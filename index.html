@@ -5,7 +5,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Zittano — Sistema de Gestión</title>
 <link href="https://fonts.googleapis.com/css2?family=DM+Sans:ital,opsz,wght@0,9..40,300..700;1,9..40,300..700&family=DM+Serif+Display&display=swap" rel="stylesheet">
-<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"><\/script>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <style>
 :root{
   --az:#003399;--az2:#0044cc;--azl:#e8efff;
@@ -2102,8 +2102,8 @@ function generarRecibo(r){
   <div class="firma">Zittano · Gestoría de Ciudadanías · Buenos Aires</div>
   <script>window.onload=()=>{window.print();}<\/script>
 <\/script>
-</body>
-</html>`);
+<\/body>
+<\/html>`);
   win.document.close();
 }
 
@@ -3557,6 +3557,6 @@ function clearAll(){
   srvs=[];etas=[];renderEtas();renderSrvs();render();
   document.getElementById('e-fec').value=d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0');
 }
-<\/script>
+</script>
 </body>
 </html>
