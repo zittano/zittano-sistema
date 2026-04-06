@@ -328,6 +328,7 @@ textarea{resize:vertical;}
       <button class="htab" onclick="showTab('ingresos',this)">💰 Ingresos</button>
       <button class="htab" onclick="showTab('info',this)">📌 Info</button>
       <button class="htab" id="tab-panel" onclick="showTab('panel',this)" style="display:none">📊 Panel</button>
+      <button class="htab" id="tab-precios" onclick="showTab('precios',this)" style="display:none">💲 Precios</button>
     </div>
     <div class="hrgt">
       <div class="sychip"><div class="sydot sp" id="sydot"></div><span id="sytxt">Conectando</span></div>
@@ -816,6 +817,37 @@ textarea{resize:vertical;}
 </div>
 </div>
 
+<!-- VIEW PRECIOS (solo Belén) -->
+<div class="view" id="view-precios">
+<div class="vbody">
+  <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:20px;flex-wrap:wrap;gap:12px">
+    <div>
+      <div class="dbtitle">Lista de Precios</div>
+      <div style="font-size:13px;color:#94a3b8;margin-top:4px">Solo vos podés editar esto. Los cambios se aplican a nuevos presupuestos automáticamente.</div>
+    </div>
+    <div style="display:flex;gap:8px">
+      <button onclick="addPrecio()" style="padding:8px 16px;background:var(--az);color:#fff;border:none;border-radius:8px;font-size:13px;font-weight:600;cursor:pointer">+ Agregar ítem</button>
+      <button onclick="guardarPrecios()" style="padding:8px 16px;background:var(--vd);color:#fff;border:none;border-radius:8px;font-size:13px;font-weight:600;cursor:pointer">💾 Guardar cambios</button>
+    </div>
+  </div>
+  <div class="twrap" style="overflow-x:auto">
+    <table style="width:100%;border-collapse:collapse">
+      <thead>
+        <tr style="background:var(--grl)">
+          <th style="padding:10px 12px;text-align:left;font-size:10px;font-weight:600;color:#94a3b8;border-bottom:1px solid var(--bo)">Nombre del servicio</th>
+          <th style="padding:10px 12px;text-align:left;font-size:10px;font-weight:600;color:#94a3b8;border-bottom:1px solid var(--bo)">Precio Transf.</th>
+          <th style="padding:10px 12px;text-align:left;font-size:10px;font-weight:600;color:#94a3b8;border-bottom:1px solid var(--bo)">Precio Efectivo</th>
+          <th style="padding:10px 12px;text-align:left;font-size:10px;font-weight:600;color:#94a3b8;border-bottom:1px solid var(--bo)">Tiempo estimado</th>
+          <th style="padding:10px 12px;text-align:left;font-size:10px;font-weight:600;color:#94a3b8;border-bottom:1px solid var(--bo)">Categoría</th>
+          <th style="padding:10px 8px;border-bottom:1px solid var(--bo);width:50px"></th>
+        </tr>
+      </thead>
+      <tbody id="precios-tbody"></tbody>
+    </table>
+  </div>
+</div>
+</div>
+
 </div><!-- /app -->
 
 <!-- MODAL -->
@@ -894,8 +926,12 @@ function initApp(){
     // Mostrar filtro de gestor en ingresos
     const igf=document.getElementById('ing-gestor');
     if(igf) igf.style.display='block';
+    const tp=document.getElementById('tab-precios');
+    if(tp) tp.style.display='block';
   }
   (async()=>{setSY('sp','Conectando...');try{const{error}=await SB.from(TB).select('id').limit(1);setSY(error?'err':'ok',error?'Error de conexión':'Conectado ✓');}catch{setSY('err','Sin conexión');}})();
+  // Cargar precios siempre para que el dropdown del presupuesto esté actualizado
+  loadPrecios();
 }
 
 // HELPERS
@@ -917,6 +953,7 @@ function showTab(name,btn){
   btn.classList.add('on');
   if(name==='base')loadDb();
   if(name==='ingresos')loadIngresos();
+  if(name==='precios')loadPrecios();
   if(name==='panel')loadPanel();
   if(name==='finalizados')loadFinalizados();
   loadInfo();
@@ -3474,6 +3511,120 @@ function updAire(field, value){
   modC.aire_datos[field] = value;
 }
 
+
+
+/* ════════════════════════════════════════
+   LISTA DE PRECIOS (solo Belén)
+════════════════════════════════════════ */
+const PRECIOS_DEFAULT = [
+  {id:'p1', nombre:'Acta Italiana del Interior', transf:'USD 450', efect:'USD 450', tiempo:'—', cat:'Actas Italianas'},
+  {id:'p2', nombre:'Acta Italiana Parroquial', transf:'USD 440', efect:'USD 440', tiempo:'—', cat:'Actas Italianas'},
+  {id:'p3', nombre:'Acta Italiana con Foto', transf:'USD 420', efect:'USD 300', tiempo:'—', cat:'Actas Italianas'},
+  {id:'p4', nombre:'Acta Italiana sin Foto', transf:'USD 490', efect:'USD 350', tiempo:'—', cat:'Actas Italianas'},
+  {id:'p5', nombre:'Expte de Cámara + Apostilla + Traducción', transf:'$532.000', efect:'$380.000', tiempo:'1 a 2 meses', cat:'Expedientes y Actas'},
+  {id:'p6', nombre:'Actas Nacionales con Foto', transf:'$30.800', efect:'$22.000', tiempo:'1 mes', cat:'Expedientes y Actas'},
+  {id:'p7', nombre:'Actas Nacionales sin Datos', transf:'$49.000', efect:'$35.000', tiempo:'1 mes', cat:'Expedientes y Actas'},
+  {id:'p8', nombre:'Traducciones (c/u)', transf:'$126.000', efect:'$90.000', tiempo:'1 mes', cat:'Expedientes y Actas'},
+  {id:'p9', nombre:'Actas Provincias', transf:'$63.000', efect:'$45.000', tiempo:'—', cat:'Expedientes y Actas'},
+  {id:'p10', nombre:'Honorarios', transf:'USD 250', efect:'USD 180', tiempo:'—', cat:'Honorarios'},
+  {id:'p11', nombre:'Honorarios sin Acta Italiana', transf:'USD 196', efect:'USD 140', tiempo:'—', cat:'Honorarios'},
+  {id:'p12', nombre:'AIRE Consulta', transf:'—', efect:'$50.000', tiempo:'—', cat:'AIRE / SPID'},
+  {id:'p13', nombre:'Carga DNI AIRE', transf:'$98.000', efect:'$70.000', tiempo:'—', cat:'AIRE / SPID'},
+  {id:'p14', nombre:'AIRE', transf:'USD 420', efect:'USD 300', tiempo:'2 a 4 meses', cat:'AIRE / SPID'},
+  {id:'p15', nombre:'AIRE + Turno Beneficio Ley', transf:'USD 420', efect:'USD 300', tiempo:'2 a 4 meses', cat:'AIRE / SPID'},
+  {id:'p16', nombre:'Turno Pasaporte (CABA/Morón/LP/Lomas)', transf:'USD 280', efect:'USD 200', tiempo:'2 meses', cat:'Pasaportes'},
+  {id:'p17', nombre:'Turno Pasaporte Adicional', transf:'USD 70', efect:'USD 50', tiempo:'—', cat:'Pasaportes'},
+  {id:'p18', nombre:'Divorcio', transf:'$420.000', efect:'$300.000', tiempo:'—', cat:'Otros'},
+  {id:'p19', nombre:'Apostilla Extra Cámara 30 días', transf:'$112.000', efect:'$80.000', tiempo:'—', cat:'Otros'},
+  {id:'p20', nombre:'Correo', transf:'$35.000', efect:'$35.000', tiempo:'—', cat:'Otros'},
+];
+
+let preciosData = [];
+
+async function loadPrecios(){
+  // Cargar desde Supabase (tabla info_equipo con tipo='precios')
+  const{data,error}=await SB.from('info_equipo').select('*').eq('tipo','precios').single();
+  if(!error && data && data.campo1){
+    try{ preciosData=JSON.parse(data.campo1); }catch{ preciosData=[...PRECIOS_DEFAULT]; }
+  } else {
+    preciosData=[...PRECIOS_DEFAULT];
+  }
+  renderPrecios();
+  // También actualizar los dropdowns del presupuesto
+  actualizarDropdownPrecios();
+}
+
+function renderPrecios(){
+  const tbody=document.getElementById('precios-tbody');
+  if(!tbody) return;
+  const INP='padding:6px 8px;border:1.5px solid var(--bo);border-radius:6px;font-size:12.5px;outline:none;background:white;width:100%';
+  tbody.innerHTML=preciosData.map((p,i)=>`<tr style="border-bottom:1px solid var(--grl)">
+    <td style="padding:5px 8px"><input value="${escH(p.nombre||'')}" oninput="updPrecio(${i},'nombre',this.value)" style="${INP};min-width:220px"></td>
+    <td style="padding:5px 8px"><input value="${escH(p.transf||'')}" placeholder="USD 200 / $50.000" oninput="updPrecio(${i},'transf',this.value)" style="${INP};min-width:120px;color:#1e40af;font-weight:600"></td>
+    <td style="padding:5px 8px"><input value="${escH(p.efect||'')}" placeholder="USD 150 / $35.000" oninput="updPrecio(${i},'efect',this.value)" style="${INP};min-width:120px;color:#0891b2;font-weight:600"></td>
+    <td style="padding:5px 8px"><input value="${escH(p.tiempo||'')}" placeholder="1 mes / —" oninput="updPrecio(${i},'tiempo',this.value)" style="${INP};min-width:100px"></td>
+    <td style="padding:5px 8px"><input value="${escH(p.cat||'')}" placeholder="Categoría" oninput="updPrecio(${i},'cat',this.value)" style="${INP};min-width:120px"></td>
+    <td style="padding:5px 8px;text-align:center">
+      <button onclick="delPrecio(${i})" style="padding:4px 8px;border:none;border-radius:6px;background:#fee2e2;color:#b91c1c;font-size:12px;font-weight:700;cursor:pointer">✕</button>
+    </td>
+  </tr>`).join('');
+}
+
+function updPrecio(i,field,value){
+  if(preciosData[i]) preciosData[i][field]=value;
+}
+
+function delPrecio(i){
+  if(!confirm('¿Eliminar este ítem?')) return;
+  preciosData.splice(i,1);
+  renderPrecios();
+}
+
+function addPrecio(){
+  preciosData.push({id:'p-'+Date.now(),nombre:'',transf:'',efect:'',tiempo:'—',cat:''});
+  renderPrecios();
+  // Scroll al final
+  const tbody=document.getElementById('precios-tbody');
+  if(tbody) tbody.lastElementChild?.scrollIntoView({behavior:'smooth'});
+}
+
+async function guardarPrecios(){
+  // Guardar en info_equipo con tipo='precios'
+  const json=JSON.stringify(preciosData);
+  const{data:existing}=await SB.from('info_equipo').select('id').eq('tipo','precios').single();
+  let error;
+  if(existing){
+    ({error}=await SB.from('info_equipo').update({campo1:json}).eq('tipo','precios'));
+  } else {
+    ({error}=await SB.from('info_equipo').insert({id:'precios-'+Date.now(),tipo:'precios',nombre:'Lista de Precios',campo1:json}));
+  }
+  if(error){toast('Error al guardar: '+error.message,'err');return;}
+  toast('✅ Precios guardados','ok');
+  actualizarDropdownPrecios();
+}
+
+function actualizarDropdownPrecios(){
+  // Actualizar el dropdown del presupuesto con los precios actuales
+  const sel=document.getElementById('srv-pre');
+  if(!sel||!preciosData.length) return;
+  // Agrupar por categoría
+  const cats={};
+  preciosData.forEach(p=>{
+    const c=p.cat||'Otros';
+    if(!cats[c]) cats[c]=[];
+    cats[c].push(p);
+  });
+  let html='<option value="">— Agregar desde lista de precios —</option>';
+  Object.entries(cats).forEach(([cat,items])=>{
+    html+=`<optgroup label="${escH(cat)}">`;
+    items.forEach(p=>{
+      const val=`${p.nombre}|${p.transf||'—'}|${p.efect||'—'}|${p.tiempo||'—'}`;
+      html+=`<option value="${escH(val)}">${escH(p.nombre)} (${p.efect||p.transf||'—'})</option>`;
+    });
+    html+='</optgroup>';
+  });
+  sel.innerHTML=html;
+}
 
 // CLEAR
 function clearAll(){
