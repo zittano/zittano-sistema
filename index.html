@@ -421,48 +421,21 @@ textarea{resize:vertical;}
     </div>
 
     <div class="ecard">
-      <div class="ehead"><div class="eico" style="background:#ede9fe">📝</div><div class="etit">Etapas del Presupuesto</div></div>
+      <div class="ehead"><div class="eico" style="background:#ede9fe">📝</div><div class="etit">Actas a Solicitar</div></div>
       <div class="ebody">
-        <div id="etapas-ed"></div>
-        <div class="addrow">
-          <select class="addsel" id="eta-pre">
-            <option value="">— Agregar etapa desde lista —</option>
-            <optgroup label="Actas Italianas">
-              <option>Acta Italiana del Interior (USD 450)</option>
-              <option>Acta Italiana Parroquial (USD 440)</option>
-              <option>Acta Italiana con Foto</option>
-              <option>Acta Italiana sin Foto</option>
-            </optgroup>
-            <optgroup label="Expedientes y Actas Nacionales">
-              <option>Expediente de Cámara + Apostilla + Traducción</option>
-              <option>Actas Nacionales con Foto</option>
-              <option>Actas Nacionales sin Datos</option>
-              <option>Traducciones (c/u)</option>
-              <option>Actas Provincias</option>
-            </optgroup>
-            <optgroup label="Honorarios">
-              <option>Honorarios</option>
-              <option>Honorarios sin Acta Italiana</option>
-            </optgroup>
-            <optgroup label="AIRE / SPID">
-              <option>AIRE Consulta</option>
-              <option>Carga DNI AIRE</option>
-              <option>AIRE</option>
-              <option>AIRE + Turno Beneficio Ley</option>
-            </optgroup>
-            <optgroup label="Pasaportes">
-              <option>Turno Pasaporte (CABA/Morón/LP/Lomas)</option>
-              <option>Turno Pasaporte Adicional</option>
-            </optgroup>
-            <optgroup label="Otros">
-              <option>Divorcio</option>
-              <option>Apostilla Extra Cámara 30 días</option>
-              <option>Correo</option>
-            </optgroup>
-          </select>
-          <button class="bsm" onclick="addEtaFromPre()">+ Agregar</button>
+        <div id="actas-ed"></div>
+        <div style="display:flex;gap:8px;flex-wrap:wrap;margin-top:8px">
+          <button class="bsm" onclick="addActa('nacimiento')" style="background:#3b82f6">+ Nacimiento</button>
+          <button class="bsm" onclick="addActa('matrimonio')" style="background:#8b5cf6">+ Matrimonio</button>
+          <button class="bsm" onclick="addActa('defuncion')" style="background:#6b7280">+ Defunción</button>
+          <button class="bsm" onclick="addItemSimple('expediente')" style="background:#0891b2">+ Expte. Cámara</button>
+          <button class="bsm" onclick="addItemSimple('traduccion')" style="background:#059669">+ Traducción</button>
+          <button class="bsm" onclick="addItemSimple('aire')" style="background:#d97706">+ AIRE</button>
+          <button class="bsm" onclick="addItemSimple('codice')" style="background:#7c3aed">+ Codice Fiscale</button>
+          <button class="bsm" onclick="addItemSimple('cie')" style="background:#be185d">+ CIE</button>
+          <button class="bsm" onclick="addItemSimple('spid')" style="background:#1d4ed8">+ SPID</button>
+          <button class="bsm" onclick="addItemSimple('honorarios')" style="background:#064e3b">+ Honorarios</button>
         </div>
-        <button class="bgh" style="margin-top:6px" onclick="addEt()">+ Etapa personalizada</button>
       </div>
     </div>
 
@@ -990,21 +963,85 @@ function togChk(i){
 }
 
 // ETAPAS
+// ── NUEVO SISTEMA DE ACTAS ──
+const ACTA_TIPOS = {
+  nacimiento:  {label:'Acta de Nacimiento',  color:'#3b82f6', bg:'#eff6ff'},
+  matrimonio:  {label:'Acta de Matrimonio',  color:'#8b5cf6', bg:'#f5f3ff'},
+  defuncion:   {label:'Acta de Defuncion',   color:'#6b7280', bg:'#f9fafb'},
+  expediente:  {label:'Expte. de Camara (Legalizacion + Traduccion)', color:'#0891b2', bg:'#ecfeff', simple:true},
+  traduccion:  {label:'Traducciones Tecnico Juridicas', color:'#059669', bg:'#f0fdf4', simple:true},
+  aire:        {label:'AIRE', color:'#d97706', bg:'#fffbeb', simple:true},
+  codice:      {label:'Codice Fiscale', color:'#7c3aed', bg:'#f5f3ff', simple:true},
+  cie:         {label:'CIE (DNI Europeo)', color:'#be185d', bg:'#fdf2f8', simple:true},
+  spid:        {label:'SPID', color:'#1d4ed8', bg:'#eff6ff', simple:true},
+  honorarios:  {label:'Honorarios', color:'#064e3b', bg:'#f0fdf4', simple:true},
+};
+
+function addItemSimple(tipo){
+  etas.push({tipo, simple:true});
+  renderEtas();
+  render();
+}
+
+function addActa(tipo){
+  etas.push({tipo, origen:'italiana', titular:'', notas:''});
+  renderEtas();
+  render();
+}
+
+function remEt(i){etas.splice(i,1);renderEtas();render();}
+
+function renderEtas(){
+  const c=document.getElementById('actas-ed');
+  if(!c) return;
+  if(!etas.length){
+    c.innerHTML='<div style="font-size:12px;color:#94a3b8;padding:10px;text-align:center">Agrega las actas con los botones de abajo</div>';
+    return;
+  }
+  const INP='padding:5px 8px;border:1.5px solid var(--bo);border-radius:6px;font-size:12px;outline:none;background:white;';
+  c.innerHTML=etas.map((e,i)=>{
+    const t=ACTA_TIPOS[e.tipo]||{label:e.tipo||'Acta',color:'#64748b',bg:'#f8fafc'};
+    // Item simple (sin campos)
+    if(t.simple||e.simple){
+      return `<div style="display:flex;align-items:center;gap:8px;padding:8px 12px;margin-bottom:6px;background:${t.bg};border:1.5px solid ${t.color}33;border-radius:8px">
+        <span style="font-size:11px;font-weight:700;color:${t.color}">${LETRAS[i]})</span>
+        <span style="font-size:13px;font-weight:500;color:var(--grd);flex:1">${t.label}</span>
+        <button onclick="remEt(${i})" class="dbtn">x</button>
+      </div>`;
+    }
+    // Item con campos (actas)
+    return `<div style="display:flex;align-items:center;gap:8px;padding:8px 10px;margin-bottom:6px;background:${t.bg};border:1.5px solid ${t.color}33;border-radius:8px;flex-wrap:wrap">
+      <span style="font-size:11px;font-weight:700;color:${t.color};min-width:70px">${LETRAS[i]}) ${t.label}</span>
+      <select onchange="updActa(${i},'origen',this.value)" style="${INP}cursor:pointer;min-width:90px">
+        <option value="italiana" ${e.origen==='italiana'?'selected':''}>Italiana</option>
+        <option value="argentina" ${e.origen==='argentina'?'selected':''}>Argentina</option>
+      </select>
+      <input value="${escH(e.titular||'')}" placeholder="Nombre del titular..."
+        oninput="updActa(${i},'titular',this.value)"
+        style="${INP}flex:1;min-width:160px">
+      <input value="${escH(e.notas||'')}" placeholder="Notas (opcional)"
+        oninput="updActa(${i},'notas',this.value)"
+        style="${INP}min-width:120px">
+      <button onclick="remEt(${i})" class="dbtn">x</button>
+    </div>`;
+  }).join('');
+}
+
+function updActa(i,field,value){
+  if(etas[i]) etas[i][field]=value;
+  render();
+}
+
+function addEt(txt=''){
+  etas.push({tipo:'nacimiento', origen:'italiana', titular:txt, notas:''});
+  renderEtas();
+  render();
+}
 function addEtaFromPre(){
   const sel=document.getElementById('eta-pre');
-  if(!sel||!sel.value) return;
+  if(!sel||!sel.value)return;
   addEt(sel.value);
   sel.value='';
-}
-function addEt(txt=''){etas.push({texto:txt});renderEtas();render();}
-function remEt(i){etas.splice(i,1);renderEtas();render();}
-function renderEtas(){
-  const c=document.getElementById('etapas-ed');c.innerHTML='';
-  etas.forEach((e,i)=>{
-    const row=document.createElement('div');row.className='erow';
-    row.innerHTML=`<div class="eleg">${LETRAS[i]})</div><textarea class="einp" rows="2" placeholder="Ej: Acta de nacimiento italiana." oninput="etas[${i}].texto=this.value;render()">${e.texto}</textarea><button class="dbtn" onclick="remEt(${i})">×</button>`;
-    c.appendChild(row);
-  });
 }
 
 // SERVICIOS
@@ -1031,15 +1068,24 @@ function render(){
   if(obj){ot.style.display='table';document.getElementById('d-obj').textContent=obj;}else ot.style.display='none';
   const det=document.getElementById('d-ets');
   if(!etas.length){
-    det.innerHTML='<p class="ph" style="text-align:center;padding:10px 0;font-size:12px">Agregá las etapas desde el panel</p>';
+    det.innerHTML='<p class="ph" style="text-align:center;padding:10px 0;font-size:12px">Agrega las actas desde el panel</p>';
   } else {
+    const TIPO_LABEL={nacimiento:'Acta de Nacimiento',matrimonio:'Acta de Matrimonio',defuncion:'Acta de Defuncion'};
+    const ORIG_LABEL={italiana:'Italiana',argentina:'Argentina'};
     let html='';
     etas.forEach(function(e,i){
-      const txt=e.texto||'...';
-      const lines=txt.split('\n');
-      html+='<div class="ded"><div class="dedl">'+LETRAS[i]+')&nbsp;&nbsp;'+lines[0]+'</div>';
-      if(lines.length>1) html+='<div class="dedc">'+lines.slice(1).join('\n')+'</div>';
-      html+='</div>';
+      // Soporte para formato viejo (texto plano) y nuevo (objeto con tipo/origen/titular)
+      let txt;
+      if(e.tipo){
+        const tl=TIPO_LABEL[e.tipo]||e.tipo;
+        const ol=ORIG_LABEL[e.origen]||e.origen||'';
+        const titular=e.titular?(' — '+e.titular):'';
+        const notas=e.notas?(' ('+e.notas+')'):'';
+        txt=tl+(ol?' — '+ol:'')+titular+notas;
+      } else {
+        txt=e.texto||'...';
+      }
+      html+='<div class="ded"><div class="dedl">'+LETRAS[i]+')&nbsp;&nbsp;'+txt+'</div></div>';
     });
     det.innerHTML=html;
   }
@@ -1072,7 +1118,7 @@ async function saveClient(){
     domicilio:g('e-dom'),consulado:g('e-cons'),
     ascendiente:g('e-asc'),parentesco:g('e-par'),nacimiento:g('e-nac'),
     comuna:g('e-com'),casado:g('e-cas'),padres:g('e-pad'),objetivo:g('e-obj'),
-    etapas:etas.map(e=>e.texto),servicios:srvs.map(s=>({...s})),
+    etapas:etas.map(e=>({...e})),servicios:srvs.map(s=>({...s})),
     estado:'En proceso',gestor:curG,checklist:chkItems,notas_internas:'',
     tipo_tramite:tipoSel,
     doc_secciones:{},documentacion:{},aire_datos:{},pagos_manual:[],
@@ -1167,6 +1213,8 @@ function renderMBody(){
   const iv=v=>v&&v.trim()?`<div class="ifv">${v}</div>`:`<div class="ifv e">—</div>`;
   const cl=c.checklist||[];
   const etArr=Array.isArray(c.etapas)?c.etapas:[];
+  // Convertir etapas viejas (strings) al nuevo formato si es necesario
+  etas=etArr.map(e=>typeof e==='string'?{tipo:'nacimiento',origen:'italiana',titular:e,notas:''}:{...e});
   const srvArr=Array.isArray(c.servicios)?c.servicios:[];
   const pagos=srvArr.filter(p=>p&&p.monto&&(String(p.monto).match(/\d/)||String(p.monto).toUpperCase().includes('USD')));
   document.getElementById('mbody').innerHTML=`
