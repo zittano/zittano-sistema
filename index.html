@@ -256,6 +256,7 @@ textarea{resize:vertical;}
 
 /* PRINT */
 @media print{
+  #d-obj-t, [data-no-print="true"] { display:none !important; }
   #login-screen,#app .hdr,.editor,.plbl,.bsave,.bprint,.bnew,.pbv,.toast,.mbg{display:none!important;}
   .pgrid{display:block;padding:0;}
   .doc{border-radius:0;box-shadow:none;border:none;}
@@ -393,7 +394,11 @@ textarea{resize:vertical;}
           <div class="fld"><label>Se casó en</label><input id="e-cas" name="ztt-cas" autocomplete="off" name="zit_field_k11" autocomplete="off" onfocus="this.removeAttribute('readonly')" readonly placeholder="Argentina" oninput="render()"></div>
         </div>
         <div class="fld"><label>Padres del ascendiente</label><input id="e-pad" name="ztt-pad" autocomplete="off" name="zit_field_l12" autocomplete="off" onfocus="this.removeAttribute('readonly')" readonly placeholder="Luigi Bollani y Adelaide Bacoli" oninput="render()"></div>
-        <div class="fld"><label>Objetivo / Notas</label><textarea id="e-obj" name="ztt-obj" autocomplete="off" name="zit_field_m13" autocomplete="off" onfocus="this.removeAttribute('readonly')" readonly rows="2" placeholder="AIRE, SPID, pasaporte, etc." oninput="render()"></textarea></div>
+        <div class="fld">
+  <label style="color:#dc2626;font-weight:700;letter-spacing:.8px">🔒 NOTAS INTERNAS</label>
+  <textarea id="e-obj" name="ztt-obj" autocomplete="off" onfocus="this.removeAttribute('readonly')" readonly rows="2" placeholder="Solo para uso interno del equipo — NO aparece en el PDF del cliente" oninput="render()" style="border:2px solid #fca5a5;background:#fff5f5;border-radius:8px;padding:8px 10px;font-size:13px;color:#7f1d1d;"></textarea>
+  <div style="font-size:10px;color:#ef4444;font-weight:600;margin-top:3px">⚠️ Este campo NO se imprime ni se envía al cliente</div>
+</div>
       </div>
     </div>
 
@@ -555,7 +560,7 @@ textarea{resize:vertical;}
             <tr><td class="fl">Se Casó En:</td><td id="d-cas" colspan="3" class="ph">—</td><td class="fl">Padres:</td><td id="d-pad" class="ph">—</td></tr>
           </tbody>
         </table>
-        <table class="dtbl" id="d-obj-t" style="margin-top:7px;display:none">
+        <table class="dtbl" id="d-obj-t" style="margin-top:7px;display:none" data-no-print="true">
           <tbody><tr><td class="fl" style="width:26%">Objetivo:</td><td id="d-obj"></td></tr></tbody>
         </table>
       </div>
@@ -1196,7 +1201,7 @@ function renderMBody(){
     </div>
     <div>
       <div class="ssep" style="margin-bottom:10px">Notas internas del equipo</div>
-      <textarea class="narea" id="m-notas" placeholder="Anotaciones internas, pendientes, recordatorios...">${c.notas_internas||''}</textarea>
+      <textarea class="narea" id="m-notas" oninput="scheduleAutoSave()" placeholder="Anotaciones internas, pendientes, recordatorios...">${c.notas_internas||''}</textarea>
     </div>
     <div class="mact">
       <button class="bmok" onclick="saveM()">💾 Guardar cambios</button>
@@ -1245,18 +1250,21 @@ function setEst(e){
   document.querySelectorAll('.eopt').forEach(el=>{
     el.className='eopt'+(el.textContent.trim()===e?' '+(map[e]||''):'');
   });
+  scheduleAutoSave();
 }
 function setGest(gg){
   modC.gestor=gg;
   document.querySelectorAll('.gopt').forEach(el=>{el.className='gopt'+(el.dataset.g===gg?' on':'');});
+  scheduleAutoSave();
 }
 function togMChk(i){
   modC.checklist[i].done=!modC.checklist[i].done;
   if(modC.checklist[i].done){const d=new Date();modC.checklist[i].fecha=d.getDate()+'/'+(d.getMonth()+1)+'/'+d.getFullYear();}else modC.checklist[i].fecha='';
   const wrap=document.getElementById('m-chk');
   if(wrap)wrap.innerHTML=modC.checklist.map((it,i)=>`<div class="chi${it.done?' done':''}" onclick="togMChk(${i})"><div class="chbox">${it.done?'✓':''}</div><span class="chl">${it.label}</span>${it.done&&it.fecha?`<span class="chd">✓ ${it.fecha}</span>`:''}</div>`).join('');
+  scheduleAutoSave();
 }
-function addMChk(){const inp=document.getElementById('nchk');if(!inp||!inp.value.trim())return;modC.checklist.push({label:inp.value.trim(),done:false,fecha:''});inp.value='';renderMBody();}
+function addMChk(){const inp=document.getElementById('nchk');if(!inp||!inp.value.trim())return;modC.checklist.push({label:inp.value.trim(),done:false,fecha:''});inp.value='';renderMBody();scheduleAutoSave();}
 async function saveM(){
   const notas=(document.getElementById('m-notas')||{value:''}).value;
   const pagos=modC.pagos_manual||[];
@@ -1448,6 +1456,7 @@ function updPagoFecha(i,part,value){
   if(part==='mes')parts[1]=String(value).padStart(2,'0');
   if(part==='dia')parts[2]=String(value).padStart(2,'0');
   p.fecha=parts.join('-');
+  scheduleAutoSave();
 }
 
 function updPagoCalc(i,field,value){
@@ -1461,6 +1470,7 @@ function updPagoCalc(i,field,value){
   p.a_pagar=ap||null;
   const el=document.getElementById('apagar-pago-'+i);
   if(el)el.value=ap||'';
+  scheduleAutoSave();
 }
 
 function setPagoComprobante(i){
@@ -1494,6 +1504,7 @@ function delPago(i){
 function updPago(i,field,value){
   if(!modC.pagos_manual||!modC.pagos_manual[i]) return;
   modC.pagos_manual[i][field]=value;
+  scheduleAutoSave();
 }
 
 
@@ -2992,6 +3003,7 @@ function delPago(i){
 function updPago(i,field,value){
   if(!modC.pagos_manual||!modC.pagos_manual[i]) return;
   modC.pagos_manual[i][field]=value;
+  scheduleAutoSave();
 }
 
 
@@ -3498,6 +3510,7 @@ function setDocEstado(actaId, estado){
   modC.documentacion[actaId].estado = estado;
   const wrap = document.getElementById('m-docs-wrap');
   if(wrap) wrap.innerHTML = renderDocs(modC);
+  scheduleAutoSave();
 }
 
 function updDoc(actaId, field, value){
@@ -3626,6 +3639,45 @@ function actualizarDropdownPrecios(){
   sel.innerHTML=html;
 }
 
+
+/* ── AUTOGUARDADO DE PAGOS ── */
+let _autoSaveTimer = null;
+function scheduleAutoSave(){
+  clearTimeout(_autoSaveTimer);
+  // Mostrar indicador de "guardando..."
+  const btn = document.querySelector('.bmok');
+  if(btn) btn.textContent = '⏳ Guardando...';
+  _autoSaveTimer = setTimeout(async ()=>{
+    if(!modC||!modC.id) return;
+    const notas=(document.getElementById('m-notas')||{value:''}).value;
+    const pagos=modC.pagos_manual||[];
+    const{error}=await SB.from(TB).update({
+      pagos_manual:pagos,
+      notas_internas:notas,
+      estado:modC.estado,
+      gestor:modC.gestor,
+      checklist:modC.checklist||[],
+      tags:modC.tags||[],
+      documentacion:modC.documentacion||{},
+      tipo_tramite:modC.tipo_tramite||'',
+      aire_datos:modC.aire_datos||{},
+      doc_secciones:modC.doc_secciones||{}
+    }).eq('id',modC.id);
+    if(!error){
+      // Sync a ingresos
+      await syncPagosToIngresos(modC.id, modC.nombre, pagos);
+      const idx=allC.findIndex(c=>c.id===modC.id);
+      if(idx>=0) allC[idx]={...allC[idx],...modC,pagos_manual:pagos,notas_internas:notas};
+      const btn2=document.querySelector('.bmok');
+      if(btn2) btn2.textContent='💾 Guardar cambios';
+      setSY('ok','Guardado ✓');
+    } else {
+      const btn2=document.querySelector('.bmok');
+      if(btn2) btn2.textContent='💾 Guardar cambios';
+      toast('Error al autoguardar','err');
+    }
+  }, 2000); // guarda 2 segundos después de la última edición
+}
 // CLEAR
 function clearAll(){
   if(!confirm('¿Nuevo presupuesto? Se borrará el actual.'))return;
