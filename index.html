@@ -1511,10 +1511,16 @@ function updPagoCalc(i,field,value){
   if(!modC.pagos_manual||!modC.pagos_manual[i]) return;
   const p=modC.pagos_manual[i];
   p[field]=value?parseFloat(value):null;
-  // Auto-calculate a_pagar
+  // Calcular A Pagar según tipo de trámite
   let ap=0;
-  if(p.efectivo) ap=parseFloat(p.efectivo);
-  else if(p.transferencia) ap=Math.round(parseFloat(p.transferencia)/1.4);
+  if(esSoloBelen(p.tipo)){
+    ap=0; // Divorcio/Correo/CIE: va directo a Belén
+  } else if(esConsulta(p.tipo)){
+    ap=parseFloat(p.efectivo||p.transferencia||0);
+  } else {
+    if(p.efectivo) ap=parseFloat(p.efectivo);
+    else if(p.transferencia) ap=Math.round(parseFloat(p.transferencia)/1.4);
+  }
   p.a_pagar=ap||null;
   const el=document.getElementById('apagar-pago-'+i);
   if(el)el.value=ap||'';
@@ -1581,14 +1587,17 @@ async function loadIngresos(){
   ingresosData=data||[];
   setSY('ok',ingresosData.length+' ingresos');
 
-  // Populate mes
-  const meses=[...new Set(ingresosData.map(r=>(r.fecha||'').slice(0,7)).filter(Boolean))].sort().reverse();
+  // Poblar selector de año con los años reales de los datos
+  const anios=[...new Set(ingresosData.map(r=>(r.fecha||'').slice(0,4)).filter(Boolean))].sort().reverse();
+  const anioActual=String(new Date().getFullYear());
+  if(!anios.includes(anioActual)) anios.unshift(anioActual);
   const sel=document.getElementById('ing-anio');
-  const cur=sel?sel.value:'2026';
-  // Populate year selector
-  // Selector is static HTML, just set value
-  if(sel&&cur) sel.value=cur;
+  if(sel){
+    const cur=sel.value||anioActual;
+    sel.innerHTML=anios.map(a=>`<option value="${a}"${a===cur?' selected':''}>${a}</option>`).join('');
+  }
 
+  collapsedMonths={}; // resetear colapso al recargar
   filterIngresos();
 }
 
@@ -1622,7 +1631,7 @@ function renderIngresos(){
     <div class="stat"><div class="stv">${ingresosFiltrados.length}</div><div class="stl">Registros</div></div>
     <div class="stat vd"><div class="stv" style="font-size:15px">$${Math.round(totE).toLocaleString('es-AR')}</div><div class="stl">Efectivo</div></div>
     <div class="stat am"><div class="stv" style="font-size:15px">$${Math.round(totT).toLocaleString('es-AR')}</div><div class="stl">Transferencias</div></div>
-    <div class="stat pu"><div class="stv" style="font-size:15px">$${Math.round(totP).toLocaleString('es-AR')}</div><div class="stl">A Pagar</div></div>`;
+    <div class="stat pu" style="border-top-color:#16a34a;border-top-width:4px"><div class="stv" style="font-size:18px;color:#16a34a;font-weight:800">$${Math.round(totP).toLocaleString('es-AR')}</div><div class="stl" style="color:#16a34a;font-weight:700">💰 TOTAL A PAGAR</div></div>`;
 
   const tbody=document.getElementById('ing-body');
   if(!tbody) return;
@@ -1633,34 +1642,39 @@ function renderIngresos(){
   const filtroMes=(document.getElementById('ing-mes')||{value:''}).value;
   const anioMostrar=(document.getElementById('ing-anio')||{value:'2026'}).value||'2026';
 
-  // Group existing data by month key
+  // Agrupar datos por mes (YYYY-MM)
   const byMonth={};
   ingresosFiltrados.forEach(r=>{
     const key=(r.fecha||'').slice(0,7);
+    if(!key) return;
     if(!byMonth[key]) byMonth[key]=[];
     byMonth[key].push(r);
   });
 
-  // Build all 12 months of the year + any extra months from other years
-  const allKeys=new Set();
-  // Add all 12 months of current year
-  for(let m=1;m<=12;m++) allKeys.add(anioMostrar+'-'+String(m).padStart(2,'0'));
-  // Add any months from data not in current year
-  Object.keys(byMonth).forEach(k=>allKeys.add(k));
+  // Solo mostrar meses que tienen registros + el mes actual
+  const hoy=new Date();
+  const mesActual=hoy.getFullYear()+'-'+String(hoy.getMonth()+1).padStart(2,'0');
+  const allKeys=new Set(Object.keys(byMonth));
+  allKeys.add(mesActual); // siempre mostrar el mes actual aunque esté vacío
   const sortedMonths=[...allKeys].sort().reverse();
 
   let html='';
   sortedMonths.forEach(mes=>{
     const rows=byMonth[mes]||[];
-    const collapsed=!!collapsedMonths[mes];
+    // collapsed se define más abajo como collapsed2
     const[y,mo]=mes.split('-');
     const mesLabel=MESES_NOM[parseInt(mo)-1]+' '+y;
     let mE=0,mT=0,mP=0;
     rows.forEach(r=>{mE+=CING.num(r.efectivo);mT+=CING.num(r.transferencia);mP+=CING.num(r.a_pagar);});
     const isEmpty=rows.length===0;
 
-    // Month header
-    html+=`<tr style="background:linear-gradient(135deg,#1e293b,#334155);cursor:pointer" onclick="toggleMes('${mes}')">
+    // Auto-colapsar meses anteriores al actual
+    const isCurrentMonth = mes===mesActual;
+    if(collapsedMonths[mes]===undefined) collapsedMonths[mes]=!isCurrentMonth;
+    const collapsed2=!!collapsedMonths[mes];
+
+    // Month header mejorado
+    html+=`<tr style="background:linear-gradient(135deg,${isCurrentMonth?'#1e3a5f,#1e4976':'#1e293b,#334155'});cursor:pointer;${isCurrentMonth?'box-shadow:0 2px 8px rgba(30,100,200,.3)':''}" onclick="toggleMes('${mes}')">
       <td colspan="3" style="padding:11px 14px">
         <span style="font-size:13px;font-weight:700;color:#fff;letter-spacing:.3px">${collapsed?'▶':'▼'} ${mesLabel}</span>
         ${isEmpty?`<span style="font-size:11px;color:rgba(255,255,255,.3);margin-left:10px">sin registros</span>`
@@ -1671,14 +1685,14 @@ function renderIngresos(){
         ${mT?`<span style="font-size:11px;font-weight:600;color:#67e8f9;margin-left:8px">Transf: $${Math.round(mT).toLocaleString('es-AR')}</span>`:''}
       </td>
       <td style="padding:11px 10px">
-        ${mP?`<span style="font-size:12px;font-weight:700;color:#86efac">$${Math.round(mP).toLocaleString('es-AR')}</span>`:''}
+        ${mP?`<span style="font-size:13px;font-weight:800;color:#4ade80;background:rgba(74,222,128,.15);padding:2px 8px;border-radius:6px">💰 $${Math.round(mP).toLocaleString('es-AR')}</span>`:''}
       </td>
       <td colspan="4" style="padding:11px 10px;text-align:right">
         ${!isEmpty?`<span style="font-size:11px;color:rgba(255,255,255,.35)">Total a pagar</span>`:''}
       </td>
     </tr>`;
 
-    if(!collapsed){
+    if(!collapsed2){
       // Data rows
       if(rows.length) html+=rows.map(r=>renderIngRow(r)).join('');
       // Empty state row
@@ -1784,24 +1798,78 @@ function updIngFecha(id,part,value){
   if(part==='mes') parts[1]=String(value).padStart(2,'0');
   if(part==='dia') parts[2]=String(value).padStart(2,'0');
   r.fecha=parts.join('-');
+  scheduleIngAutoSave(id);
+}
+
+/* ── AUTOGUARDADO DE INGRESOS ── */
+const _ingTimers={};
+function scheduleIngAutoSave(id){
+  clearTimeout(_ingTimers[id]);
+  _ingTimers[id]=setTimeout(()=>autoSaveIngRow(id), 1500);
+}
+
+async function autoSaveIngRow(id){
+  const r=ingresosData.find(x=>x.id===id);
+  if(!r) return;
+  // Solo guardar si tiene al menos cliente o monto
+  const tieneDatos = r.cliente||r.efectivo||r.transferencia||r.a_pagar;
+  if(!tieneDatos) return;
+  if(!r.fecha) return;
+  const{_new,...record}=r;
+  record.gestor=record.gestor||curG;
+  let error;
+  if(_new){
+    ({error}=await SB.from('ingresos').insert(record));
+    if(!error){
+      r._new=false;
+      // Resaltar la fila en verde brevemente
+      const row=document.getElementById('row-'+id);
+      if(row){row.style.background='#dcfce7';setTimeout(()=>{row.style.background=r.source_ficha?'#fafcff':'';},1500);}
+    }
+  } else {
+    ({error}=await SB.from('ingresos').update(record).eq('id',id));
+    if(!error){
+      const row=document.getElementById('row-'+id);
+      if(row){row.style.background='#dcfce7';setTimeout(()=>{row.style.background=r.source_ficha?'#fafcff':'';},1000);}
+    }
+  }
+  if(error) console.warn('autoSaveIngRow error:', error.message);
+  else if(r.cliente_id) syncIngresoPagoEnFicha(r);
+  // Actualizar totales
+  filterIngresos();
 }
 
 function updIng(id,field,value){
   const r=ingresosData.find(x=>x.id===id);
-  if(r) r[field]=value;
+  if(r){ r[field]=value; scheduleIngAutoSave(id); }
 }
 
+
+// Si el tipo es "consulta", el A Pagar = monto exacto sin factor transferencia
+function esConsulta(tipo){ return (tipo||'').toLowerCase().includes('consulta'); }
+// Trámites que van directo a Belén — A Pagar = 0 para empleados
+function esSoloBelen(tipo){
+  const t=(tipo||'').toLowerCase();
+  return t.includes('divorcio')||t.includes('correo')||t.includes('cie');
+}
 function updIngNum(id,field,value){
   const r=ingresosData.find(x=>x.id===id);
   if(!r) return;
   r[field]=value?parseFloat(value):null;
-  // Auto-calculate a_pagar
+  // Calcular A Pagar según tipo de trámite
   let pagar=0;
-  if(r.efectivo) pagar=parseFloat(r.efectivo);
-  else if(r.transferencia) pagar=Math.round(parseFloat(r.transferencia)/1.4);
+  if(esSoloBelen(r.tipo)){
+    pagar=0; // Divorcio/Correo/CIE: va directo a Belén, no se acredita al empleado
+  } else if(esConsulta(r.tipo)){
+    pagar=parseFloat(r.efectivo||r.transferencia||0); // Consulta: monto exacto sin factor
+  } else {
+    if(r.efectivo) pagar=parseFloat(r.efectivo);
+    else if(r.transferencia) pagar=Math.round(parseFloat(r.transferencia)/1.4);
+  }
   r.a_pagar=pagar||null;
   const el=document.getElementById('apagar-'+id);
   if(el) el.value=pagar||'';
+  scheduleIngAutoSave(id);
 }
 
 /* ── AUTOCOMPLETE CLIENTE EN INGRESOS ── */
