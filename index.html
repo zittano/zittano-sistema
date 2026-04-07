@@ -1095,12 +1095,22 @@ function render(){
   if(!srvs.length){pb.innerHTML='<tr><td colspan="6" class="ph" style="text-align:center;padding:14px">Agregá servicios desde el panel</td></tr>';pf.style.display='none';return;}
   let tA=0,eA=0,tU=0,eU=0;
   pb.innerHTML=srvs.map(s=>{
-    const c=parseInt(s.cant)||1;const tN=pn(s.transf),eN=pn(s.efect);
-    const isUT=(s.transf||'').toUpperCase().includes('USD');const isUE=(s.efect||'').toUpperCase().includes('USD');
-    let sT='—',sE='—';
-    if(tN){const v=tN*c;sT=isUT?'USD '+fmt(v):'$'+fmt(v);if(isUT)tU+=v;else tA+=v;}
-    if(eN){const v=eN*c;sE=isUE?'USD '+fmt(v):'$'+fmt(v);if(isUE)eU+=v;else eA+=v;}
-    return`<tr><td><strong>${s.desc||'—'}</strong></td><td>${s.transf||'—'} / ${s.efect||'—'}</td><td class="c">${c}</td><td class="r">${sT}</td><td class="r">${sE}</td><td>${s.tiempo||'—'}</td></tr>`;
+  const c=parseFloat(s.cant)||1;const tN=pn(s.transf),eN=pn(s.efect);
+  const iSUT=(s.transf||'').toUpperCase().includes('USD');const iSUE=(s.efect||'').toUpperCase().includes('USD');
+  
+  // Detectar si es traducción
+  const esTraduccion = s.desc && s.desc.toLowerCase().includes('traducc');
+  
+  let sT='-',sE='-';
+  if(tN && !esTraduccion){const v=tN*c;sT=iSUT?'USD '+fmt(v):'$'+fmt(v);if(iSUT)tU+=v;else tA+=v;}
+  if(eN && !esTraduccion){const v=eN*c;sE=iSUE?'EUR '+fmt(v):'$'+fmt(v);if(iSUE)eU+=v;else eA+=v;}
+  
+  // Mostrar guiones en vez de precios para traducciones
+  const mostrarTransf = esTraduccion ? '-' : (s.transf||'-');
+  const mostrarEfect = esTraduccion ? '-' : (s.efect||'-');
+  
+  return`<tr><td><strong>${s.desc||'-'}</strong></td><td>${mostrarTransf} / ${mostrarEfect}</td><td class="c">${c}</td><td class="r">${sT}</td><td class="r">${sE}</td>`;
+}).join('');
   }).join('');
   pf.style.display='';
   document.getElementById('d-tt').textContent=[tA&&'$'+fmt(tA),tU&&'USD '+fmt(tU)].filter(Boolean).join(' + ')||'—';
