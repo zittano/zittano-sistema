@@ -978,7 +978,9 @@ const ACTA_TIPOS = {
 };
 
 function addItemSimple(tipo){
-  etas.push({tipo, simple:true});
+  // Capitalizar primera letra
+  const tipoCapitalizado = tipo.charAt(0).toUpperCase() + tipo.slice(1);
+  etas.push({tipo: tipoCapitalizado, simple:true});
   renderEtas();
   render();
 }
