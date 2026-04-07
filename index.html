@@ -1097,9 +1097,14 @@ function render(){
   pb.innerHTML=srvs.map(s=>{
   const c=parseFloat(s.cant)||1;const tN=pn(s.transf),eN=pn(s.efect);
   const iSUT=(s.transf||'').toUpperCase().includes('USD');const iSUE=(s.efect||'').toUpperCase().includes('USD');
+  let sT='-',sE='-';
+  if(tN && !esTraduccion){const v=tN*c;sT=iSUT?'USD '+fmt(v):'$'+fmt(v);if(iSUT)tU+=v;else tA+=v;}
+  if(eN && !esTraduccion){const v=eN*c;sE=iSUE?'EUR '+fmt(v):'$'+fmt(v);if(iSUE)eU+=v;else eA+=v;}
   
-  // Detectar si es traducción
-  const esTraduccion = s.desc && s.desc.toLowerCase().includes('traducc');
+  const mostrarTransf = esTraduccion ? '-' : (s.transf||'-');
+  const mostrarEfect = esTraduccion ? '-' : (s.efect||'-');
+  
+  return`<tr><td><strong>${s.desc||'-'}</strong></td><td>${mostrarTransf} / ${mostrarEfect}</td><td class="c">${c}</td><td class="r">${sT}</td><td class="r">${sE}</td>`;
   
   let sT='-',sE='-';
   if(tN && !esTraduccion){const v=tN*c;sT=iSUT?'USD '+fmt(v):'$'+fmt(v);if(iSUT)tU+=v;else tA+=v;}
