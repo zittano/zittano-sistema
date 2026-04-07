@@ -1107,7 +1107,7 @@ function render(){
   const mostrarTransf = esTraduccion ? '-' : (s.transf||'-');
   const mostrarEfect = esTraduccion ? '-' : (s.efect||'-');
   
-  return`<tr><td><strong>${s.desc||'-'}</strong></td><td>${mostrarTransf} / ${mostrarEfect}</td><td class="c">${c}</td><td class="r">${sT}</td><td class="r">${sE}</td>`;
+  return`<tr><td><strong>${s.desc||'-'}</strong></td><td>${mostrarTransf} / ${mostrarEfect}</td><td class="c">${c}</td><td class="r">${sT}</td><td class="r">${sE}</td></tr>`;
 }).join('');
   }).join('');
   pf.style.display='';
