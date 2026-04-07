@@ -1094,23 +1094,16 @@ function render(){
   const pb=document.getElementById('d-pb');const pf=document.getElementById('d-pf');
   if(!srvs.length){pb.innerHTML='<tr><td colspan="6" class="ph" style="text-align:center;padding:14px">Agregá servicios desde el panel</td></tr>';pf.style.display='none';return;}
   let tA=0,eA=0,tU=0,eU=0;
-  pb.innerHTML=srvs.map(s=>{
+ pb.innerHTML=srvs.map(s=>{
   const c=parseFloat(s.cant)||1;const tN=pn(s.transf),eN=pn(s.efect);
   const iSUT=(s.transf||'').toUpperCase().includes('USD');const iSUE=(s.efect||'').toUpperCase().includes('USD');
-  let sT='-',sE='-';
-  if(tN && !esTraduccion){const v=tN*c;sT=iSUT?'USD '+fmt(v):'$'+fmt(v);if(iSUT)tU+=v;else tA+=v;}
-  if(eN && !esTraduccion){const v=eN*c;sE=iSUE?'EUR '+fmt(v):'$'+fmt(v);if(iSUE)eU+=v;else eA+=v;}
   
-  const mostrarTransf = esTraduccion ? '-' : (s.transf||'-');
-  return`<tr><td><strong>${s.desc||'-'}</strong></td><td>${mostrarTransf} / ${mostrarEfect}</td><td class="c">${c}</td><td class="r">${sT}</td><td class="r">${sE}</td>`;
-  
-  return`<tr><td><strong>${s.desc||'-'}</strong></td><td>${mostrarTransf} / ${mostrarEfect}</td><td class="c">${c}</td><td class="r">${sT}</td><td class="r">${sE}</td>`;
+  const esTraduccion = s.desc && s.desc.toLowerCase().includes('traducc');
   
   let sT='-',sE='-';
   if(tN && !esTraduccion){const v=tN*c;sT=iSUT?'USD '+fmt(v):'$'+fmt(v);if(iSUT)tU+=v;else tA+=v;}
   if(eN && !esTraduccion){const v=eN*c;sE=iSUE?'EUR '+fmt(v):'$'+fmt(v);if(iSUE)eU+=v;else eA+=v;}
   
-  // Mostrar guiones en vez de precios para traducciones
   const mostrarTransf = esTraduccion ? '-' : (s.transf||'-');
   const mostrarEfect = esTraduccion ? '-' : (s.efect||'-');
   
