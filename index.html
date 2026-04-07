@@ -1102,7 +1102,7 @@ function render(){
   if(eN && !esTraduccion){const v=eN*c;sE=iSUE?'EUR '+fmt(v):'$'+fmt(v);if(iSUE)eU+=v;else eA+=v;}
   
   const mostrarTransf = esTraduccion ? '-' : (s.transf||'-');
-  const mostrarEfect = esTraduccion ? '-' : (s.efect||'-');
+  return`<tr><td><strong>${s.desc||'-'}</strong></td><td>${mostrarTransf} / ${mostrarEfect}</td><td class="c">${c}</td><td class="r">${sT}</td><td class="r">${sE}</td>`;
   
   return`<tr><td><strong>${s.desc||'-'}</strong></td><td>${mostrarTransf} / ${mostrarEfect}</td><td class="c">${c}</td><td class="r">${sT}</td><td class="r">${sE}</td>`;
   
