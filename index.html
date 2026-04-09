@@ -1580,7 +1580,12 @@ const CING = {
 
 async function loadIngresos(){
   const tbody=document.getElementById('ing-body');
-  if(tbody) tbody.innerHTML=`<tr><td colspan="10" style="padding:20px;text-align:center;color:#94a3b8">Cargando...</td></tr>`;
+ if(tbody) {
+  tbody.innerHTML=`<tr><td colspan="10" style="padding:20px;text-align:center;color:#94a3b8">Cargando...</td></tr>`;
+} else {
+  console.log('El elemento ing-body no existe todavía');
+  return;
+}
   setSY('sp','Cargando...');
   let q=SB.from('ingresos').select('*').order('fecha',{ascending:false});
   if(curG!=='Belén') q=q.eq('gestor',curG);
