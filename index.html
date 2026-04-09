@@ -3118,6 +3118,105 @@ async function loadIngresos(){
   
   tbody.innerHTML='<tr><td colspan="10" style="padding:20px;text-align:center;color:#94a3b8">Cargando...</td></tr>';
 
+  // Cargar desde tabla ingresos en Supabase
+  let query = SB.from('ingresos').select('*').order('fecha',{ascending:false});
+  
+  // Filtrar por gestor si no es Belén
+  if(curG!=='Belén') query = query.eq('gestor', curG);
+  
+  const {data, error} = await query;
+  
+  if(error) {
+    console.error('Error cargando ingresos:', error);
+    tbody.innerHTML='<tr><td colspan="10" style="padding:20px;text-align:center;color:#ef4444">Error cargando datos</td></tr>';
+    return;
+  }
+  
+  ingresosFiltrados = data || [];
+  
+  // Calcular totales globales
+  let totE=0, totT=0, totP=0;
+  ingresosFiltrados.forEach(r=>{
+    totE += parseFloat(r.efectivo) || 0;
+    totT += parseFloat(r.transferencia) || 0;
+    totP += parseFloat(r.a_pagar) || 0;
+  });
+  
+  // Actualizar resumen
+  const resumen = document.getElementById('ing-resumen');
+  if(resumen) {
+    resumen.innerHTML=`
+      <div class="stat"><div class="stv">${ingresosFiltrados.length}</div><div class="stl">Registros</div></div>
+      <div class="stat vd"><div class="stv" style="font-size:18px">$${Math.round(totE).toLocaleString('es-AR')}</div><div class="stl">Efectivo</div></div>
+      <div class="stat am"><div class="stv" style="font-size:18px">$${Math.round(totT).toLocaleString('es-AR')}</div><div class="stl">Transferencias</div></div>
+      <div class="stat pu"><div class="stv" style="font-size:18px;color:#1ea34a">$${Math.round(totP).toLocaleString('es-AR')}</div><div class="stl">A pagar</div></div>
+    `;
+  }
+  
+  // Si no hay datos
+  if(!ingresosFiltrados.length) {
+    tbody.innerHTML='<tr><td colspan="10" style="padding:20px;text-align:center;color:#94a3b8">No hay ingresos registrados</td></tr>';
+    return;
+  }
+  
+  // Agrupar por gestor
+  const porGestor = {};
+  ingresosFiltrados.forEach(ing => {
+    const gestor = ing.gestor || 'Sin asignar';
+    if(!porGestor[gestor]) porGestor[gestor] = [];
+    porGestor[gestor].push(ing);
+  });
+  
+  // Renderizar por gestor
+  let html = '';
+  const gestores = Object.keys(porGestor).sort();
+  
+  gestores.forEach(gestor => {
+    const registros = porGestor[gestor];
+    
+    // Totales por gestor
+    let gE=0, gT=0, gP=0;
+    registros.forEach(r => {
+      gE += parseFloat(r.efectivo) || 0;
+      gT += parseFloat(r.transferencia) || 0;
+      gP += parseFloat(r.a_pagar) || 0;
+    });
+    
+    // Header del gestor
+    html += `<tr style="background:linear-gradient(135deg,#1ea5f7,#34155f)">
+      <td colspan="10" style="padding:12px 14px;color:#fff;font-weight:700;font-size:14px">
+        👤 ${gestor.toUpperCase()} 
+        <span style="opacity:0.7;font-weight:400;margin-left:10px">${registros.length} registros</span>
+        <span style="float:right;opacity:0.8">Total: $${Math.round(gP).toLocaleString('es-AR')}</span>
+      </td>
+    </tr>`;
+    
+    // Registros del gestor
+    registros.forEach(r => {
+      html += `<tr>
+        <td style="font-size:12px;color:#64748b">${r.fecha || '-'}</td>
+        <td style="font-size:13px">${r.cliente || '-'}</td>
+        <td style="font-size:12px;color:#64748b">${r.tipo || '-'}</td>
+        <td style="font-size:13px;color:#059669">$${Math.round(parseFloat(r.efectivo)||0).toLocaleString('es-AR')}</td>
+        <td style="font-size:13px;color:#3b82f6">$${Math.round(parseFloat(r.transferencia)||0).toLocaleString('es-AR')}</td>
+        <td style="font-size:14px;font-weight:600;color:#1ea34a">$${Math.round(parseFloat(r.a_pagar)||0).toLocaleString('es-AR')}</td>
+        <td style="font-size:12px">${r.quien_cobro || '-'}</td>
+        <td style="font-size:11px">${r.comprobante ? '✓ Sí' : '-'}</td>
+        <td>
+          <button onclick="eliminarIngreso('${r.id}')" style="padding:4px 8px;background:#ef4444;color:#fff;border:none;border-radius:4px;cursor:pointer;font-size:11px">🗑️</button>
+        </td>
+      </tr>`;
+    });
+    
+    // Spacer
+    html += `<tr><td colspan="10" style="padding:4px;background:#f1f5f9"></td></tr>`;
+  });
+  
+  tbody.innerHTML = html;
+}
+  
+  tbody.innerHTML='<tr><td colspan="10" style="padding:20px;text-align:center;color:#94a3b8">Cargando...</td></tr>';
+
   // Load all clients for current gestor (already in allC if base was loaded)
   let clients = allC;
   if(!clients.length){
