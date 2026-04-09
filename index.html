@@ -3110,12 +3110,18 @@ function updPago(i,field,value){
    INGRESOS
 ════════════════════════════════════════ */
 async function loadIngresos(){
-  document.getElementById('ing-tabla').innerHTML='<div class="empty"><i>⏳</i><h3>Cargando...</h3></div>';
+  const tbody = document.getElementById('ing-body');
+  if(!tbody) {
+    console.log('Elemento ing-body no encontrado');
+    return;
+  }
   
+  tbody.innerHTML='<tr><td colspan="10" style="padding:20px;text-align:center;color:#94a3b8">Cargando...</td></tr>';
+
   // Load all clients for current gestor (already in allC if base was loaded)
   let clients = allC;
   if(!clients.length){
-    let query = SB.from(TB).select('id,nombre,pagos_manual,gestor');
+    let query = SB.from('clientes').select('id,nombre,pagos_manual,gestor');
     if(curG!=='Belén') query = query.eq('gestor',curG);
     const{data} = await query;
     clients = data||[];
@@ -3129,8 +3135,8 @@ async function loadIngresos(){
       if(p.monto&&(String(p.monto).match(/\d/)||String(p.monto).toUpperCase().includes('USD'))){
         allPagos.push({
           ...p,
-          cliente: c.nombre||'—',
-          gestor: c.gestor||'—',
+          cliente: c.nombre||'-',
+          gestor: c.gestor||'-',
           clienteId: c.id,
         });
       }
@@ -3162,49 +3168,36 @@ async function loadIngresos(){
   let totalP=0,totalU=0;
   filtered.forEach(p=>{
     const m=String(p.monto||'');
-    if(m.toUpperCase().includes('USD')){totalU+=(parseInt(m.replace(/[^0-9]/g,''))||0);}
-    else{totalP+=(parseInt(m.replace(/\./g,'').replace(/,/g,'').replace(/[^0-9]/g,''))||0);}
+    if(m.toUpperCase().includes('USD')){totalU+=(parseFloat(m.replace(/[^0-9.]/g,''))||0);}
+    else{totalP+=(parseFloat(m.replace(/\./g,'').replace(/,/g,'.'))||0);}
   });
 
   // Resumen cards
   const resumen = document.getElementById('ing-resumen');
   resumen.innerHTML=`
     <div class="stat"><div class="stv">${filtered.length}</div><div class="stl">Pagos</div></div>
-    <div class="stat vd"><div class="stv" style="font-size:18px">${totalP?'$'+totalP.toLocaleString('es-AR'):'—'}</div><div class="stl">Total $</div></div>
-    <div class="stat am"><div class="stv" style="font-size:18px">${totalU?'USD '+totalU.toLocaleString('es-AR'):'—'}</div><div class="stl">Total USD</div></div>
+    <div class="stat vd"><div class="stv" style="font-size:18px">$${totalP?'+$'+totalP.toLocaleString('es-AR'):'-'}</div><div class="stl">Total $</div></div>
+    <div class="stat am"><div class="stv" style="font-size:18px">${totalU?'USD +$'+totalU.toLocaleString('es-AR'):'-'}</div><div class="stl">Total USD</div></div>
     <div class="stat pu"><div class="stv">${[...new Set(filtered.map(p=>p.clienteId))].length}</div><div class="stl">Clientes</div></div>`;
 
   // Table
   if(!filtered.length){
-    document.getElementById('ing-tabla').innerHTML='<div class="empty"><i>💰</i><h3>Sin ingresos</h3><p>No hay pagos registrados para este período.</p></div>';
+    tbody.innerHTML='<tr><td colspan="10" style="padding:20px;text-align:center;color:#94a3b8">Sin ingresos para este período.</td></tr>';
     return;
   }
 
-  document.getElementById('ing-tabla').innerHTML=`<table class="dbt">
-    <thead><tr>
-      <th>Fecha</th>
-      <th>Cliente</th>
-      ${curG==='Belén'?'<th>Gestor</th>':''}
-      <th>Monto</th>
-      <th>Concepto</th>
-      <th>Comprobante</th>
-      <th></th>
-    </tr></thead>
-    <tbody>${filtered.map((p,i)=>`<tr>
-      <td style="font-size:13px;color:var(--gr)">${fmtFechaIng(p.fecha)}</td>
-      <td><div class="cn" style="font-size:13px">${p.cliente}</div></td>
-      ${curG==='Belén'?`<td><span class="gb3 ${gbCl(p.gestor)}">${p.gestor}</span></td>`:''}
-      <td style="font-weight:700;color:var(--vd);font-size:13px">${p.monto||'—'}</td>
-      <td style="font-size:13px;color:var(--gr)">${p.concepto||'—'}</td>
-      <td style="font-size:12px">
-        ${p.comprobante
-          ?`<a href="${p.comprobante}" target="_blank" style="color:var(--az);font-weight:600;text-decoration:underline">Ver comprobante</a>`
-          :`<span style="color:#cbd5e1">Sin comprobante</span>`}
-      </td>
-      <td></td>
-    </tr>`).join('')}
-    </tbody>
-  </table>`;
+  tbody.innerHTML=filtered.map((p,i)=>`<tr>
+    <td style="font-size:13px;color:var(--gr)">${fmtFechaIng(p.fecha)}</td>
+    <td><div class="cn" style="font-size:13px">${p.cliente}</div></td>
+    ${curG==='Belén'?'<td><span class="gb3 ${gbl(p.gestor)}">${p.gestor}</span></td>':''}
+    <td style="font-weight:700;color:var(--vd);font-size:13px">${p.monto||'-'}</td>
+    <td style="font-size:13px;color:var(--gr)">${p.concepto||'-'}</td>
+    <td style="font-size:12px">
+      ${p.comprobante
+        ?`<a href="${p.comprobante}" target="_blank" style="color:var(--az);font-weight:600;text-decoration:underline">Ver comprobante</a>`
+        :`<span style="color:#cbd5e1">Sin comprobante</span>`}
+    </td>
+  </tr>`).join('');
 }
 
 function fmtFechaIng(f){
