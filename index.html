@@ -1630,17 +1630,18 @@ function renderIngresos(){
   });
   const res=document.getElementById('ing-resumen');
   if(res) res.innerHTML=`
-    <div class="stat"><div class="stv">${ingresosFiltrados.length}</div><div class="stl">Registros</div></div>
-    <div class="stat vd"><div class="stv" style="font-size:15px">$${Math.round(totE).toLocaleString('es-AR')}</div><div class="stl">Efectivo</div></div>
-    <div class="stat am"><div class="stv" style="font-size:15px">$${Math.round(totT).toLocaleString('es-AR')}</div><div class="stl">Transferencias</div></div>
-    <div class="stat pu" style="border-top-color:#16a34a;border-top-width:4px"><div class="stv" style="font-size:18px;color:#16a34a;font-weight:800">$${Math.round(totP).toLocaleString('es-AR')}</div><div class="stl" style="color:#16a34a;font-weight:700">💰 TOTAL A PAGAR</div></div>`;
+    <div class="stat"><div class="stv">\$${ingresosFiltrados.length}</div><div class="stl">Registros</div></div>
+    <div class="stat vd"><div class="stv" style="font-size:15px">\$${Math.round(totE).toLocaleString('es-AR')}</div><div class="stl">Efectivo</div></div>
+    <div class="stat am"><div class="stv" style="font-size:15px">\$${Math.round(totT).toLocaleString('es-AR')}</div><div class="stl">Transferencias</div></div>
+    <div class="stat pu" style="border-top-color:#1ea34a;border-width:4px"><div class="stv" style="font-size:18px;color:#1ea34a;font-weight:800">\$${Math.round(totP).toLocaleString('es-AR')}</div><div class="stl">A pagar</div></div>
+  `;
 
   const tbody=document.getElementById('ing-body');
   if(!tbody) return;
 
   const MESES_NOM=['Enero','Febrero','Marzo','Abril','Mayo','Junio','Julio','Agosto','Septiembre','Octubre','Noviembre','Diciembre'];
-  
-  // Determine which year to show — current year by default, or from filter
+
+  // Determine which year to show
   const filtroMes=(document.getElementById('ing-mes')||{value:''}).value;
   const anioMostrar=(document.getElementById('ing-anio')||{value:'2026'}).value||'2026';
 
@@ -1663,8 +1664,8 @@ function renderIngresos(){
   let html='';
   sortedMonths.forEach(mes=>{
     const rows=byMonth[mes]||[];
-    // collapsed se define más abajo como collapsed2
-    const[y,mo]=mes.split('-');
+    // collapsed2 se define más abajo como collapsed2
+    const [y,mo]=mes.split('-');
     const mesLabel=MESES_NOM[parseInt(mo)-1]+' '+y;
     let mE=0,mT=0,mP=0;
     rows.forEach(r=>{mE+=CING.num(r.efectivo);mT+=CING.num(r.transferencia);mP+=CING.num(r.a_pagar);});
@@ -1672,32 +1673,38 @@ function renderIngresos(){
 
     // Auto-colapsar meses anteriores al actual
     const isCurrentMonth = mes===mesActual;
-    if(collapsedMonths[mes]===undefined) collapsedMonths[mes]=!isCurrentMonth;
+    if(collapsedMonths[mes]===undefined) collapsedMonths[mes]=isCurrentMonth;
+    const collapsed2=!!collapsedMonths[mes];
+
     // Month header mejorado
-    html+=`<tr style="background:linear-gradient(135deg,${isCurrentMonth?'#1e3a5f,#1e4976':'#1e293b,#334155'});cursor:pointer;${isCurrentMonth?'box-shadow:0 2px 8px rgba(30,100,200,.3)':''}" onclick="toggleMes('${mes}')">
+    html+=`<tr style="background:linear-gradient(135deg,\${isCurrentMonth?'#1ea5f7':'#1e93f7'},#34155f);cursor:pointer" onclick="toggleMes('${mes}')">
       <td colspan="3" style="padding:11px 14px">
-        <span style="font-size:13px;font-weight:700;color:#fff;letter-spacing:.3px">${collapsed2?'▶':'▼'} ${mesLabel}</span>
-        ${isEmpty?`<span style="font-size:11px;color:rgba(255,255,255,.3);margin-left:10px">sin registros</span>`
-          :`<span style="font-size:11px;color:rgba(255,255,255,.5);margin-left:10px">${rows.length} registro${rows.length!==1?'s':''}</span>`}
+        <span style="font-size:13px;font-weight:700;color:#fff;letter-spacing:.3px">\${collapsed2?'▶':'▼'} \${mesLabel}</span>
       </td>
-      <td colspan="2" style="padding:11px 10px">
-        ${mE?`<span style="font-size:11px;font-weight:600;color:#93c5fd">Efec: $${Math.round(mE).toLocaleString('es-AR')}</span>`:''}
-        ${mT?`<span style="font-size:11px;font-weight:600;color:#67e8f9;margin-left:8px">Transf: $${Math.round(mT).toLocaleString('es-AR')}</span>`:''}
-      </td>
-      <td style="padding:11px 10px">
-        ${mP?`<span style="font-size:13px;font-weight:800;color:#4ade80;background:rgba(74,222,128,.15);padding:2px 8px;border-radius:6px">💰 $${Math.round(mP).toLocaleString('es-AR')}</span>`:''}
-      </td>
-      <td colspan="4" style="padding:11px 10px;text-align:right">
-        ${!isEmpty?`<span style="font-size:11px;color:rgba(255,255,255,.35)">Total a pagar</span>`:''}
+      <td style="font-size:11px;color:rgba(255,255,255,.85);text-align:right;padding-right:10px">sin registros</td>
+      <td colspan="6" style="text-align:right;padding-right:10px">
+        <span style="font-size:11px;color:rgba(255,255,255,.5);margin-left:10px">\${rows.length} registros</span>
       </td>
     </tr>`;
+    if(isEmpty) html+=`<tr><td colspan="10" style="padding:12px 14px;color:#cdd5e1;font-size:13px;text-align:center">Sin ingresos en \${mesLabel}</td></tr>`;
 
     if(!collapsed2){
       // Data rows
       if(rows.length) html+=rows.map(r=>renderIngRow(r)).join('');
       // Empty state row
-      else html+=`<tr style="background:#fafcff"><td colspan="10" style="padding:12px 14px;color:#cbd5e1;font-size:13px;text-align:center">Sin ingresos en ${mesLabel}</td></tr>`;
+      else html+=`<tr style="background:#fafcff"><td colspan="10" style="padding:12px 14px;color:#cbd5e1;font-size:13px;text-align:center">Sin ingresos en \${mesLabel}</td></tr>`;
     }
+
+    // Totals row
+    html+=`<tr>
+      <td colspan="4" style="padding:11px 10px;text-align:right">
+        \${!isEmpty?'<span style="font-size:11px;color:rgba(255,255,255,.35)">Total a pagar:</span>':''}
+      </td>
+      <td>
+      </td>
+      <td colspan="5">
+      </td>
+    </tr>`;
 
     // Spacer
     html+=`<tr><td colspan="10" style="padding:3px;background:var(--bg)"></td></tr>`;
