@@ -3149,7 +3149,7 @@ async function loadIngresos(){
   // Populate mes selector
   const meses = [...new Set(allPagos.map(p=>(p.fecha||'').slice(0,7)).filter(Boolean))].sort().reverse();
   const selMes = document.getElementById('ing-mes');
-  const curMes = selMes.value;
+  const curMes = selMes ? selMes.value : '';
   selMes.innerHTML='<option value="">Todos los meses</option>'+meses.map(m=>{
     const [y,mo] = m.split('-');
     const nombres=['Ene','Feb','Mar','Abr','May','Jun','Jul','Ago','Sep','Oct','Nov','Dic'];
@@ -3157,8 +3157,8 @@ async function loadIngresos(){
   }).join('');
 
   // Filter by mes
-  const filtroMes = document.getElementById('ing-mes').value;
-  const filtroTipo = document.getElementById('ing-tipo').value;
+ const filtroMes = (document.getElementById('ing-mes')||{value:''}).value;
+const filtroTipo = (document.getElementById('ing-tipo')||{value:''}).value;
   let filtered = allPagos;
   if(filtroMes) filtered = filtered.filter(p=>(p.fecha||'').startsWith(filtroMes));
   if(filtroTipo==='efectivo') filtered = filtered.filter(p=>!String(p.comprobante||'').trim()&&!String(p.monto||'').toUpperCase().includes('TRANSF'));
