@@ -1578,35 +1578,6 @@ const CING = {
   fmt: (n)=> n?'$'+Math.round(n).toLocaleString('es-AR'):'',
 };
 
-async function loadIngresos(){
-  const tbody=document.getElementById('ing-body');
- if(tbody) {
-  tbody.innerHTML=`<tr><td colspan="10" style="padding:20px;text-align:center;color:#94a3b8">Cargando...</td></tr>`;
-} else {
-  console.log('El elemento ing-body no existe todavía');
-  return;
-}
-  setSY('sp','Cargando...');
-  let q=SB.from('ingresos').select('*').order('fecha',{ascending:false});
-  if(curG!=='Belén') q=q.eq('gestor',curG);
-  const{data,error}=await q;
-  if(error){setSY('err','Error');return;}
-  ingresosData=data||[];
-  setSY('ok',ingresosData.length+' ingresos');
-
-  // Poblar selector de año con los años reales de los datos
-  const anios=[...new Set(ingresosData.map(r=>(r.fecha||'').slice(0,4)).filter(Boolean))].sort().reverse();
-  const anioActual=String(new Date().getFullYear());
-  if(!anios.includes(anioActual)) anios.unshift(anioActual);
-  const sel=document.getElementById('ing-anio');
-  if(sel){
-    const cur=sel.value||anioActual;
-    sel.innerHTML=anios.map(a=>`<option value="${a}"${a===cur?' selected':''}>${a}</option>`).join('');
-  }
-
-  collapsedMonths={}; // resetear colapso al recargar
-  filterIngresos();
-}
 
 function filterIngresos(){
   const mes=(document.getElementById("ing-anio")||{value:"2026"}).value||"2026";
