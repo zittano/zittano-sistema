@@ -1787,7 +1787,7 @@ function updIngFecha(id,part,value){
 /* ── AUTOGUARDADO DE INGRESOS ── */
 const _ingTimers={};
 function scheduleIngAutoSave(id){
-  clearTimeout(_ingTimers[id]);
+   return; // DESACTIVADO;clearTimeout(_ingTimers[id]);
   // _ingTimers[id]=setTimeout(()=>autoSaveIngRow(id), 1500);
 }
 
