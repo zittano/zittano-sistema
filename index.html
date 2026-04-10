@@ -3155,7 +3155,15 @@ function updPago(i,field,value){
 /* ════════════════════════════════════════
    INGRESOS
 ════════════════════════════════════════ */
-async function loadIngresos(){
+[línea 1651] ... código anterior ...
+[línea 1652] 
+[línea 1653] // === MODAL INGRESO MANUAL ===   ← CÓDIGO NUEVO EMPIEZA ACÁ
+[línea 1654] function abrirModalIngreso(){
+[línea 1655] ...
+[... todo el código nuevo ...]
+[línea 1700] }
+[línea 1701]
+[línea 1702] function loadIngresos(){    ← LA FUNCIÓN ORIGINAL SIGUE ACÁasync function loadIngresos(){
   const tbody = document.getElementById('ing-body');
   if(!tbody) {
     console.log('Elemento ing-body no encontrado');
