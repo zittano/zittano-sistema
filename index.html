@@ -1787,8 +1787,8 @@ function updIngFecha(id,part,value){
 /* ── AUTOGUARDADO DE INGRESOS ── */
 const _ingTimers={};
 function scheduleIngAutoSave(id){
-   return; // DESACTIVADO;clearTimeout(_ingTimers[id]);
-  // _ingTimers[id]=setTimeout(()=>autoSaveIngRow(id), 1500);
+  clearTimeout(_ingTimers[id]);
+  _ingTimers[id]=setTimeout(()=>autoSaveIngRow(id), 1500);
 }
 
 async function autoSaveIngRow(id){
@@ -1824,7 +1824,7 @@ async function autoSaveIngRow(id){
 
 function updIng(id,field,value){
   const r=ingresosData.find(x=>x.id===id);
-  // if(r){ r[field]=value; scheduleIngAutoSave(id); }
+  if(r){ r[field]=value; scheduleIngAutoSave(id); }
 }
 
 
@@ -1852,7 +1852,7 @@ function updIngNum(id,field,value){
   r.a_pagar=pagar||null;
   const el=document.getElementById('apagar-'+id);
   if(el) el.value=pagar||'';
-  // scheduleIngAutoSave(id);
+  scheduleIngAutoSave(id);
 }
 
 /* ── AUTOCOMPLETE CLIENTE EN INGRESOS ── */
@@ -1912,7 +1912,7 @@ function cerrarSugerencias(rowId){
 async function saveIngRow(id){
   const r=ingresosData.find(x=>x.id===id);
   if(!r) return;
-  // if(!r.cliente||!r.fecha){toast('Completá fecha y cliente','err');return;}
+  if(!r.cliente||!r.fecha){toast('Completá fecha y cliente','err');return;}
   const{_new,...record}=r;
   record.gestor=record.gestor||curG;
   let error;
