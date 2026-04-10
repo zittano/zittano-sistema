@@ -1919,7 +1919,7 @@ async function saveIngRow(id){
   record.gestor=record.gestor||curG;
   let error;
   if(_new){
-  const {data, error: insertError} = await SB.from('ingresos').insert(record).select();
+  console.log('📤 Intentando guardar:', record); const {data, error: insertError} = await SB.from('ingresos').insert([record]).select();
   if(insertError) { console.error('Error insertando:', insertError); error = insertError; }
   else { console.log('✅ Guardado exitoso:', data); r._new = false; }
 } else {
