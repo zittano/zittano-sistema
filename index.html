@@ -1788,7 +1788,7 @@ function updIngFecha(id,part,value){
 const _ingTimers={};
 function scheduleIngAutoSave(id){
   clearTimeout(_ingTimers[id]);
-  _ingTimers[id]=setTimeout(()=>autoSaveIngRow(id), 1500);
+  // _ingTimers[id]=setTimeout(()=>autoSaveIngRow(id), 1500);
 }
 
 async function autoSaveIngRow(id){
@@ -1824,7 +1824,7 @@ async function autoSaveIngRow(id){
 
 function updIng(id,field,value){
   const r=ingresosData.find(x=>x.id===id);
-  if(r){ r[field]=value; scheduleIngAutoSave(id); }
+  // if(r){ r[field]=value; scheduleIngAutoSave(id); }
 }
 
 
@@ -1852,7 +1852,7 @@ function updIngNum(id,field,value){
   r.a_pagar=pagar||null;
   const el=document.getElementById('apagar-'+id);
   if(el) el.value=pagar||'';
-  scheduleIngAutoSave(id);
+  // scheduleIngAutoSave(id);
 }
 
 /* ── AUTOCOMPLETE CLIENTE EN INGRESOS ── */
