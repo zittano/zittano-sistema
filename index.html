@@ -1912,7 +1912,7 @@ function cerrarSugerencias(rowId){
 async function saveIngRow(id){
   const r=ingresosData.find(x=>x.id===id);
   if(!r) return;
-  if(!r.cliente||!r.fecha){toast('Completá fecha y cliente','err');return;}
+  // if(!r.cliente||!r.fecha){toast('Completá fecha y cliente','err');return;}
   const{_new,...record}=r;
   record.gestor=record.gestor||curG;
   let error;
