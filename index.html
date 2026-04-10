@@ -1910,22 +1910,18 @@ function cerrarSugerencias(rowId){
 
 /* ── GUARDAR INGRESO + SYNC HACIA FICHA ── */
 async function saveIngRow(id){
-async function saveIngRow(id){
-  console.log('🔍 saveIngRow ejecutándose con ID:', id);
-  const r=ingresosData.find(x=>x.id===id);  
+  const r=ingresosData.find(x=>x.id===id);
   if(!r) return;
   // if(!r.cliente||!r.fecha){toast('Completá fecha y cliente','err');return;}
   const{_new,...record}=r;
   record.gestor=record.gestor||curG;
   let error;
   if(_new){
-  console.log('📤 Intentando guardar:', record); const {data, error: insertError} = await SB.from('ingresos').insert([record]).select();
-  if(insertError) { console.error('Error insertando:', insertError); error = insertError; }
-  else { console.log('✅ Guardado exitoso:', data); r._new = false; }
-} else {
-  const {error: updateError} = await SB.from('ingresos').update(record).eq('id',id);
-  if(updateError) console.error('Error actualizando:', updateError); error = updateError;
-}
+    ({error}=await SB.from('ingresos').insert(record));
+    if(!error) r._new=false;
+  } else {
+    ({error}=await SB.from('ingresos').update(record).eq('id',id));
+  }
   if(error){toast('Error: '+error.message,'err');return;}
   if(r.cliente_id) await syncIngresoPagoEnFicha(r);
   toast('✅ Guardado','ok');
