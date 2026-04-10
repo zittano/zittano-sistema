@@ -3117,7 +3117,16 @@ function updPago(i,field,value){
 /* ════════════════════════════════════════
    INGRESOS
 ════════════════════════════════════════ */
-async function loadIngresos(){
+[... código anterior ...]
+
+// === TEMPLATES DE EMAILS ===
+async function loadEmailTemplates(){
+  [... todo el código que te di ...]
+}
+
+async function loadIngresos(){    ← LA FUNCIÓN QUE YA ESTABA
+  const tbody = document.getElementById('ing-body');
+  [...] async function loadIngresos(){
   const tbody = document.getElementById('ing-body');
   if(!tbody) {
     console.log('Elemento ing-body no encontrado');
