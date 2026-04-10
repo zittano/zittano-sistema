@@ -1376,7 +1376,7 @@ async function syncPagosToIngresos(clienteId, clienteNombre, pagos){
       tipo: p.tipo || p.concepto || '',
       efectivo: efectivo,
       transferencia: transferencia,
-      a_pagar: aPagar || null,
+      a_pagar: Math.round(efectivo + transferencia),
       comprobante: p.comprobante || null,
       quien_cobro: p.quien_cobro || '',
       gestor: gestorPago,
