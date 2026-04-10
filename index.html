@@ -1917,11 +1917,13 @@ async function saveIngRow(id){
   record.gestor=record.gestor||curG;
   let error;
   if(_new){
-    ({error}=await SB.from('ingresos').insert(record));
-    if(!error) r._new=false;
-  } else {
-    ({error}=await SB.from('ingresos').update(record).eq('id',id));
-  }
+  const {data, error: insertError} = await SB.from('ingresos').insert(record).select();
+  if(insertError) { console.error('Error insertando:', insertError); error = insertError; }
+  else { console.log('✅ Guardado exitoso:', data); r._new = false; }
+} else {
+  const {error: updateError} = await SB.from('ingresos').update(record).eq('id',id);
+  if(updateError) console.error('Error actualizando:', updateError); error = updateError;
+}
   if(error){toast('Error: '+error.message,'err');return;}
   if(r.cliente_id) await syncIngresoPagoEnFicha(r);
   toast('✅ Guardado','ok');
