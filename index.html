@@ -643,20 +643,23 @@ textarea{resize:vertical;}
 
   <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:16px;flex-wrap:wrap;gap:12px">
     <div class="dbtitle">Ingresos</div>
-    <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap">
-      <!-- Filtro por gestor: solo visible para Belén (admin) -->
-      <select class="fsel" id="ing-gestor" onchange="filterIngresos()" style="display:none">
-        <option value="">Todos los gestores</option>
-        <option value="Malena">Malena</option>
-        <option value="Sofía">Sofía</option>
-        <option value="Belén">Belén</option>
-        <option value="Germán">Germán</option>
-      </select>
-      <select class="fsel" id="ing-mes" onchange="filterIngresos()">
-        <option value="">Año actual</option>
-      </select>
-      <input class="sinp" id="ing-q" placeholder="🔍 Buscar cliente..." oninput="filterIngresos()" style="max-width:200px">
-      <button class="bref" onclick="loadIngresos()">↺</button>
+    <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap;justify-content:space-between">
+      <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap">
+        <!-- Filtro por gestor: solo visible para Belén (admin) -->
+        <select class="fsel" id="ing-gestor" onchange="filterIngresos()" style="display:none">
+          <option value="">Todos los gestores</option>
+          <option value="Malena">Malena</option>
+          <option value="Sofía">Sofía</option>
+          <option value="Belén">Belén</option>
+          <option value="Germán">Germán</option>
+        </select>
+        <select class="fsel" id="ing-mes" onchange="filterIngresos()">
+          <option value="">Año actual</option>
+        </select>
+        <input class="sinp" id="ing-q" placeholder="🔍 Buscar cliente..." oninput="filterIngresos()" style="max-width:200px">
+        <button class="bref" onclick="loadIngresos()">↺</button>
+      </div>
+      <button onclick="limpiarIngresosLocal()" style="padding:6px 12px;border:1px solid #fca5a5;border-radius:7px;background:#fef2f2;font-size:11px;font-weight:600;color:#dc2626;cursor:pointer;transition:all .13s" onmouseover="this.style.background='#fee2e2'" onmouseout="this.style.background='#fef2f2'" title="Limpia los datos guardados localmente en este navegador">🗑️ Limpiar datos locales</button>
     </div>
   </div>
 
@@ -792,6 +795,86 @@ textarea{resize:vertical;}
     </div>
   </div>
 
+  <!-- TEMPLATES DE EMAILS -->
+  <div style="margin-top:40px">
+    <div style="font-size:11px;font-weight:700;color:#94a3b8;letter-spacing:1px;text-transform:uppercase;margin-bottom:16px">📧 Templates de Emails</div>
+    
+    <!-- Template 1: Codice Fiscale -->
+    <div style="background:var(--wh);border-radius:12px;padding:20px;margin-bottom:16px;border:1px solid var(--bo);box-shadow:var(--sh)">
+      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:12px">
+        <h3 style="font-size:14px;font-weight:700;color:var(--grd);margin:0">Pedido de Codice Fiscale por mail</h3>
+        <button onclick="copiarTemplate('cf')" style="padding:6px 12px;background:var(--azl);color:var(--az);border:1px solid var(--az);border-radius:6px;font-size:12px;font-weight:600;cursor:pointer;transition:all .13s" onmouseover="this.style.background='var(--az)';this.style.color='#fff'" onmouseout="this.style.background='var(--azl)';this.style.color='var(--az)'">📋 Copiar</button>
+      </div>
+      <div id="template-cf" style="font-size:13px;line-height:1.6;color:var(--grd)">
+        <p style="margin:8px 0"><strong>Para:</strong> pensioni.buenosaires@esteri.it</p>
+        <p style="margin:8px 0"><strong>Asunto:</strong> [NOMBRE COMPLETO] - CODICE FISCALE</p>
+        <p style="margin:8px 0"><strong>Cuerpo:</strong></p>
+        <div style="background:#f8fafc;padding:12px;border-radius:8px;border-left:3px solid var(--az);margin:8px 0">
+          <p style="margin:4px 0">Buenos días a quien corresponda. Mi nombre es [NOMBRE COMPLETO], DNI [DNI]. Escribo para solicitar la atribución de mi Códice Fiscale, debido a reiterados intentos por gestionarlo a través del portal Fast It sin éxito.</p>
+          <p style="margin:4px 0">Adjunto el formulario correspondiente completo, mi DNI escaneado y mi pasaporte italiano vigente.</p>
+          <p style="margin:4px 0">Aguardo respuesta, desde ya muchas gracias.</p>
+        </div>
+        <p style="margin:8px 0"><strong>Adjuntar:</strong></p>
+        <ul style="margin:4px 0;padding-left:20px">
+          <li>Formulario firmado</li>
+          <li>DNI frente y dorso</li>
+          <li>Pasaporte italiano</li>
+        </ul>
+      </div>
+    </div>
+
+    <!-- Template 2: Hijos menores beneficio ley -->
+    <div style="background:var(--wh);border-radius:12px;padding:20px;margin-bottom:16px;border:1px solid var(--bo);box-shadow:var(--sh)">
+      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:12px">
+        <h3 style="font-size:14px;font-weight:700;color:var(--grd);margin:0">Carga de hijos menores por beneficio ley en CABA</h3>
+        <button onclick="copiarTemplate('menor')" style="padding:6px 12px;background:var(--azl);color:var(--az);border:1px solid var(--az);border-radius:6px;font-size:12px;font-weight:600;cursor:pointer;transition:all .13s" onmouseover="this.style.background='var(--az)';this.style.color='#fff'" onmouseout="this.style.background='var(--azl)';this.style.color='var(--az)'">📋 Copiar</button>
+      </div>
+      <div id="template-menor" style="font-size:13px;line-height:1.6;color:var(--grd)">
+        <p style="margin:8px 0"><strong>Para:</strong> consgenbuenosaires.consolare@esteri.it</p>
+        <p style="margin:8px 0"><strong>Enviar desde:</strong> el mail registrado en el portal</p>
+        <p style="margin:8px 0"><strong>Asunto:</strong> [NOMBRE HIJO] - [CÓDIGO PRÁCTICA]</p>
+        <p style="margin:8px 0"><strong>Cuerpo:</strong></p>
+        <div style="background:#f8fafc;padding:12px;border-radius:8px;border-left:3px solid var(--vd);margin:8px 0">
+          <p style="margin:4px 0">Buen día a quien corresponda. Mi nombre es [NOMBRE PADRE/MADRE], DNI [DNI]. Cargué a través de mi portal Fast It la solicitud de transmisión de ciudadanía a mi hijo menor de edad por beneficio de ley, mediante el servicio "Atto di nascita – Art. 1, c. 1-ter D.L. 36/2025".</p>
+          <p style="margin:4px 0">Adjunto los documentos cargados en el AIRE:</p>
+          <ul style="margin:4px 0;padding-left:20px">
+            <li>Acta de nacimiento de [NOMBRE HIJO], legalizada y traducida</li>
+            <li>DNI del hijo, de su madre y del padre</li>
+            <li>Factura de servicio</li>
+            <li>Formulario completo</li>
+          </ul>
+          <p style="margin:4px 0">Aguardo respuesta, desde ya muchas gracias.</p>
+        </div>
+        <p style="margin:8px 0"><strong>Adjuntar:</strong> todos los archivos mencionados en el cuerpo</p>
+      </div>
+    </div>
+
+    <!-- Template 3: Reclamo código pasaporte -->
+    <div style="background:var(--wh);border-radius:12px;padding:20px;margin-bottom:16px;border:1px solid var(--bo);box-shadow:var(--sh)">
+      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:12px">
+        <h3 style="font-size:14px;font-weight:700;color:var(--grd);margin:0">Reclamo código pasaporte</h3>
+        <button onclick="copiarTemplate('pasaporte')" style="padding:6px 12px;background:var(--azl);color:var(--az);border:1px solid var(--az);border-radius:6px;font-size:12px;font-weight:600;cursor:pointer;transition:all .13s" onmouseover="this.style.background='var(--az)';this.style.color='#fff'" onmouseout="this.style.background='var(--azl)';this.style.color='var(--az)'">📋 Copiar</button>
+      </div>
+      <div id="template-pasaporte" style="font-size:13px;line-height:1.6;color:var(--grd)">
+        <p style="margin:8px 0"><strong>Para:</strong> passaporti.buenosaires@esteri.it</p>
+        <p style="margin:8px 0"><strong>Enviar desde:</strong> tu mail registrado en Prenotami</p>
+        <p style="margin:8px 0"><strong>Asunto:</strong> [CÓDIGO PRIMER TURNO] - segundo turno pasaporte [APELLIDO]</p>
+        <p style="margin:8px 0"><strong>Cuerpo:</strong></p>
+        <div style="background:#f8fafc;padding:12px;border-radius:8px;border-left:3px solid var(--am);margin:8px 0">
+          <p style="margin:4px 0">Buenos días a quien corresponda. Escribo ya que en el día [FECHA ESPERADA] deberían haberme enviado un mail con el código correspondiente para obtener mi turno presencial de retiro de pasaporte. El primer turno virtual fue aprobado, y recibí correos de confirmación del mismo.</p>
+          <ul style="margin:4px 0;padding-left:20px">
+            <li>CÓDIGO PRIMER TURNO: [CÓDIGO]</li>
+            <li>FECHA DE OBTENCIÓN: [FECHA]</li>
+            <li>Nombre completo: [NOMBRE COMPLETO]</li>
+            <li>DNI: [DNI]</li>
+          </ul>
+          <p style="margin:4px 0">Aguardo pronta respuesta, desde ya muchas gracias.</p>
+        </div>
+        <p style="margin:8px 0"><strong>Adjuntar:</strong> DNI de [NOMBRE]</p>
+      </div>
+    </div>
+  </div>
+
 </div>
 </div>
 
@@ -920,6 +1003,76 @@ function fmt(n){return n.toLocaleString('es-AR');}
 function fmtD(r){if(!r)return'—';const[y,m,d]=r.split('-');return d+'/'+m+'/'+y;}
 function setSY(s,t){document.getElementById('sydot').className='sydot'+(s==='sp'?' sp':s==='ok'?' ok':s==='err'?' err':'');document.getElementById('sytxt').textContent=t;}
 function toast(msg,type=''){const t=document.getElementById('toast');t.textContent=msg;t.className='toast on'+(type?' '+type:'');clearTimeout(t._t);t._t=setTimeout(()=>t.className='toast',3000);}
+
+// Copiar templates de emails
+function copiarTemplate(tipo){
+  const templates = {
+    'cf': `Para: pensioni.buenosaires@esteri.it
+Asunto: [NOMBRE COMPLETO] - CODICE FISCALE
+
+Buenos días a quien corresponda. Mi nombre es [NOMBRE COMPLETO], DNI [DNI]. Escribo para solicitar la atribución de mi Códice Fiscale, debido a reiterados intentos por gestionarlo a través del portal Fast It sin éxito.
+
+Adjunto el formulario correspondiente completo, mi DNI escaneado y mi pasaporte italiano vigente.
+
+Aguardo respuesta, desde ya muchas gracias.
+
+Adjuntar:
+• Formulario firmado
+• DNI frente y dorso
+• Pasaporte italiano`,
+
+    'menor': `Para: consgenbuenosaires.consolare@esteri.it
+Enviar desde: el mail registrado en el portal
+Asunto: [NOMBRE HIJO] - [CÓDIGO PRÁCTICA]
+
+Buen día a quien corresponda. Mi nombre es [NOMBRE PADRE/MADRE], DNI [DNI]. Cargué a través de mi portal Fast It la solicitud de transmisión de ciudadanía a mi hijo menor de edad por beneficio de ley, mediante el servicio "Atto di nascita – Art. 1, c. 1-ter D.L. 36/2025".
+
+Adjunto los documentos cargados en el AIRE:
+• Acta de nacimiento de [NOMBRE HIJO], legalizada y traducida
+• DNI del hijo, de su madre y del padre
+• Factura de servicio
+• Formulario completo
+
+Aguardo respuesta, desde ya muchas gracias.
+
+Adjuntar: todos los archivos mencionados en el cuerpo`,
+
+    'pasaporte': `Para: passaporti.buenosaires@esteri.it
+Enviar desde: tu mail registrado en Prenotami
+Asunto: [CÓDIGO PRIMER TURNO] - segundo turno pasaporte [APELLIDO]
+
+Buenos días a quien corresponda. Escribo ya que en el día [FECHA ESPERADA] deberían haberme enviado un mail con el código correspondiente para obtener mi turno presencial de retiro de pasaporte. El primer turno virtual fue aprobado, y recibí correos de confirmación del mismo.
+
+• CÓDIGO PRIMER TURNO: [CÓDIGO]
+• FECHA DE OBTENCIÓN: [FECHA]
+• Nombre completo: [NOMBRE COMPLETO]
+• DNI: [DNI]
+
+Aguardo pronta respuesta, desde ya muchas gracias.
+
+Adjuntar: DNI de [NOMBRE]`
+  };
+
+  const texto = templates[tipo];
+  if(!texto) return;
+
+  // Copiar al portapapeles
+  navigator.clipboard.writeText(texto).then(() => {
+    toast('✅ Template copiado al portapapeles','ok');
+  }).catch(err => {
+    // Fallback para navegadores antiguos
+    const textarea = document.createElement('textarea');
+    textarea.value = texto;
+    textarea.style.position = 'fixed';
+    textarea.style.opacity = '0';
+    document.body.appendChild(textarea);
+    textarea.select();
+    document.execCommand('copy');
+    document.body.removeChild(textarea);
+    toast('✅ Template copiado al portapapeles','ok');
+  });
+}
+
 function epCl(e){return{Consulta:'ep-c','En proceso':'ep-p','Con turno':'ep-t','Cerrado':'ep-z','Activo':'ep-p'}[e]||'ep-p';}
 function gbCl(g){const n=(g||'').toLowerCase().normalize('NFD').replace(/[̀-ͯ]/g,'');return n==='malena'?'mal':n==='sofia'?'sof':n==='belen'?'bel':n==='german'?'ger':'unk';}
 
@@ -1606,20 +1759,16 @@ function renderIngresos(){
   });
   const res=document.getElementById('ing-resumen');
   if(res) res.innerHTML=`
-    <div class="stat"><div class="stv">\$${ingresosFiltrados.length}</div><div class="stl">Registros</div></div>
-    <div class="stat vd"><div class="stv" style="font-size:15px">\$${Math.round(totE).toLocaleString('es-AR')}</div><div class="stl">Efectivo</div></div>
-    <div class="stat am"><div class="stv" style="font-size:15px">\$${Math.round(totT).toLocaleString('es-AR')}</div><div class="stl">Transferencias</div></div>
-    <div class="stat pu" style="border-top-color:#1ea34a;border-width:4px"><div class="stv" style="font-size:18px;color:#1ea34a;font-weight:800">\$${Math.round(totP).toLocaleString('es-AR')}</div><div class="stl">A pagar</div></div>
+    <div class="stat"><div class="stv">${ingresosFiltrados.length}</div><div class="stl">Registros</div></div>
+    <div class="stat vd"><div class="stv" style="font-size:15px">$${Math.round(totE).toLocaleString('es-AR')}</div><div class="stl">Efectivo</div></div>
+    <div class="stat am"><div class="stv" style="font-size:15px">$${Math.round(totT).toLocaleString('es-AR')}</div><div class="stl">Transferencias</div></div>
+    <div class="stat pu" style="border-top-color:#1ea34a;border-width:4px"><div class="stv" style="font-size:18px;color:#1ea34a;font-weight:800">$${Math.round(totP).toLocaleString('es-AR')}</div><div class="stl">A pagar</div></div>
   `;
 
   const tbody=document.getElementById('ing-body');
   if(!tbody) return;
 
   const MESES_NOM=['Enero','Febrero','Marzo','Abril','Mayo','Junio','Julio','Agosto','Septiembre','Octubre','Noviembre','Diciembre'];
-
-  // Determine which year to show
-  const filtroMes=(document.getElementById('ing-mes')||{value:''}).value;
-  const anioMostrar=(document.getElementById('ing-anio')||{value:'2026'}).value||'2026';
 
   // Agrupar datos por mes (YYYY-MM)
   const byMonth={};
@@ -1630,60 +1779,82 @@ function renderIngresos(){
     byMonth[key].push(r);
   });
 
-  // Solo mostrar meses que tienen registros + el mes actual
+  // Generar lista completa de meses desde el más antiguo hasta el actual
   const hoy=new Date();
   const mesActual=hoy.getFullYear()+'-'+String(hoy.getMonth()+1).padStart(2,'0');
-  const allKeys=new Set(Object.keys(byMonth));
-  allKeys.add(mesActual); // siempre mostrar el mes actual aunque esté vacío
-  const sortedMonths=[...allKeys].sort().reverse();
+  
+  // Encontrar el mes más antiguo con datos
+  const mesesConDatos = Object.keys(byMonth).sort();
+  const mesInicio = mesesConDatos.length > 0 ? mesesConDatos[0] : mesActual;
+  
+  // Generar todos los meses desde el inicio hasta el actual
+  const allMonths = [];
+  const [startY, startM] = mesInicio.split('-').map(Number);
+  const [endY, endM] = mesActual.split('-').map(Number);
+  
+  for(let y = startY; y <= endY; y++) {
+    const startMonth = (y === startY) ? startM : 1;
+    const endMonth = (y === endY) ? endM : 12;
+    for(let m = startMonth; m <= endMonth; m++) {
+      allMonths.push(y + '-' + String(m).padStart(2, '0'));
+    }
+  }
+  
+  // Ordenar de más reciente a más antiguo
+  const sortedMonths = allMonths.reverse();
 
   let html='';
   sortedMonths.forEach(mes=>{
     const rows=byMonth[mes]||[];
-    // collapsed2 se define más abajo como collapsed2
     const [y,mo]=mes.split('-');
     const mesLabel=MESES_NOM[parseInt(mo)-1]+' '+y;
     let mE=0,mT=0,mP=0;
     rows.forEach(r=>{mE+=CING.num(r.efectivo);mT+=CING.num(r.transferencia);mP+=CING.num(r.a_pagar);});
     const isEmpty=rows.length===0;
 
-    // Auto-colapsar meses anteriores al actual
+    // Todos los meses EXPANDIDOS por defecto (collapsed = false)
     const isCurrentMonth = mes===mesActual;
-    if(collapsedMonths[mes]===undefined) collapsedMonths[mes]=isCurrentMonth;
-    const collapsed2=!!collapsedMonths[mes];
+    if(collapsedMonths[mes]===undefined) collapsedMonths[mes]=false; // SIEMPRE EXPANDIDO
+    const collapsed=!!collapsedMonths[mes];
 
-    // Month header mejorado
-    html+=`<tr style="background:linear-gradient(135deg,\${isCurrentMonth?'#1ea5f7':'#1e93f7'},#34155f);cursor:pointer" onclick="toggleMes('${mes}')">
-      <td colspan="3" style="padding:11px 14px">
-        <span style="font-size:13px;font-weight:700;color:#fff;letter-spacing:.3px">\${collapsed2?'▶':'▼'} \${mesLabel}</span>
+    // Month header con diseño mejorado
+    const headerColor = isCurrentMonth ? '#1ea5f7' : '#64748b';
+    html+=`<tr style="background:linear-gradient(to right,${headerColor},${headerColor}dd);cursor:pointer;border-bottom:2px solid var(--bg)" onclick="toggleMes('${mes}')">
+      <td colspan="3" style="padding:14px 16px">
+        <div style="display:flex;align-items:center;gap:8px">
+          <span style="font-size:15px;font-weight:700;color:#fff;letter-spacing:.5px">${collapsed?'▶':'▼'} ${mesLabel}</span>
+          ${isCurrentMonth?'<span style="background:rgba(255,255,255,.2);color:#fff;padding:2px 8px;border-radius:12px;font-size:10px;font-weight:700;letter-spacing:.5px">ACTUAL</span>':''}
+        </div>
       </td>
-      <td style="font-size:11px;color:rgba(255,255,255,.85);text-align:right;padding-right:10px">sin registros</td>
-      <td colspan="6" style="text-align:right;padding-right:10px">
-        <span style="font-size:11px;color:rgba(255,255,255,.5);margin-left:10px">\${rows.length} registros</span>
+      <td style="padding:14px 10px;text-align:right;color:rgba(255,255,255,.9);font-size:12px;font-weight:600">
+        ${!isEmpty?'$'+Math.round(mE).toLocaleString('es-AR'):'—'}
+      </td>
+      <td style="padding:14px 10px;text-align:right;color:rgba(255,255,255,.9);font-size:12px;font-weight:600">
+        ${!isEmpty?'$'+Math.round(mT).toLocaleString('es-AR'):'—'}
+      </td>
+      <td style="padding:14px 10px;text-align:right;color:#fff;font-size:13px;font-weight:700;background:rgba(0,0,0,.15)">
+        ${!isEmpty?'$'+Math.round(mP).toLocaleString('es-AR'):'—'}
+      </td>
+      <td colspan="3" style="padding:14px 16px;text-align:right">
+        <span style="font-size:11px;color:rgba(255,255,255,.7);font-weight:600">${rows.length} ${rows.length===1?'ingreso':'ingresos'}</span>
       </td>
     </tr>`;
-    if(isEmpty) html+=`<tr><td colspan="10" style="padding:12px 14px;color:#cdd5e1;font-size:13px;text-align:center">Sin ingresos en \${mesLabel}</td></tr>`;
 
-    if(!collapsed2){
-      // Data rows
-      if(rows.length) html+=rows.map(r=>renderIngRow(r)).join('');
-      // Empty state row
-      else html+=`<tr style="background:#fafcff"><td colspan="10" style="padding:12px 14px;color:#cbd5e1;font-size:13px;text-align:center">Sin ingresos en \${mesLabel}</td></tr>`;
+    // Filas de datos o mensaje vacío
+    if(!collapsed){
+      if(rows.length > 0) {
+        html+=rows.map(r=>renderIngRow(r)).join('');
+      } else {
+        html+=`<tr style="background:#fafcff">
+          <td colspan="9" style="padding:20px 14px;color:#94a3b8;font-size:13px;text-align:center;font-style:italic">
+            Sin ingresos registrados en ${mesLabel}
+          </td>
+        </tr>`;
+      }
     }
 
-    // Totals row
-    html+=`<tr>
-      <td colspan="4" style="padding:11px 10px;text-align:right">
-        \${!isEmpty?'<span style="font-size:11px;color:rgba(255,255,255,.35)">Total a pagar:</span>':''}
-      </td>
-      <td>
-      </td>
-      <td colspan="5">
-      </td>
-    </tr>`;
-
-    // Spacer
-    html+=`<tr><td colspan="10" style="padding:3px;background:var(--bg)"></td></tr>`;
+    // Spacer entre meses
+    html+=`<tr><td colspan="9" style="padding:6px;background:var(--bg)"></td></tr>`;
   });
 
   tbody.innerHTML=html;
@@ -1781,50 +1952,41 @@ function updIngFecha(id,part,value){
   if(part==='mes') parts[1]=String(value).padStart(2,'0');
   if(part==='dia') parts[2]=String(value).padStart(2,'0');
   r.fecha=parts.join('-');
-  scheduleIngAutoSave(id);
+  
+  // Marcar visualmente que hay cambios sin guardar
+  const row=document.getElementById('row-'+id);
+  if(row && !row.classList.contains('unsaved')) {
+    row.style.borderLeft='3px solid #f59e0b';
+    row.classList.add('unsaved');
+  }
 }
 
-/* ── AUTOGUARDADO DE INGRESOS ── */
+/* ── AUTOGUARDADO DE INGRESOS DESHABILITADO ── */
+// El guardado ahora es 100% MANUAL con el botón ✓
 const _ingTimers={};
 function scheduleIngAutoSave(id){
-  clearTimeout(_ingTimers[id]);
-  _ingTimers[id]=setTimeout(()=>autoSaveIngRow(id), 1500);
+  // Autoguardado DESHABILITADO - solo se guarda con botón ✓
+  // clearTimeout(_ingTimers[id]);
+  // _ingTimers[id]=setTimeout(()=>autoSaveIngRow(id), 1500);
+  console.log('⚠️ Recordá guardar manualmente con el botón ✓');
 }
 
 async function autoSaveIngRow(id){
-  const r=ingresosData.find(x=>x.id===id);
-  if(!r) return;
-  // Solo guardar si tiene al menos cliente o monto
-  const tieneDatos = r.cliente||r.efectivo||r.transferencia||r.a_pagar;
-  if(!tieneDatos) return;
-  if(!r.fecha) return;
-  const{_new,...record}=r;
-  record.gestor=record.gestor||curG;
-  let error;
-  if(_new){
-    ({error}=await SB.from('ingresos').insert(record));
-    if(!error){
-      r._new=false;
-      // Resaltar la fila en verde brevemente
-      const row=document.getElementById('row-'+id);
-      if(row){row.style.background='#dcfce7';setTimeout(()=>{row.style.background=r.source_ficha?'#fafcff':'';},1500);}
-    }
-  } else {
-    ({error}=await SB.from('ingresos').update(record).eq('id',id));
-    if(!error){
-      const row=document.getElementById('row-'+id);
-      if(row){row.style.background='#dcfce7';setTimeout(()=>{row.style.background=r.source_ficha?'#fafcff':'';},1000);}
-    }
-  }
-  if(error) console.warn('autoSaveIngRow error:', error.message);
-  else if(r.cliente_id) syncIngresoPagoEnFicha(r);
-  // Actualizar totales
-  filterIngresos();
+  // Función deshabilitada - usar saveIngRow() manual
+  return;
 }
 
 function updIng(id,field,value){
   const r=ingresosData.find(x=>x.id===id);
-  if(r){ r[field]=value; scheduleIngAutoSave(id); }
+  if(r){ 
+    r[field]=value; 
+    // Marcar visualmente que hay cambios sin guardar
+    const row=document.getElementById('row-'+id);
+    if(row && !row.classList.contains('unsaved')) {
+      row.style.borderLeft='3px solid #f59e0b';
+      row.classList.add('unsaved');
+    }
+  }
 }
 
 
@@ -1852,7 +2014,13 @@ function updIngNum(id,field,value){
   r.a_pagar=pagar||null;
   const el=document.getElementById('apagar-'+id);
   if(el) el.value=pagar||'';
-  scheduleIngAutoSave(id);
+  
+  // Marcar visualmente que hay cambios sin guardar
+  const row=document.getElementById('row-'+id);
+  if(row && !row.classList.contains('unsaved')) {
+    row.style.borderLeft='3px solid #f59e0b';
+    row.classList.add('unsaved');
+  }
 }
 
 /* ── AUTOCOMPLETE CLIENTE EN INGRESOS ── */
@@ -1913,20 +2081,53 @@ async function saveIngRow(id){
   const r=ingresosData.find(x=>x.id===id);
   if(!r) return;
   if(!r.cliente||!r.fecha){toast('Completá fecha y cliente','err');return;}
+  
+  // PASO 1: GUARDAR SIEMPRE EN LOCALSTORAGE PRIMERO (garantiza persistencia)
+  try {
+    const localIngresos = JSON.parse(localStorage.getItem('zittano_ingresos') || '[]');
+    const index = localIngresos.findIndex(x => x.id === id);
+    const recordToSave = {...r};
+    delete recordToSave._new; // limpiar flag temporal
+    recordToSave.gestor = recordToSave.gestor || curG;
+    
+    if(index >= 0) {
+      localIngresos[index] = recordToSave;
+    } else {
+      localIngresos.push(recordToSave);
+    }
+    localStorage.setItem('zittano_ingresos', JSON.stringify(localIngresos));
+    console.log('✅ Ingreso guardado en localStorage:', id);
+  } catch(e) {
+    console.error('Error guardando en localStorage:', e);
+    toast('Error al guardar localmente','err');
+    return;
+  }
+  
+  // PASO 2: Intentar guardar en Supabase (opcional, si está disponible)
   const{_new,...record}=r;
   record.gestor=record.gestor||curG;
   let error;
-  if(_new){
-    ({error}=await SB.from('ingresos').insert(record));
-    if(!error) r._new=false;
-  } else {
-    ({error}=await SB.from('ingresos').update(record).eq('id',id));
+  try {
+    if(_new){
+      ({error}=await SB.from('ingresos').insert(record));
+      if(!error) r._new=false;
+    } else {
+      ({error}=await SB.from('ingresos').update(record).eq('id',id));
+    }
+    if(error) console.warn('Supabase error (datos guardados localmente):', error.message);
+    if(!error && r.cliente_id) await syncIngresoPagoEnFicha(r);
+  } catch(e) {
+    console.warn('Supabase no disponible (datos guardados localmente):', e);
   }
-  if(error){toast('Error: '+error.message,'err');return;}
-  if(r.cliente_id) await syncIngresoPagoEnFicha(r);
+  
   toast('✅ Guardado','ok');
   const row=document.getElementById('row-'+id);
-  if(row){row.style.background='#dcfce7';setTimeout(()=>{row.style.background='';},1200);}
+  if(row){
+    row.style.background='#dcfce7';
+    row.style.borderLeft='none';
+    row.classList.remove('unsaved');
+    setTimeout(()=>{row.style.background='';},1200);
+  }
 }
 
 async function syncIngresoPagoEnFicha(ingreso){
@@ -1947,19 +2148,36 @@ async function syncIngresoPagoEnFicha(ingreso){
 
 async function delIngRow(id){
   if(!confirm('¿Eliminar este ingreso?')) return;
+  
+  // PASO 1: Eliminar de localStorage
+  try {
+    const localIngresos = JSON.parse(localStorage.getItem('zittano_ingresos') || '[]');
+    const filtered = localIngresos.filter(x => x.id !== id);
+    localStorage.setItem('zittano_ingresos', JSON.stringify(filtered));
+    console.log('✅ Ingreso eliminado de localStorage:', id);
+  } catch(e) {
+    console.error('Error eliminando de localStorage:', e);
+  }
+  
+  // PASO 2: Intentar eliminar de Supabase
   const r=ingresosData.find(x=>x.id===id);
   if(r&&!r._new){
-    if(r.cliente_id){
-      const TB2=typeof TB!=='undefined'?TB:'clientes';
-      const{data:cli}=await SB.from(TB2).select('id,pagos_manual').eq('id',r.cliente_id).single();
-      if(cli){
-        const pagos=(cli.pagos_manual||[]).filter(p=>p.ingresos_id!==id);
-        await SB.from(TB2).update({pagos_manual:pagos}).eq('id',r.cliente_id);
+    try {
+      if(r.cliente_id){
+        const TB2=typeof TB!=='undefined'?TB:'clientes';
+        const{data:cli}=await SB.from(TB2).select('id,pagos_manual').eq('id',r.cliente_id).single();
+        if(cli){
+          const pagos=(cli.pagos_manual||[]).filter(p=>p.ingresos_id!==id);
+          await SB.from(TB2).update({pagos_manual:pagos}).eq('id',r.cliente_id);
+        }
       }
+      const{error}=await SB.from('ingresos').delete().eq('id',id);
+      if(error) console.warn('Error Supabase al eliminar:', error.message);
+    } catch(e) {
+      console.warn('Supabase no disponible:', e);
     }
-    const{error}=await SB.from('ingresos').delete().eq('id',id);
-    if(error){toast('Error','err');return;}
   }
+  
   ingresosData=ingresosData.filter(x=>x.id!==id);
   filterIngresos();
   toast('Eliminado','err');
@@ -3110,94 +3328,82 @@ function updPago(i,field,value){
    INGRESOS
 ════════════════════════════════════════ */
 async function loadIngresos(){
-  const tbody = document.getElementById('ing-body');
-  if(!tbody) {
-    console.log('Elemento ing-body no encontrado');
-    return;
+  console.log('🔄 Cargando ingresos...');
+  
+  // PASO 1: Cargar desde localStorage (persistencia garantizada)
+  let localIngresos = [];
+  try {
+    localIngresos = JSON.parse(localStorage.getItem('zittano_ingresos') || '[]');
+    console.log('📦 Ingresos desde localStorage:', localIngresos.length);
+  } catch(e) {
+    console.error('Error leyendo localStorage:', e);
   }
   
-  tbody.innerHTML='<tr><td colspan="10" style="padding:20px;text-align:center;color:#94a3b8">Cargando...</td></tr>';
-
-  // Load all clients for current gestor (already in allC if base was loaded)
-  let clients = allC;
-  if(!clients.length){
-    let query = SB.from('clientes').select('id,nombre,pagos_manual,gestor');
-    if(curG!=='Belén') query = query.eq('gestor',curG);
-    const{data} = await query;
-    clients = data||[];
+  // PASO 2: Intentar cargar desde Supabase (si está disponible)
+  let supabaseIngresos = [];
+  try {
+    let query = SB.from('ingresos').select('*').order('fecha', {ascending: false});
+    if(curG !== 'Belén') query = query.eq('gestor', curG);
+    const {data, error} = await query;
+    if(!error && data) {
+      supabaseIngresos = data;
+      console.log('☁️ Ingresos desde Supabase:', supabaseIngresos.length);
+    }
+  } catch(e) {
+    console.warn('Supabase no disponible:', e);
   }
-
-  // Collect all pagos from all clients
-  let allPagos = [];
-  clients.forEach(c=>{
-    const pagos = Array.isArray(c.pagos_manual)?c.pagos_manual:[];
-    pagos.forEach(p=>{
-      if(p.monto&&(String(p.monto).match(/\d/)||String(p.monto).toUpperCase().includes('USD'))){
-        allPagos.push({
-          ...p,
-          cliente: c.nombre||'-',
-          gestor: c.gestor||'-',
-          clienteId: c.id,
-        });
-      }
-    });
+  
+  // PASO 3: Combinar y deduplicar (prioridad a localStorage para datos recientes)
+  const combined = {};
+  
+  // Primero agregar de Supabase
+  supabaseIngresos.forEach(ing => {
+    combined[ing.id] = ing;
   });
-
-  // Sort by fecha desc
-  allPagos.sort((a,b)=>(b.fecha||'').localeCompare(a.fecha||''));
-
-  // Populate mes selector
-  const meses = [...new Set(allPagos.map(p=>(p.fecha||'').slice(0,7)).filter(Boolean))].sort().reverse();
+  
+  // Luego sobrescribir/agregar desde localStorage (prioridad)
+  localIngresos.forEach(ing => {
+    combined[ing.id] = ing;
+  });
+  
+  // Convertir a array y filtrar por gestor si no es Belén
+  ingresosData = Object.values(combined);
+  if(curG !== 'Belén') {
+    ingresosData = ingresosData.filter(r => r.gestor === curG);
+  }
+  
+  // Ordenar por fecha desc
+  ingresosData.sort((a, b) => (b.fecha || '').localeCompare(a.fecha || ''));
+  
+  console.log('✅ Total ingresos cargados:', ingresosData.length);
+  
+  // Popular el selector de meses
+  const meses = [...new Set(ingresosData.map(r => (r.fecha || '').slice(0, 7)).filter(Boolean))].sort().reverse();
   const selMes = document.getElementById('ing-mes');
-  const curMes = selMes ? selMes.value : '';
-  selMes.innerHTML='<option value="">Todos los meses</option>'+meses.map(m=>{
-    const [y,mo] = m.split('-');
-    const nombres=['Ene','Feb','Mar','Abr','May','Jun','Jul','Ago','Sep','Oct','Nov','Dic'];
-    return `<option value="${m}"${curMes===m?' selected':''}>${nombres[parseInt(mo)-1]} ${y}</option>`;
-  }).join('');
-
-  // Filter by mes
- const filtroMes = (document.getElementById('ing-mes')||{value:''}).value;
-const filtroTipo = (document.getElementById('ing-tipo')||{value:''}).value;
-  let filtered = allPagos;
-  if(filtroMes) filtered = filtered.filter(p=>(p.fecha||'').startsWith(filtroMes));
-  if(filtroTipo==='efectivo') filtered = filtered.filter(p=>!String(p.comprobante||'').trim()&&!String(p.monto||'').toUpperCase().includes('TRANSF'));
-  if(filtroTipo==='transferencia') filtered = filtered.filter(p=>String(p.comprobante||'').trim());
-
-  // Calculate totals
-  let totalP=0,totalU=0;
-  filtered.forEach(p=>{
-    const m=String(p.monto||'');
-    if(m.toUpperCase().includes('USD')){totalU+=(parseFloat(m.replace(/[^0-9.]/g,''))||0);}
-    else{totalP+=(parseFloat(m.replace(/\./g,'').replace(/,/g,'.'))||0);}
-  });
-
-  // Resumen cards
-  const resumen = document.getElementById('ing-resumen');
-  resumen.innerHTML=`
-    <div class="stat"><div class="stv">${filtered.length}</div><div class="stl">Pagos</div></div>
-    <div class="stat vd"><div class="stv" style="font-size:18px">$${totalP?'+$'+totalP.toLocaleString('es-AR'):'-'}</div><div class="stl">Total $</div></div>
-    <div class="stat am"><div class="stv" style="font-size:18px">${totalU?'USD +$'+totalU.toLocaleString('es-AR'):'-'}</div><div class="stl">Total USD</div></div>
-    <div class="stat pu"><div class="stv">${[...new Set(filtered.map(p=>p.clienteId))].length}</div><div class="stl">Clientes</div></div>`;
-
-  // Table
-  if(!filtered.length){
-    tbody.innerHTML='<tr><td colspan="10" style="padding:20px;text-align:center;color:#94a3b8">Sin ingresos para este período.</td></tr>';
-    return;
+  if(selMes) {
+    const curMes = selMes.value || '';
+    const hoy = new Date();
+    const mesActual = hoy.getFullYear() + '-' + String(hoy.getMonth() + 1).padStart(2, '0');
+    if(!meses.includes(mesActual)) meses.unshift(mesActual);
+    
+    selMes.innerHTML = '<option value="">Año actual</option>' + meses.map(m => {
+      const [y, mo] = m.split('-');
+      const nombres = ['Ene', 'Feb', 'Mar', 'Abr', 'May', 'Jun', 'Jul', 'Ago', 'Sep', 'Oct', 'Nov', 'Dic'];
+      return `<option value="${m}"${curMes === m ? ' selected' : ''}>${nombres[parseInt(mo) - 1]} ${y}</option>`;
+    }).join('');
   }
+  
+  // Renderizar
+  filterIngresos();
+}
 
-  tbody.innerHTML=filtered.map((p,i)=>`<tr>
-    <td style="font-size:13px;color:var(--gr)">${fmtFechaIng(p.fecha)}</td>
-    <td><div class="cn" style="font-size:13px">${p.cliente}</div></td>
-    ${curG==='Belén'?'<td><span class="gb3 ${gbl(p.gestor)}">${p.gestor}</span></td>':''}
-    <td style="font-weight:700;color:var(--vd);font-size:13px">${p.monto||'-'}</td>
-    <td style="font-size:13px;color:var(--gr)">${p.concepto||'-'}</td>
-    <td style="font-size:12px">
-      ${p.comprobante
-        ?`<a href="${p.comprobante}" target="_blank" style="color:var(--az);font-weight:600;text-decoration:underline">Ver comprobante</a>`
-        :`<span style="color:#cbd5e1">Sin comprobante</span>`}
-    </td>
-  </tr>`).join('');
+// Función para limpiar localStorage (útil cuando borraste todos los datos)
+function limpiarIngresosLocal(){
+  if(confirm('⚠️ Esto eliminará TODOS los ingresos guardados localmente en este navegador.\n\n¿Estás seguro?')){
+    localStorage.removeItem('zittano_ingresos');
+    toast('🗑️ Datos locales eliminados. Recargá la página.','ok');
+    console.log('🗑️ localStorage limpiado');
+  }
 }
 
 function fmtFechaIng(f){
