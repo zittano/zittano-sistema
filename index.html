@@ -653,8 +653,25 @@ textarea{resize:vertical;}
           <option value="Belén">Belén</option>
           <option value="Germán">Germán</option>
         </select>
+        <!-- Selector de AÑO -->
+        <select class="fsel" id="ing-anio" onchange="actualizarMeses();filterIngresos()">
+          <option value="">Todos los años</option>
+          <option value="2025">2025</option>
+          <option value="2026" selected>2026</option>
+          <option value="2027">2027</option>
+          <option value="2028">2028</option>
+          <option value="2029">2029</option>
+          <option value="2030">2030</option>
+          <option value="2031">2031</option>
+          <option value="2032">2032</option>
+          <option value="2033">2033</option>
+          <option value="2034">2034</option>
+          <option value="2035">2035</option>
+          <option value="2036">2036</option>
+        </select>
+        <!-- Selector de MES -->
         <select class="fsel" id="ing-mes" onchange="filterIngresos()">
-          <option value="">Año actual</option>
+          <option value="">Todos los meses</option>
         </select>
         <input class="sinp" id="ing-q" placeholder="🔍 Buscar cliente..." oninput="filterIngresos()" style="max-width:200px">
         <button class="bref" onclick="loadIngresos()">↺</button>
@@ -1733,17 +1750,55 @@ const CING = {
 
 
 function filterIngresos(){
-  const mes=(document.getElementById("ing-anio")||{value:"2026"}).value||"2026";
+  const anio=(document.getElementById("ing-anio")||{value:""}).value||"";
+  const mes=(document.getElementById("ing-mes")||{value:""}).value||"";
   const q=((document.getElementById("ing-q")||{value:""}).value||"").toLowerCase();
   const gestorFiltro=curG==="Belén"?((document.getElementById("ing-gestor")||{value:""}).value||""):"";
+  
   ingresosFiltrados=ingresosData.filter(r=>{
-    const mM=!mes||(r.fecha||"").startsWith(mes);
+    const fecha = r.fecha || "";
+    let mFecha = true;
+    
+    // Filtrar por año si está seleccionado
+    if(anio) {
+      mFecha = fecha.startsWith(anio);
+    }
+    
+    // Filtrar por mes específico si está seleccionado (ej: "2026-04")
+    if(mes) {
+      mFecha = fecha.startsWith(mes);
+    }
+    
     const mQ=!q||(r.cliente||"").toLowerCase().includes(q)||(r.tipo||"").toLowerCase().includes(q);
     const mG=!gestorFiltro||(r.gestor||"")=== gestorFiltro;
-    return mM&&mQ&&mG;
+    return mFecha&&mQ&&mG;
   });
   collapsedMonths={};
   renderIngresos();
+}
+
+// Actualizar el selector de meses cuando cambia el año
+function actualizarMeses(){
+  const selAnio = document.getElementById('ing-anio');
+  const anioSeleccionado = selAnio ? selAnio.value : '';
+  const anioActual = anioSeleccionado || new Date().getFullYear();
+  
+  const selMes = document.getElementById('ing-mes');
+  if(selMes) {
+    const nombres = ['Enero', 'Febrero', 'Marzo', 'Abril', 'Mayo', 'Junio', 'Julio', 'Agosto', 'Septiembre', 'Octubre', 'Noviembre', 'Diciembre'];
+    
+    // Generar todos los 12 meses del año seleccionado
+    const mesesDelAnio = [];
+    for(let m = 1; m <= 12; m++) {
+      const mesKey = anioActual + '-' + String(m).padStart(2, '0');
+      mesesDelAnio.push(mesKey);
+    }
+    
+    selMes.innerHTML = '<option value="">Todos los meses</option>' + mesesDelAnio.map(m => {
+      const [y, mo] = m.split('-');
+      return `<option value="${m}">${nombres[parseInt(mo) - 1]} ${y}</option>`;
+    }).join('');
+  }
 }
 
 // Track collapsed months
@@ -3377,21 +3432,8 @@ async function loadIngresos(){
   
   console.log('✅ Total ingresos cargados:', ingresosData.length);
   
-  // Popular el selector de meses
-  const meses = [...new Set(ingresosData.map(r => (r.fecha || '').slice(0, 7)).filter(Boolean))].sort().reverse();
-  const selMes = document.getElementById('ing-mes');
-  if(selMes) {
-    const curMes = selMes.value || '';
-    const hoy = new Date();
-    const mesActual = hoy.getFullYear() + '-' + String(hoy.getMonth() + 1).padStart(2, '0');
-    if(!meses.includes(mesActual)) meses.unshift(mesActual);
-    
-    selMes.innerHTML = '<option value="">Año actual</option>' + meses.map(m => {
-      const [y, mo] = m.split('-');
-      const nombres = ['Ene', 'Feb', 'Mar', 'Abr', 'May', 'Jun', 'Jul', 'Ago', 'Sep', 'Oct', 'Nov', 'Dic'];
-      return `<option value="${m}"${curMes === m ? ' selected' : ''}>${nombres[parseInt(mo) - 1]} ${y}</option>`;
-    }).join('');
-  }
+  // Popular el selector de meses inicialmente
+  actualizarMeses();
   
   // Renderizar
   filterIngresos();
