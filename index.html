@@ -328,6 +328,7 @@ textarea{resize:vertical;}
       <button class="htab" onclick="showTab('base',this)">📂 Base de Clientes</button>
       <button class="htab" onclick="showTab('ingresos',this)">💰 Ingresos</button>
       <button class="htab" onclick="showTab('info',this)">📌 Info</button>
+      <button class="htab" onclick="showTab('planillas',this)">📋 Planillas</button>
       <button class="htab" id="tab-panel" onclick="showTab('panel',this)" style="display:none">📊 Panel</button>
       <button class="htab" id="tab-precios" onclick="showTab('precios',this)" style="display:none">💲 Precios</button>
     </div>
@@ -895,6 +896,67 @@ textarea{resize:vertical;}
 </div>
 </div>
 
+<!-- VIEW PLANILLAS -->
+<div class="view" id="view-planillas">
+<div class="vbody">
+
+  <div style="margin-bottom:24px">
+    <div class="dbtitle">Planillas de Seguimiento</div>
+    <div style="font-size:13px;color:#94a3b8;margin-top:4px">Registros de cámaras y apostillas — se guarda automáticamente</div>
+  </div>
+
+  <div style="display:grid;grid-template-columns:1fr 1fr;gap:24px">
+    
+    <!-- CÁMARAS -->
+    <div>
+      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:12px">
+        <div style="font-size:11px;font-weight:700;color:#94a3b8;letter-spacing:1px;text-transform:uppercase">🏛️ Cámaras</div>
+        <button onclick="addPlanillaRow('camaras')" style="padding:5px 14px;border:1.5px dashed var(--bo);border-radius:8px;background:transparent;font-size:12px;font-weight:600;color:#94a3b8;cursor:pointer;transition:all .2s" onmouseover="this.style.color='var(--az)'" onmouseout="this.style.color='#94a3b8'">+ Agregar</button>
+      </div>
+      <div class="twrap">
+        <table style="width:100%;border-collapse:collapse">
+          <thead>
+            <tr style="background:var(--grl)">
+              <th style="padding:9px 12px;text-align:left;font-size:10px;font-weight:600;color:#94a3b8;border-bottom:1px solid var(--bo)">N° Pedido</th>
+              <th style="padding:9px 12px;text-align:left;font-size:10px;font-weight:600;color:#94a3b8;border-bottom:1px solid var(--bo)">Fecha</th>
+              <th style="padding:9px 12px;text-align:left;font-size:10px;font-weight:600;color:#94a3b8;border-bottom:1px solid var(--bo)">Mail</th>
+              <th style="padding:9px 12px;text-align:center;font-size:10px;font-weight:600;color:#94a3b8;border-bottom:1px solid var(--bo);width:90px">Estado</th>
+              <th style="padding:9px 8px;border-bottom:1px solid var(--bo);width:60px"></th>
+            </tr>
+          </thead>
+          <tbody id="planillas-camaras"></tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- APOSTILLAS -->
+    <div>
+      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:12px">
+        <div style="font-size:11px;font-weight:700;color:#94a3b8;letter-spacing:1px;text-transform:uppercase">📜 Apostillas</div>
+        <button onclick="addPlanillaRow('apostillas')" style="padding:5px 14px;border:1.5px dashed var(--bo);border-radius:8px;background:transparent;font-size:12px;font-weight:600;color:#94a3b8;cursor:pointer;transition:all .2s" onmouseover="this.style.color='var(--az)'" onmouseout="this.style.color='#94a3b8'">+ Agregar</button>
+      </div>
+      <div class="twrap">
+        <table style="width:100%;border-collapse:collapse">
+          <thead>
+            <tr style="background:var(--grl)">
+              <th style="padding:9px 12px;text-align:left;font-size:10px;font-weight:600;color:#94a3b8;border-bottom:1px solid var(--bo)">Fecha Ingreso</th>
+              <th style="padding:9px 12px;text-align:left;font-size:10px;font-weight:600;color:#94a3b8;border-bottom:1px solid var(--bo)">Expediente</th>
+              <th style="padding:9px 12px;text-align:left;font-size:10px;font-weight:600;color:#94a3b8;border-bottom:1px solid var(--bo)">Tipo Doc.</th>
+              <th style="padding:9px 12px;text-align:left;font-size:10px;font-weight:600;color:#94a3b8;border-bottom:1px solid var(--bo)">Cliente</th>
+              <th style="padding:9px 12px;text-align:center;font-size:10px;font-weight:600;color:#94a3b8;border-bottom:1px solid var(--bo);width:90px">Estado</th>
+              <th style="padding:9px 8px;border-bottom:1px solid var(--bo);width:60px"></th>
+            </tr>
+          </thead>
+          <tbody id="planillas-apostillas"></tbody>
+        </table>
+      </div>
+    </div>
+
+  </div>
+
+</div>
+</div>
+
 <!-- VIEW PRECIOS (solo Belén) -->
 <div class="view" id="view-precios">
 <div class="vbody">
@@ -958,6 +1020,7 @@ const CL={
 };
 
 let etas=[],srvs=[],curId=null,allC=[],curG='',chkItems=[],modC=null;
+let planillasData={camaras:[],apostillas:[]};
 
 // LOGIN
 let selGestor='';
@@ -996,7 +1059,9 @@ function initApp(){
   etas=[];srvs=[];chkItems=[];curId=null;
   renderEtas();renderSrvs();render();
   // Show gestor filter only for Belén (admin)
+  console.log('DEBUG: curG =', curG);
   if(curG==='Belén'){
+    console.log('DEBUG: Mostrando Panel y Precios para Belén');
     const gf=document.getElementById('db-g');
     if(gf) gf.style.display='block';
     const pt=document.getElementById('tab-panel');
@@ -1006,6 +1071,12 @@ function initApp(){
     if(igf) igf.style.display='block';
     const tp=document.getElementById('tab-precios');
     if(tp) tp.style.display='block';
+  } else {
+    console.log('DEBUG: Ocultando Panel y Precios para', curG);
+    const pt=document.getElementById('tab-panel');
+    if(pt) pt.style.display='none';
+    const tp=document.getElementById('tab-precios');
+    if(tp) tp.style.display='none';
   }
   (async()=>{setSY('sp','Conectando...');try{const{error}=await SB.from(TB).select('id').limit(1);setSY(error?'err':'ok',error?'Error de conexión':'Conectado ✓');}catch{setSY('err','Sin conexión');}})();
   // Cargar precios siempre para que el dropdown del presupuesto esté actualizado
@@ -1090,6 +1161,167 @@ Adjuntar: DNI de [NOMBRE]`
   });
 }
 
+/* ══════════════════════════════
+   PLANILLAS (Cámaras y Apostillas)
+══════════════════════════════ */
+async function loadPlanillas(){
+  const {data} = await SB.from('planillas').select('*');
+  const rows = data || [];
+  planillasData.camaras = rows.filter(r => r.tipo === 'camara');
+  planillasData.apostillas = rows.filter(r => r.tipo === 'apostilla');
+  renderPlanillas();
+}
+
+function renderPlanillas(){
+  renderPlanilla('camaras');
+  renderPlanilla('apostillas');
+}
+
+function renderPlanilla(tipo){
+  const tbody = document.getElementById('planillas-'+tipo);
+  if(!tbody) return;
+  
+  const INP = 'width:100%;padding:5px 7px;border:1.5px solid var(--bo);border-radius:6px;font-size:12.5px;outline:none;background:white';
+  
+  // Estados con colores
+  const getEstadoStyle = (estado) => {
+    if(estado === 'listo') return {bg:'#dcfce7', border:'#22c55e', text:'#166534', label:'Listo'};
+    if(estado === 'proceso') return {bg:'#fef9c3', border:'#f59e0b', text:'#854d0e', label:'En Proceso'};
+    return {bg:'#f8fafc', border:'#e2e8f0', text:'#94a3b8', label:'Sin estado'};
+  };
+  
+  if(tipo === 'camaras'){
+    tbody.innerHTML = planillasData.camaras.map(r => {
+      const est = getEstadoStyle(r.estado);
+      return `
+      <tr style="border-bottom:1px solid var(--grl);background:${est.bg}">
+        <td style="padding:6px 8px">
+          <input value="${(r.numero||'').replace(/"/g,'&quot;')}" placeholder="Número..." 
+            oninput="updPlanilla('camaras','${r.id}','numero',this.value)"
+            style="${INP}">
+        </td>
+        <td style="padding:6px 8px">
+          <input type="date" value="${r.fecha||''}"
+            oninput="updPlanilla('camaras','${r.id}','fecha',this.value)"
+            style="${INP}">
+        </td>
+        <td style="padding:6px 8px">
+          <input value="${(r.mail||'').replace(/"/g,'&quot;')}" placeholder="Mail..."
+            oninput="updPlanilla('camaras','${r.id}','mail',this.value)"
+            style="${INP}">
+        </td>
+        <td style="padding:6px 8px">
+          <div style="display:flex;gap:3px;justify-content:center">
+            <button onclick="updPlanilla('camaras','${r.id}','estado','proceso')" 
+              style="padding:3px 8px;border-radius:6px;border:2px solid ${r.estado==='proceso'?'#f59e0b':'#e2e8f0'};background:${r.estado==='proceso'?'#f59e0b':'transparent'};color:${r.estado==='proceso'?'#fff':'#94a3b8'};font-size:11px;font-weight:700;cursor:pointer;transition:all .13s" 
+              title="En Proceso">⏳</button>
+            <button onclick="updPlanilla('camaras','${r.id}','estado','listo')" 
+              style="padding:3px 8px;border-radius:6px;border:2px solid ${r.estado==='listo'?'#22c55e':'#e2e8f0'};background:${r.estado==='listo'?'#22c55e':'transparent'};color:${r.estado==='listo'?'#fff':'#94a3b8'};font-size:11px;font-weight:700;cursor:pointer;transition:all .13s" 
+              title="Listo">✓</button>
+          </div>
+        </td>
+        <td style="padding:6px 8px;text-align:center">
+          <button onclick="delPlanilla('camaras','${r.id}')" 
+            style="border:none;background:#fee2e2;color:#b91c1c;border-radius:6px;padding:4px 8px;cursor:pointer;font-size:12px;font-weight:700">✕</button>
+        </td>
+      </tr>
+      `;
+    }).join('');
+  } else {
+    tbody.innerHTML = planillasData.apostillas.map(r => {
+      const est = getEstadoStyle(r.estado);
+      return `
+      <tr style="border-bottom:1px solid var(--grl);background:${est.bg}">
+        <td style="padding:6px 8px">
+          <input type="date" value="${r.fecha_ingreso||''}"
+            oninput="updPlanilla('apostillas','${r.id}','fecha_ingreso',this.value)"
+            style="${INP}">
+        </td>
+        <td style="padding:6px 8px">
+          <input value="${(r.expediente||'').replace(/"/g,'&quot;')}" placeholder="Expediente..."
+            oninput="updPlanilla('apostillas','${r.id}','expediente',this.value)"
+            style="${INP}">
+        </td>
+        <td style="padding:6px 8px">
+          <input value="${(r.tipo_doc||'').replace(/"/g,'&quot;')}" placeholder="Tipo doc..."
+            oninput="updPlanilla('apostillas','${r.id}','tipo_doc',this.value)"
+            style="${INP}">
+        </td>
+        <td style="padding:6px 8px">
+          <input value="${(r.cliente||'').replace(/"/g,'&quot;')}" placeholder="Nombre cliente..."
+            oninput="updPlanilla('apostillas','${r.id}','cliente',this.value)"
+            style="${INP}">
+        </td>
+        <td style="padding:6px 8px">
+          <div style="display:flex;gap:3px;justify-content:center">
+            <button onclick="updPlanilla('apostillas','${r.id}','estado','proceso')" 
+              style="padding:3px 8px;border-radius:6px;border:2px solid ${r.estado==='proceso'?'#f59e0b':'#e2e8f0'};background:${r.estado==='proceso'?'#f59e0b':'transparent'};color:${r.estado==='proceso'?'#fff':'#94a3b8'};font-size:11px;font-weight:700;cursor:pointer;transition:all .13s" 
+              title="En Proceso">⏳</button>
+            <button onclick="updPlanilla('apostillas','${r.id}','estado','listo')" 
+              style="padding:3px 8px;border-radius:6px;border:2px solid ${r.estado==='listo'?'#22c55e':'#e2e8f0'};background:${r.estado==='listo'?'#22c55e':'transparent'};color:${r.estado==='listo'?'#fff':'#94a3b8'};font-size:11px;font-weight:700;cursor:pointer;transition:all .13s" 
+              title="Listo">✓</button>
+          </div>
+        </td>
+        <td style="padding:6px 8px;text-align:center">
+          <button onclick="delPlanilla('apostillas','${r.id}')" 
+            style="border:none;background:#fee2e2;color:#b91c1c;border-radius:6px;padding:4px 8px;cursor:pointer;font-size:12px;font-weight:700">✕</button>
+        </td>
+      </tr>
+      `;
+    }).join('');
+  }
+}
+
+function addPlanillaRow(tipo){
+  const tipoSingular = tipo === 'camaras' ? 'camara' : 'apostilla';
+  const newRow = {
+    id: tipoSingular + '-' + Date.now(),
+    tipo: tipoSingular
+  };
+  
+  if(tipo === 'camaras'){
+    newRow.numero = '';
+    newRow.fecha = '';
+    newRow.mail = '';
+  } else {
+    newRow.fecha_ingreso = '';
+    newRow.expediente = '';
+    newRow.tipo_doc = '';
+    newRow.cliente = '';
+  }
+  
+  planillasData[tipo].push(newRow);
+  renderPlanilla(tipo);
+}
+
+async function updPlanilla(tipo, id, field, value){
+  const r = planillasData[tipo].find(x => x.id === id);
+  if(!r) return;
+  r[field] = value;
+  
+  // Auto-save
+  const {data:existing} = await SB.from('planillas').select('id').eq('id',id).single();
+  if(existing){
+    await SB.from('planillas').update({[field]:value}).eq('id',id);
+  } else {
+    await SB.from('planillas').insert(r);
+  }
+  
+  // Re-renderizar para mostrar el cambio de estado/color
+  if(field === 'estado'){
+    renderPlanilla(tipo);
+  }
+}
+
+async function delPlanilla(tipo, id){
+  if(!confirm('¿Eliminar este registro?')) return;
+  await SB.from('planillas').delete().eq('id',id);
+  planillasData[tipo] = planillasData[tipo].filter(x => x.id !== id);
+  renderPlanilla(tipo);
+  toast('Eliminado','err');
+}
+
+
 function epCl(e){return{Consulta:'ep-c','En proceso':'ep-p','Con turno':'ep-t','Cerrado':'ep-z','Activo':'ep-p'}[e]||'ep-p';}
 function gbCl(g){const n=(g||'').toLowerCase().normalize('NFD').replace(/[̀-ͯ]/g,'');return n==='malena'?'mal':n==='sofia'?'sof':n==='belen'?'bel':n==='german'?'ger':'unk';}
 
@@ -1103,6 +1335,7 @@ function showTab(name,btn){
   if(name==='ingresos')loadIngresos();
   if(name==='precios')loadPrecios();
   if(name==='panel')loadPanel();
+  if(name==='planillas')loadPlanillas();
   if(name==='finalizados')loadFinalizados();
   loadInfo();
 }
