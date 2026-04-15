@@ -891,6 +891,56 @@ textarea{resize:vertical;}
         <p style="margin:8px 0"><strong>Adjuntar:</strong> DNI de [NOMBRE]</p>
       </div>
     </div>
+
+    <!-- Template 4: Presupuesto AIRE -->
+    <div style="background:var(--wh);border-radius:12px;padding:20px;margin-bottom:16px;border:1px solid var(--bo);box-shadow:var(--sh)">
+      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:12px">
+        <h3 style="font-size:14px;font-weight:700;color:var(--grd);margin:0">Presupuesto AIRE</h3>
+        <button onclick="copiarTemplate('aire')" style="padding:6px 12px;background:var(--azl);color:var(--az);border:1px solid var(--az);border-radius:6px;font-size:12px;font-weight:600;cursor:pointer;transition:all .13s" onmouseover="this.style.background='var(--az)';this.style.color='#fff'" onmouseout="this.style.background='var(--azl)';this.style.color='var(--az)'">📋 Copiar</button>
+      </div>
+      <div id="template-aire" style="font-size:13px;line-height:1.6;color:var(--grd)">
+        <p style="margin:8px 0"><strong>Para:</strong> cliente</p>
+        <p style="margin:8px 0"><strong>Asunto:</strong> Presupuesto AIRE - [APELLIDO]</p>
+        <p style="margin:8px 0"><strong>Cuerpo:</strong></p>
+        <div style="background:#f8fafc;padding:12px;border-radius:8px;border-left:3px solid var(--am);margin:8px 0">
+          <p style="margin:4px 0">Estimado/a [Nombre],</p>
+          <p style="margin:4px 0">Tal como conversamos, te adjunto el presupuesto completo, donde vas a encontrar el detalle del proceso paso a paso junto con las indicaciones necesarias para orientarte en cada etapa. El mismo tiene una validez de 15 días.</p>
+          <p style="margin:4px 0">Para poder iniciar las gestiones, te solicito por favor que completes el documento de Word adjunto y me lo reenvíes junto con la siguiente documentación:</p>
+          <ul style="margin:8px 0;padding-left:20px">
+            <li>Escaneo de DNI (frente y dorso) de todo el grupo familiar</li>
+            <li>Factura de servicio a tu nombre, coincidente con el domicilio declarado en tu DNI</li>
+            <li>Foto o escaneo de las actas nacionales mencionadas en el presupuesto</li>
+          </ul>
+          <p style="margin:4px 0">Una vez recibido todo, nos estaremos comunicando por WhatsApp para coordinar el adelanto de las gestiones a iniciar. En tu caso, el primer paso será: [completar según corresponda].</p>
+          <p style="margin:4px 0">Quedo a disposición para cualquier consulta que puedas tener. Ha sido un gusto conocerte.</p>
+          <p style="margin:4px 0">Saludos cordiales,</p>
+          <p style="margin:4px 0">XXX</p>
+        </div>
+        <p style="margin:8px 0"><strong>Adjuntar:</strong> Presupuesto PDF + Documento Word para completar</p>
+      </div>
+    </div>
+
+    <!-- Template 5: Presupuesto Reconstrucción -->
+    <div style="background:var(--wh);border-radius:12px;padding:20px;margin-bottom:16px;border:1px solid var(--bo);box-shadow:var(--sh)">
+      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:12px">
+        <h3 style="font-size:14px;font-weight:700;color:var(--grd);margin:0">Presupuesto Reconstrucción</h3>
+        <button onclick="copiarTemplate('recons')" style="padding:6px 12px;background:var(--azl);color:var(--az);border:1px solid var(--az);border-radius:6px;font-size:12px;font-weight:600;cursor:pointer;transition:all .13s" onmouseover="this.style.background='var(--az)';this.style.color='#fff'" onmouseout="this.style.background='var(--azl)';this.style.color='var(--az)'">📋 Copiar</button>
+      </div>
+      <div id="template-recons" style="font-size:13px;line-height:1.6;color:var(--grd)">
+        <p style="margin:8px 0"><strong>Para:</strong> cliente</p>
+        <p style="margin:8px 0"><strong>Asunto:</strong> Presupuesto Reconstrucción - [APELLIDO]</p>
+        <p style="margin:8px 0"><strong>Cuerpo:</strong></p>
+        <div style="background:#f8fafc;padding:12px;border-radius:8px;border-left:3px solid var(--am);margin:8px 0">
+          <p style="margin:4px 0">Estimado,</p>
+          <p style="margin:4px 0">Tal como te comenté en la consulta, te adjunto el presupuesto completo, donde se detalla el proceso paso a paso junto con las indicaciones necesarias para orientarte en cada etapa. El mismo tiene una validez de 15 días.</p>
+          <p style="margin:4px 0">Para iniciar tus trámites, el primer paso será: [completar según corresponda].</p>
+          <p style="margin:4px 0">Quedamos en contacto. Me encuentro a disposición para cualquier consulta que necesites realizar por WhatsApp. Ha sido un gusto conocerte.</p>
+          <p style="margin:4px 0">Saludos cordiales,</p>
+          <p style="margin:4px 0">ZITTANO</p>
+        </div>
+        <p style="margin:8px 0"><strong>Adjuntar:</strong> Presupuesto PDF</p>
+      </div>
+    </div>
   </div>
 
 </div>
@@ -1059,9 +1109,7 @@ function initApp(){
   etas=[];srvs=[];chkItems=[];curId=null;
   renderEtas();renderSrvs();render();
   // Show gestor filter only for Belén (admin)
-  console.log('DEBUG: curG =', curG);
   if(curG==='Belén'){
-    console.log('DEBUG: Mostrando Panel y Precios para Belén');
     const gf=document.getElementById('db-g');
     if(gf) gf.style.display='block';
     const pt=document.getElementById('tab-panel');
@@ -1071,12 +1119,6 @@ function initApp(){
     if(igf) igf.style.display='block';
     const tp=document.getElementById('tab-precios');
     if(tp) tp.style.display='block';
-  } else {
-    console.log('DEBUG: Ocultando Panel y Precios para', curG);
-    const pt=document.getElementById('tab-panel');
-    if(pt) pt.style.display='none';
-    const tp=document.getElementById('tab-precios');
-    if(tp) tp.style.display='none';
   }
   (async()=>{setSY('sp','Conectando...');try{const{error}=await SB.from(TB).select('id').limit(1);setSY(error?'err':'ok',error?'Error de conexión':'Conectado ✓');}catch{setSY('err','Sin conexión');}})();
   // Cargar precios siempre para que el dropdown del presupuesto esté actualizado
@@ -1138,7 +1180,45 @@ Buenos días a quien corresponda. Escribo ya que en el día [FECHA ESPERADA] deb
 
 Aguardo pronta respuesta, desde ya muchas gracias.
 
-Adjuntar: DNI de [NOMBRE]`
+Adjuntar: DNI de [NOMBRE]`,
+
+    'aire': `Para: cliente
+Asunto: Presupuesto AIRE - [APELLIDO]
+
+Estimado/a [Nombre],
+
+Tal como conversamos, te adjunto el presupuesto completo, donde vas a encontrar el detalle del proceso paso a paso junto con las indicaciones necesarias para orientarte en cada etapa. El mismo tiene una validez de 15 días.
+
+Para poder iniciar las gestiones, te solicito por favor que completes el documento de Word adjunto y me lo reenvíes junto con la siguiente documentación:
+
+• Escaneo de DNI (frente y dorso) de todo el grupo familiar
+• Factura de servicio a tu nombre, coincidente con el domicilio declarado en tu DNI
+• Foto o escaneo de las actas nacionales mencionadas en el presupuesto
+
+Una vez recibido todo, nos estaremos comunicando por WhatsApp para coordinar el adelanto de las gestiones a iniciar. En tu caso, el primer paso será: [completar según corresponda].
+
+Quedo a disposición para cualquier consulta que puedas tener. Ha sido un gusto conocerte.
+
+Saludos cordiales,
+XXX
+
+Adjuntar: Presupuesto PDF + Documento Word para completar`,
+
+    'recons': `Para: cliente
+Asunto: Presupuesto Reconstrucción - [APELLIDO]
+
+Estimado,
+
+Tal como te comenté en la consulta, te adjunto el presupuesto completo, donde se detalla el proceso paso a paso junto con las indicaciones necesarias para orientarte en cada etapa. El mismo tiene una validez de 15 días.
+
+Para iniciar tus trámites, el primer paso será: [completar según corresponda].
+
+Quedamos en contacto. Me encuentro a disposición para cualquier consulta que necesites realizar por WhatsApp. Ha sido un gusto conocerte.
+
+Saludos cordiales,
+ZITTANO
+
+Adjuntar: Presupuesto PDF`
   };
 
   const texto = templates[tipo];
