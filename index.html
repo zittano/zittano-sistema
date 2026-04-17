@@ -327,6 +327,7 @@ textarea{resize:vertical;}
       <button class="htab on" onclick="showTab('presup',this)">📄 Nuevo Presupuesto</button>
       <button class="htab" onclick="showTab('base',this)">📂 Base de Clientes</button>
       <button class="htab" onclick="showTab('ingresos',this)">💰 Ingresos</button>
+      <button class="htab" onclick="showTab('gastos',this)">💸 Gastos</button>
       <button class="htab" onclick="showTab('info',this)">📌 Info</button>
       <button class="htab" onclick="showTab('planillas',this)">📋 Planillas</button>
       <button class="htab" id="tab-panel" onclick="showTab('panel',this)" style="display:none">📊 Panel</button>
@@ -350,16 +351,16 @@ textarea{resize:vertical;}
       <div class="ehead"><div class="eico" style="background:#e8efff">👤</div><div class="etit">Datos del Cliente</div></div>
       <div class="ebody">
         <div class="r2">
-          <div class="fld"><label>Nombre</label><input id="e-nom" name="ztt-nom" autocomplete="off" name="zit_field_a1" autocomplete="off" onfocus="this.removeAttribute('readonly')" readonly placeholder="Antonella" oninput="render()"></div>
-          <div class="fld"><label>Apellido</label><input id="e-ape" name="ztt-ape" autocomplete="off" name="zit_field_b2" autocomplete="off" onfocus="this.removeAttribute('readonly')" readonly placeholder="Bollani" oninput="render()"></div>
+          <div class="fld"><label>Nombre</label><input id="e-nom" autocomplete="new-password" onfocus="this.removeAttribute('readonly')" readonly oninput="render()"></div>
+          <div class="fld"><label>Apellido</label><input id="e-ape" autocomplete="new-password" onfocus="this.removeAttribute('readonly')" readonly oninput="render()"></div>
         </div>
         <div class="r2">
-          <div class="fld"><label>DNI</label><input id="e-dni" name="ztt-dni" autocomplete="off" name="zit_field_c3" autocomplete="off" onfocus="this.removeAttribute('readonly')" readonly placeholder="36.665.436" oninput="render()"></div>
-          <div class="fld"><label>Celular</label><input id="e-cel" name="ztt-cel" autocomplete="off" name="zit_field_d4" autocomplete="off" onfocus="this.removeAttribute('readonly')" readonly placeholder="11 1234-5678"></div>
+          <div class="fld"><label>DNI</label><input id="e-dni" autocomplete="new-password" onfocus="this.removeAttribute('readonly')" readonly oninput="render()"></div>
+          <div class="fld"><label>Celular</label><input id="e-cel" autocomplete="new-password" onfocus="this.removeAttribute('readonly')" readonly></div>
         </div>
         <div class="r2">
-          <div class="fld"><label>Mail</label><input id="e-mail" name="ztt-mail" autocomplete="off" name="zit_field_e5" autocomplete="off" onfocus="this.removeAttribute('readonly')" readonly placeholder="cliente@mail.com"></div>
-          <div class="fld"><label>Domicilio</label><input id="e-dom" name="ztt-dom" autocomplete="off" name="zit_field_f6" autocomplete="off" onfocus="this.removeAttribute('readonly')" readonly placeholder="CABA" oninput="render()"></div>
+          <div class="fld"><label>Mail</label><input id="e-mail" autocomplete="new-password" onfocus="this.removeAttribute('readonly')" readonly></div>
+          <div class="fld"><label>Domicilio</label><input id="e-dom" autocomplete="new-password" onfocus="this.removeAttribute('readonly')" readonly oninput="render()"></div>
         </div>
         <div class="fld"><label>Consulado</label>
           <select id="e-cons" onchange="render()">
@@ -385,19 +386,19 @@ textarea{resize:vertical;}
     <div class="ecard">
       <div class="ehead"><div class="eico" style="background:#e8f7ee">🇮🇹</div><div class="etit">Ascendiente Italiano</div></div>
       <div class="ebody">
-        <div class="fld"><label>Nombre del ascendiente</label><input id="e-asc" name="ztt-asc" autocomplete="off" name="zit_field_g7" autocomplete="off" onfocus="this.removeAttribute('readonly')" readonly placeholder="Michele Gio Maria Bollani" oninput="render()"></div>
+        <div class="fld"><label>Nombre del ascendiente</label><input id="e-asc" autocomplete="new-password" onfocus="this.removeAttribute('readonly')" readonly oninput="render()"></div>
         <div class="r2">
-          <div class="fld"><label>Parentesco</label><input id="e-par" name="ztt-par" autocomplete="off" name="zit_field_h8" autocomplete="off" onfocus="this.removeAttribute('readonly')" readonly placeholder="abuelo" oninput="render()"></div>
-          <div class="fld"><label>Fecha nacimiento</label><input id="e-nac" name="ztt-nac" autocomplete="off" name="zit_field_i9" autocomplete="off" onfocus="this.removeAttribute('readonly')" readonly placeholder="20/10/1925" oninput="render()"></div>
+          <div class="fld"><label>Parentesco</label><input id="e-par" autocomplete="new-password" onfocus="this.removeAttribute('readonly')" readonly oninput="render()"></div>
+          <div class="fld"><label>Fecha nacimiento</label><input id="e-nac" autocomplete="new-password" onfocus="this.removeAttribute('readonly')" readonly oninput="render()"></div>
         </div>
         <div class="r2">
-          <div class="fld"><label>Comuna</label><input id="e-com" name="ztt-com" autocomplete="off" name="zit_field_j10" autocomplete="off" onfocus="this.removeAttribute('readonly')" readonly placeholder="Sabbio Chiese (BS)" oninput="render()"></div>
-          <div class="fld"><label>Se casó en</label><input id="e-cas" name="ztt-cas" autocomplete="off" name="zit_field_k11" autocomplete="off" onfocus="this.removeAttribute('readonly')" readonly placeholder="Argentina" oninput="render()"></div>
+          <div class="fld"><label>Comuna</label><input id="e-com" autocomplete="new-password" onfocus="this.removeAttribute('readonly')" readonly oninput="render()"></div>
+          <div class="fld"><label>Se casó en</label><input id="e-cas" autocomplete="new-password" onfocus="this.removeAttribute('readonly')" readonly oninput="render()"></div>
         </div>
-        <div class="fld"><label>Padres del ascendiente</label><input id="e-pad" name="ztt-pad" autocomplete="off" name="zit_field_l12" autocomplete="off" onfocus="this.removeAttribute('readonly')" readonly placeholder="Luigi Bollani y Adelaide Bacoli" oninput="render()"></div>
+        <div class="fld"><label>Padres del ascendiente</label><input id="e-pad" autocomplete="new-password" onfocus="this.removeAttribute('readonly')" readonly oninput="render()"></div>
         <div class="fld">
   <label style="color:#dc2626;font-weight:700;letter-spacing:.8px">🔒 NOTAS INTERNAS</label>
-  <textarea id="e-obj" name="ztt-obj" autocomplete="off" onfocus="this.removeAttribute('readonly')" readonly rows="2" placeholder="Solo para uso interno del equipo — NO aparece en el PDF del cliente" oninput="render()" style="border:2px solid #fca5a5;background:#fff5f5;border-radius:8px;padding:8px 10px;font-size:13px;color:#7f1d1d;"></textarea>
+  <textarea id="e-obj" autocomplete="new-password" onfocus="this.removeAttribute('readonly')" readonly rows="2" placeholder="Solo para uso interno del equipo — NO aparece en el PDF del cliente" oninput="render()" style="border:2px solid #fca5a5;background:#fff5f5;border-radius:8px;padding:8px 10px;font-size:13px;color:#7f1d1d;"></textarea>
   <div style="font-size:10px;color:#ef4444;font-weight:600;margin-top:3px">⚠️ Este campo NO se imprime ni se envía al cliente</div>
 </div>
       </div>
@@ -677,7 +678,10 @@ textarea{resize:vertical;}
         <input class="sinp" id="ing-q" placeholder="🔍 Buscar cliente..." oninput="filterIngresos()" style="max-width:200px">
         <button class="bref" onclick="loadIngresos()">↺</button>
       </div>
-      <button onclick="limpiarIngresosLocal()" style="padding:6px 12px;border:1px solid #fca5a5;border-radius:7px;background:#fef2f2;font-size:11px;font-weight:600;color:#dc2626;cursor:pointer;transition:all .13s" onmouseover="this.style.background='#fee2e2'" onmouseout="this.style.background='#fef2f2'" title="Limpia los datos guardados localmente en este navegador">🗑️ Limpiar datos locales</button>
+      <div style="display:flex;gap:8px">
+        <button onclick="descargarIngresosExcel()" style="padding:6px 12px;border:1px solid #10b981;border-radius:7px;background:#d1fae5;font-size:11px;font-weight:600;color:#059669;cursor:pointer;transition:all .13s" onmouseover="this.style.background='#a7f3d0'" onmouseout="this.style.background='#d1fae5'" title="Descargar ingresos visibles en Excel">📥 Descargar Excel</button>
+        <button onclick="limpiarIngresosLocal()" style="padding:6px 12px;border:1px solid #fca5a5;border-radius:7px;background:#fef2f2;font-size:11px;font-weight:600;color:#dc2626;cursor:pointer;transition:all .13s" onmouseover="this.style.background='#fee2e2'" onmouseout="this.style.background='#fef2f2'" title="Limpia los datos guardados localmente en este navegador">🗑️ Limpiar datos locales</button>
+      </div>
     </div>
   </div>
 
@@ -705,6 +709,82 @@ textarea{resize:vertical;}
         <tr>
           <td colspan="10" style="padding:8px 10px">
             <button onclick="addIngresoRow()" style="width:100%;padding:9px;border:1.5px dashed var(--bo);border-radius:8px;background:transparent;font-size:13px;font-weight:600;color:#94a3b8;cursor:pointer;transition:all .13s" onmouseover="this.style.borderColor='var(--vd)';this.style.color='var(--vd)'" onmouseout="this.style.borderColor='var(--bo)';this.style.color='#94a3b8'">+ Agregar ingreso</button>
+          </td>
+        </tr>
+      </tfoot>
+    </table>
+  </div>
+
+</div>
+</div>
+
+<!-- VIEW GASTOS -->
+<div class="view" id="view-gastos">
+<div class="vbody">
+  <div style="margin-bottom:20px">
+    <div class="dbtitle" style="margin-bottom:4px">💸 Gastos</div>
+    <div style="font-size:13px;color:#94a3b8">Registro de gastos del negocio</div>
+    <div class="flts" style="margin-top:14px">
+      <div style="display:flex;gap:8px;flex-wrap:wrap;align-items:center">
+        <!-- Filtro de gestor (solo Belén) -->
+        <select class="fsel" id="gas-gestor" onchange="filterGastos()" style="display:none">
+          <option value="">Todos los gestores</option>
+          <option value="Malena">Malena</option>
+          <option value="Sofía">Sofía</option>
+          <option value="Belén">Belén</option>
+          <option value="Germán">Germán</option>
+        </select>
+        <!-- Selector de AÑO -->
+        <select class="fsel" id="gas-anio" onchange="actualizarMesesGastos();filterGastos()">
+          <option value="">Todos los años</option>
+          <option value="2025">2025</option>
+          <option value="2026" selected>2026</option>
+          <option value="2027">2027</option>
+          <option value="2028">2028</option>
+          <option value="2029">2029</option>
+          <option value="2030">2030</option>
+          <option value="2031">2031</option>
+          <option value="2032">2032</option>
+          <option value="2033">2033</option>
+          <option value="2034">2034</option>
+          <option value="2035">2035</option>
+          <option value="2036">2036</option>
+        </select>
+        <!-- Selector de MES -->
+        <select class="fsel" id="gas-mes" onchange="filterGastos()">
+          <option value="">Todos los meses</option>
+        </select>
+        <input class="sinp" id="gas-q" placeholder="🔍 Buscar..." oninput="filterGastos()" style="max-width:200px">
+        <button class="bref" onclick="loadGastos()">↺</button>
+      </div>
+      <div style="display:flex;gap:8px">
+        <button onclick="descargarGastosExcel()" style="padding:6px 12px;border:1px solid #10b981;border-radius:7px;background:#d1fae5;font-size:11px;font-weight:600;color:#059669;cursor:pointer;transition:all .13s" onmouseover="this.style.background='#a7f3d0'" onmouseout="this.style.background='#d1fae5'" title="Descargar gastos visibles en Excel">📥 Descargar Excel</button>
+        <button onclick="limpiarGastosLocal()" style="padding:6px 12px;border:1px solid #fca5a5;border-radius:7px;background:#fef2f2;font-size:11px;font-weight:600;color:#dc2626;cursor:pointer;transition:all .13s" onmouseover="this.style.background='#fee2e2'" onmouseout="this.style.background='#fef2f2'" title="Limpia los datos guardados localmente en este navegador">🗑️ Limpiar datos locales</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Cards resumen -->
+  <div id="gas-resumen" style="display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin-bottom:16px"></div>
+
+  <!-- Tabla inline editable -->
+  <div class="twrap" style="overflow-x:auto">
+    <table style="width:100%;border-collapse:collapse;min-width:800px" id="gas-tbl">
+      <thead>
+        <tr style="background:var(--grl)">
+          <th style="padding:10px 10px;text-align:left;font-size:10px;font-weight:600;color:#94a3b8;letter-spacing:.5px;text-transform:uppercase;border-bottom:1px solid var(--bo);white-space:nowrap">Fecha</th>
+          <th style="padding:10px 10px;text-align:left;font-size:10px;font-weight:600;color:#94a3b8;letter-spacing:.5px;text-transform:uppercase;border-bottom:1px solid var(--bo)">Tipo de Doc.</th>
+          <th style="padding:10px 10px;text-align:left;font-size:10px;font-weight:600;color:#94a3b8;letter-spacing:.5px;text-transform:uppercase;border-bottom:1px solid var(--bo)">Cliente</th>
+          <th style="padding:10px 10px;text-align:left;font-size:10px;font-weight:600;color:#94a3b8;letter-spacing:.5px;text-transform:uppercase;border-bottom:1px solid var(--bo);white-space:nowrap;background:#fef2f2">Monto $</th>
+          <th style="padding:10px 10px;text-align:left;font-size:10px;font-weight:600;color:#94a3b8;letter-spacing:.5px;text-transform:uppercase;border-bottom:1px solid var(--bo)">Método Pago</th>
+          <th style="padding:10px 8px;border-bottom:1px solid var(--bo);width:32px"></th>
+        </tr>
+      </thead>
+      <tbody id="gas-body"></tbody>
+      <tfoot>
+        <tr>
+          <td colspan="6" style="padding:8px 10px">
+            <button onclick="addGastoRow()" style="width:100%;padding:9px;border:1.5px dashed var(--bo);border-radius:8px;background:transparent;font-size:13px;font-weight:600;color:#94a3b8;cursor:pointer;transition:all .13s" onmouseover="this.style.borderColor='var(--vd)';this.style.color='var(--vd)'" onmouseout="this.style.borderColor='var(--bo)';this.style.color='#94a3b8'">+ Agregar gasto</button>
           </td>
         </tr>
       </tfoot>
@@ -943,6 +1023,41 @@ textarea{resize:vertical;}
     </div>
   </div>
 
+  <!-- IMPERIO AUSTRO-HÚNGARO -->
+  <div style="margin-top:40px">
+    <div style="font-size:11px;font-weight:700;color:#94a3b8;letter-spacing:1px;text-transform:uppercase;margin-bottom:12px">🇦🇹 Imperio Austro-Húngaro</div>
+    <div style="background:#fffbeb;border:2px solid #fbbf24;border-radius:10px;padding:16px 20px">
+      <div style="font-weight:700;color:#92400e;margin-bottom:12px;font-size:13px">⚠️ Regla importante para reconocimiento de ciudadanía</div>
+      
+      <div style="margin-bottom:14px">
+        <div style="font-weight:600;color:#78350f;font-size:12px;margin-bottom:6px">❌ NO SE PUEDE DAR ciudadanía si:</div>
+        <div style="background:white;padding:12px;border-radius:6px;font-size:12px;color:#451a03;border-left:3px solid #dc2626">
+          El ascendiente italiano <strong>nació en territorio del Imperio A-H</strong> y <strong>emigró entre 25/12/1867 y 16/07/1920</strong>
+        </div>
+      </div>
+      
+      <div style="margin-bottom:14px">
+        <div style="font-weight:600;color:#78350f;font-size:12px;margin-bottom:6px">✅ SÍ SE PUEDE DAR ciudadanía si:</div>
+        <div style="background:white;padding:12px;border-radius:6px;font-size:12px;color:#451a03;border-left:3px solid #059669">
+          El italiano/a <strong>nació y/o emigró después del 16/07/1920</strong> → Se reconoce por vía <strong>ADMINISTRATIVA</strong> normal (Jure Sanguinis)
+        </div>
+      </div>
+      
+      <details style="margin-top:12px">
+        <summary style="cursor:pointer;font-weight:600;color:#92400e;font-size:12px;padding:8px;background:white;border-radius:6px">📋 Ver lista completa de comunas (click para expandir)</summary>
+        <div style="background:white;margin-top:8px;padding:14px;border-radius:6px;max-height:300px;overflow-y:auto;font-size:11px;line-height:1.6;color:#451a03;column-count:3;column-gap:12px">
+          <strong style="display:block;break-after:avoid">Veneto:</strong> Casotto, Colle Santa Lucia, Cortina d'Ampezzo, Livinallongo del Col di Lana, Pedemonte
+          <br><br>
+          <strong style="display:block;break-after:avoid">Lombardia:</strong> Armo, Bollone, Magasa, Moerna, Persone, Valvestino
+          <br><br>
+          <strong style="display:block;break-after:avoid">Trentino A.A.:</strong> (800+ comunas) Acereto, Agrone, Ala, Albes, Albiano, Aldeno, Aldino, Alliz, Almazzago, Amblar, Andalo, Andogno, Andriano, Anterivo, Anterselva, Appiano, Arco, Arnago, Avelengo, Avio, Badia, Banco, Barbiano, Baselga di Pinè, Baselga di Vezzano, Bedollo, Bersone, Besenello, Bezzecca, Biacesa, Bieno, Bleggio Inferiore, Bleggio Superiore, Bocenago, Bolbeno, Bolentina, Bolzano, Bondo, Bondone, Borghetto, Borgo Valsugana, Borzago, Bosentino, Bozzana, Braies, Breguzzo, Brennero, Brentonico, Bresimo, Bressanone, Brez, Brione, Bronzolo, Brunico, Burgusio, Caderzone Terme, Cadine, Cagnò, Caines, Calavino, Calceranica al Lago, Caldaro, Caldes, Caldonazzo, Calliano, Caminata in Tures, Campitello di Fassa, Campo, Campo Tures, Campodenno, Canal San Bovo, Canazei, Canezza, Capriana, Carano, Carciato, Carisolo, Carzano, Casez, Castagnè, Castel Condino, Castelbello, Casteldarne, Castelfondo, Castellano, Castello, Castello Tesino, Castello-Molina di Fiemme, Castelnuovo, Castelrotto, Cauria, Cavalese, Cavareno, Cavedago, Cavedine, Cavizzana, Celentino, Celledizzo, Cembra, Cengles, Centa San Nicolò, Cermes, Ceves, Chienes, Chienis, Chiusa, Chizzola, Ciago, Ciardes, Cimego, Cimone, Cinte Tesino, Cis, Civezzano, Cles, Cloz, Clusio, Cognola, Cogolo, Coldrano, Colfosco, Colle in Casies, Colli in Pusteria, Cologna in Giudicarie, Cologna-Gavazzo, Colsano, Comano, Comasine, Condino, Coredo, Cornedo, Cortaccia, Corti in Pusteria, Cortina, Corvara, Corzes, Costasavina, Covelano, Covelo, Creto, Croviana, Cunevo, Curon, Daiano, Dambel, Daone, Dardine, Darè, Darzo, Deggiano, Denno, Dercolo, Dermulo, Dimaro, Dobbiaco, Don, Dorsino, Drena, Dro, Egna, Elle, Enguiso, Eores, Faedo, Fai della Paganella, Falesina, Falzes, Faver, Favogna di Sotto, Fiavè, Fiè allo Sciliar, Fiera di Primiero, Fierozzo, Fisto, Flavon, Fleres, Foiana, Folgaria, Fondo, Fornace, Forno, Fortezza, Frassilongo, Fraveggio, Fundres, Funes, Gais, Gardolo al Piano, Gargazzone, Garniga Terme, Giovo, Giustino, Glorenza, Grauno, Gries, Grigno, Grimaldo, Grumes, Grumo, Gudon, Iavrè, Imer, Ischia, Isera, Issengo, Ivano-Fracena, La Valle, Laces, Lacinigo, Lagundo, Laion, Laives, Lana, Lappago, Lardaro, Lasa, Lasino, Laudes, Lauregno, Lavarone, Lavis, Lazfons, Legos, Lenzima, Lenzumo, Levico Terme, Lisignago, Livo, Lizzana, Locca, Lodrone, Lon, Lona-Lases, Longiarù, Lover, Lundo, Luserna, Luson, Lutago, Madrano, Magras, Magrè, Maia Alta, Maia Bassa, Malè, Malgolo, Malles, Malosco, Mantana, Manzano, Marano, Maranza, Marco, Marebbe, Mareta, Margone, Marlengo, Martello, Masi di Vigo, Massimeno, Mastellina, Mattarello, Mazia, Mazzin, Meano, Mechel, Meltina, Merano, Mestriago, Mezzana, Mezzano, Mezzocorona, Mezzolago, Mezzolombardo, Millan-Sarnes, Miola, Moena, Molina di Ledro, Molini di Tures, Mollaro, Molveno, Monclassico, Monghezzo, Monguelfo, Montagna, Montagne, Montassilone, Monte di Mezzodì, Monte di Tramontana, Monte San Candido, Montechiaro, Montefontana, Monteponente, Montes, Mori, Mortaso, Morter, Moso in Passiria, Mules, Nago-Torbole, Nalles, Nanno, Naturno, Nave San Rocco, Naz, Noarna, Nogarè, Nogaredo, Nomesino, Nomi, Noriglio, Nova Levante, Nova Ponente, Novacella, Novaledo, Oltresarca, Onies, Ora, Oris, Ortisei, Ospedaletto, Ossana, Padergnone, Palù del Fersina, Panchià, Parcines, Patone, Pederzano, Peio, Pellizzano, Pelugo, Pera, Perca, Pergine Valsugana, Piano, Pieve di Ledro, Pieve Tesino, Pilcante, Pinzolo, Planol, Plata, Plaus, Pomarolo, Ponte Gardena, Por, Postal, Povo, Pozza di Fassa, Pranzo, Praso, Prati, Prato alla Drava, Prato di Venosta, Prè, Predazzo, Predoi, Pregasina, Preghena, Premione, Preore, Presson, Prezzo, Priò, Proves, Quarazze, Quetta, Rabbi, Racines, Ragoli, Ranzo, Rasun di Sopra, Rasun di Sotto, Ravina, Renon, Resia, Reviano Folas, Revò, Ridanna, Rifiano, Rina, Rio di Pusteria, Riomolino, Riscone, Riva del Garda, Riva di Tures, Rodengo, Romagnano, Romallo, Romarzolo, Romeno, Roncegno Terme, Ronchi Valsugana, Roncogno, Roncone, Ronzo, Ronzo-Chienis, Ronzone, Rover Carbonare, Roverè della Luna, Rovereto, Ruffrè-Mendola, Rumo, Sagron Mis, Salorno, Samoclevo, Samone, San Candido, San Felice, San Genesio Atesino, San Giacomo, San Giorgio, San Giovanni, San Leonardo, San Lorenzo di Sebato, San Lorenzo in Banale, San Lugano, San Martino al Monte, San Martino in Badia, San Martino in Casies, San Martino in Passiria, San Michele all'Adige, San Pietro, San Sigismondo, San Valentino, Santa Cristina Valgardena, Santa Maddalena, Santa Margherita, Sant'Andrea, Sant'Orsola Terme, Sanzeno, Saone, Sardagna, Sarentino, Sarnonico, Sasso, Scaleres, Scena, Sciaves, Sclemo, Scurelle, Segno, Segonzano, Seio, Selva dei Molini, Selva di Val Gardena, Senale, Senales, Seo, Serravalle, Serso, Sesto, Sevignano, Sfruz, Silandro, Siror, Slingia, Sluderno, Smarano, Sopramonte, Soraga, Sover, Spera, Spinga, Spormaggiore, Sporminore, Stava, Stelvio, Stenico, Stilves, Storo, Strada, Stramentizzo, Strembo, Strigno, Stumiaga, Susà, Tablà, Taio, Tanas, Tarces, Tarres, Tassullo, Tavodo, Tavon, Telve, Telve di Sopra, Telves, Tenna, Tenno, Teodone, Terento, Terlago, Terlano, Termenago, Termeno, Termon, Terragnolo, Terres, Terzolas, Tesero, Tesido, Tesimo, Tiarno di Sopra, Tiarno di Sotto, Tione di Trento, Tires, Tirolo, Tiso, Tonadico, Torcegno, Torra, Toss, Trambileno, Transacqua, Trens, Trento, Tres, Trodena, Tubre, Tuenetto, Tuenno, Tunes, Ultimo, Vadena, Valas, Valda, Valdaora, Valfloriana, Valgiovo, Vallarga, Vallarsa, Valle San Felice, Valle San Silvestro, Vallelunga, Valles, Vandoies di Sopra, Vandoies di Sotto, Vanga, Varena, Varna, Vasio, Vattaro, Velturno, Verano, Verdesina, Vermiglio, Versciaco, Vervò, Vezzano, Viarago, Vigalzano, Vignola, Vigo d'Anaunia, Vigo di Fassa, Vigo Rendena, Vigolo Baselga, Vigolo Vattaro, Villa Agnedo, Villa Banale, Villa Lagarina, Villa Ottone, Villa Rendena, Villa Santa Caterina, Villabassa, Villandro, Villazzano, Ville del Monte, Vion, Vipiteno, Vizze, Volano, Zambana, Ziano di Fiemme, Zuclo
+          <br><br>
+          <strong style="display:block;break-after:avoid">Friuli V.G.:</strong> (200+ comunas) Aiba, Aidussina, Aiello del Friuli, Alber di Sesana, Anicova Corada, Aquileia, Auremo di Sopra, Aurisina, Auzza, Battaglia della Bainsizza, Bergogna, Biglia, Bigliana, Boriano, Brazzano, Brestovizza, Bretto, Bucuie, Budagne, Cal di Canale, Camigna, Campolongo al Torre, Camporosso, Canale d'Isonzo, Caporetto, Capriva del Friuli, Capriva nel Carso, Cave Auremiane, Ceconico, Cernizza Goriziana, Cervignano del Friuli, Chiapovano, Chiopris-Viscone, Circhina, Cobbia, Comeno, Corgnale, Cormons, Corona, Cosbana, Cossana, Creda, Crenovizza, Descla, Divaccia, Doberdò del Lago, Dol Grande, Dole, Dolegna del Collio, Dol-Ottelza, Dresenza, Duino, Duttogliano, Ersel, Famie, Farra d'Isonzo, Fiumicello, Fogliano Redipuglia, Fusine in Valromana, Gabria, Gabrovizza, Gargaro, Godovici, Goiaci, Goriano, Gorizia, Gozza, Gracova Serravalle, Gradisca d'Isonzo, Grado, Idresca, Idria, Idria di Sotto, Ioannis, Laglesie San Leopoldo, Lase, Libussina, Locavizza di Aidussina, Locavizza di Canale, Lose, Lucinico, Luico, Malborghetto, Malchina, Mariano del Friuli, Medana, Medea, Merna, Monfalcone, Monrupino, Monte San Vito, Monte Urabice, Montenero d'Idria, Montespino, Moraro, Mossa, Muggia, Muscoli Strassoldo, Oltresonzia, Opacchiasella, Ossecca Vittuglia, Ossegliano San Michele, Paniqua, Perteole, Piedimonte del Calvario, Planina, Plezzo, Pliscovizza, Pocrai del Piro, Podraga, Pontebba Nova, Postumia Grotte, Poverio, Prevacina, Ranziano, Rifembergo, Roditti, Romans, Ronchi dei Legionari, Ronzina, Ruda, Sable Grande, Saga, Sagrado, Salcano, Samaria, Sambasso, San Canzian d'Isonzo, San Daniele del Carso, San Dorligo, San Floriano del Collio, San Giacomo in Colle, San Lorenzo Isontino, San Martino Quisca, San Michele di Postumia, San Pelagio, San Pier d'Isonzo, San Pietro del Carso, San Pietro di Gorizia, San Vito al Torre, San Vito di Vipacco, Santa Croce di Aidussina, Santa Lucia d'Isonzo, Sant'Andrea di Gorizia, Santo Spirito, Savogna d'Isonzo, Scherbina, Scodovacca, Scoppo, Scrilla, Sebreglie, Sedula, Sella delle Trincee, Senadole, Senosecchia, Serpenizza, Sesana, Sgonico, Slappe Zorzi, Slivia, Sonzia, Staranzano, Storie, Sturia, Tapogliano, Tarnova, Tarvisio, Temenizza, Ternova d'Isonzo, Terzo d'Aquileia, Tolmino, Tomadio, Trenta d'Isonzo, Tribussa, Trieste, Turriaco, Ugovizza Valbruna, Ustie, Verpogliano, Versa, Vertoiba, Vertovino, Villa Slavina, Villa Vicentina, Villabassa di Senosecchia, Ville Montevecchio, Villesse, Vipacco, Visco, Voissizza, Volzana, Voschia, Zolla
+        </div>
+      </details>
+    </div>
+  </div>
+
 </div>
 </div>
 
@@ -1095,15 +1210,23 @@ function initApp(){
   const clearForm=()=>{
     ['e-nom','e-ape','e-dni','e-cel','e-mail','e-dom','e-asc','e-par','e-nac','e-com','e-cas','e-pad','e-obj'].forEach(id=>{
       const el=document.getElementById(id);
-      if(el){el.value='';el.defaultValue='';el.setAttribute('value','');}
+      if(el){
+        el.value='';
+        el.defaultValue='';
+        el.setAttribute('value','');
+        el.removeAttribute('readonly'); // Remover readonly para poder limpiar
+      }
     });
-    const ec=document.getElementById('e-cons');if(ec)ec.value='';
-    const et=document.getElementById('e-tipo');if(et)et.value='';
+    const ec=document.getElementById('e-cons');if(ec){ec.value='';ec.selectedIndex=0;}
+    const et=document.getElementById('e-tipo');if(et){et.value='';et.selectedIndex=0;}
   };
+  // Limpiar múltiples veces para vencer el autocomplete
   clearForm();
   setTimeout(clearForm,50);
   setTimeout(clearForm,200);
   setTimeout(clearForm,500);
+  setTimeout(clearForm,1000); // Extra tiempo para asegurar
+  
   const d=new Date();
   document.getElementById('e-fec').value=d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0');
   etas=[];srvs=[];chkItems=[];curId=null;
@@ -1117,6 +1240,9 @@ function initApp(){
     // Mostrar filtro de gestor en ingresos
     const igf=document.getElementById('ing-gestor');
     if(igf) igf.style.display='block';
+    // Mostrar filtro de gestor en gastos
+    const ggf=document.getElementById('gas-gestor');
+    if(ggf) ggf.style.display='block';
     const tp=document.getElementById('tab-precios');
     if(tp) tp.style.display='block';
   }
@@ -1413,6 +1539,7 @@ function showTab(name,btn){
   btn.classList.add('on');
   if(name==='base')loadDb();
   if(name==='ingresos')loadIngresos();
+  if(name==='gastos')loadGastos();
   if(name==='precios')loadPrecios();
   if(name==='panel')loadPanel();
   if(name==='planillas')loadPlanillas();
@@ -1611,8 +1738,18 @@ async function saveClient(){
   curId=rec.id;
   const{error}=await SB.from(TB).upsert(rec,{onConflict:'id'});
   btn.disabled=false;btn.textContent='💾  Guardar en base de clientes';
-  if(error){setSY('err','Error');toast('Error: '+error.message,'err');}
-  else{setSY('ok','Guardado ✓');toast('✅ '+nom+' guardado','ok');}
+  if(error){
+    setSY('err','Error');
+    toast('Error: '+error.message,'err');
+  } else {
+    setSY('ok','Guardado ✓');
+    toast('✅ '+nom+' guardado','ok');
+    // Limpiar formulario automáticamente después de guardar (sin pedir confirmación)
+    setTimeout(() => {
+      clearAll(true); // true = skipConfirm
+      toast('📄 Formulario limpio - Listo para nuevo presupuesto','ok');
+    }, 1500);
+  }
 }
 
 // DB
@@ -1813,60 +1950,9 @@ async function saveM(){
 }
 
 async function syncPagosToIngresos(clienteId, clienteNombre, pagos){
-  // Get existing ingresos for this client that came from ficha (have source_ficha=true)
-  const{data:existing}=await SB.from('ingresos').select('id,pago_id').eq('cliente_id',clienteId).eq('source_ficha',true);
-  const existingPagoIds=new Set((existing||[]).map(r=>r.pago_id).filter(Boolean));
-
-  for(const p of pagos){
-    // Each pago needs at least a fecha and algún monto para sincronizar
-    const tieneEfectivo = p.efectivo && parseFloat(p.efectivo) > 0;
-    const tieneTransf = p.transferencia && parseFloat(p.transferencia) > 0;
-    const tieneMonto = p.monto && String(p.monto).match(/\d/); // compatibilidad con formato viejo
-    if(!p.fecha || (!tieneEfectivo && !tieneTransf && !tieneMonto)) continue;
-
-    // Generar un ID estable y único basado en datos del pago (no en Date.now)
-    const pagoKey = p.id || (clienteId + '|' + p.fecha + '|' + (p.efectivo||'') + '|' + (p.transferencia||'') + '|' + (p.tipo||p.concepto||''));
-    if(existingPagoIds.has(pagoKey)) continue; // ya sincronizado
-
-    // Calcular montos
-    let efectivo = null, transferencia = null, aPagar = 0;
-    if(tieneEfectivo){
-      efectivo = parseFloat(p.efectivo);
-      aPagar = efectivo;
-    } else if(tieneTransf){
-      transferencia = parseFloat(p.transferencia);
-      aPagar = Math.round(transferencia / 1.4);
-    } else if(tieneMonto){
-      // Formato viejo: campo "monto" string
-      const montoStr = String(p.monto||'');
-      const num = parseFloat(montoStr.replace(/[^0-9.]/g,''))||0;
-      const isTransf = montoStr.toUpperCase().includes('TRANSF') || !!p.comprobante;
-      if(isTransf){ transferencia=num; aPagar=Math.round(num/1.4); }
-      else { efectivo=num; aPagar=num; }
-    }
-
-    // Determinar gestor: usar el del pago si existe, sino el usuario actual
-    const gestorPago = p.quien_cobro
-      ? (['Malena','Sofía','Belén','Germán'].find(g => p.quien_cobro.toLowerCase().includes(g.toLowerCase())) || curG)
-      : curG;
-
-    const{error}=await SB.from('ingresos').insert({
-      id: 'sync-' + clienteId.slice(-8) + '-' + p.fecha + '-' + Math.random().toString(36).slice(2,7),
-      pago_id: pagoKey,
-      cliente_id: clienteId,
-      fecha: p.fecha,
-      cliente: clienteNombre,
-      tipo: p.tipo || p.concepto || '',
-      efectivo: efectivo,
-      transferencia: transferencia,
-      a_pagar: Math.round(efectivo + transferencia),
-      comprobante: p.comprobante || null,
-      quien_cobro: p.quien_cobro || '',
-      gestor: gestorPago,
-      source_ficha: true,
-    });
-    if(error) console.warn('syncPagosToIngresos error:', error.message, p);
-  }
+  // FUNCIÓN DESACTIVADA - Ingresos y Base de Clientes son INDEPENDIENTES
+  // No se sincronizan automáticamente para evitar duplicados
+  return;
 }
 
 /* ════════════════════════════════════════
@@ -2054,6 +2140,7 @@ function updPago(i,field,value){
    INGRESOS — TABLA INLINE
 ════════════════════════════════════════ */
 let ingresosData=[], ingresosFiltrados=[], ingPendingSave={};
+let gastosData=[], gastosFiltrados=[], gasPendingSave={};
 
 const CING = {
   is: (s)=> !isNaN(parseFloat(s)) && parseFloat(s)>0,
@@ -2450,13 +2537,26 @@ async function saveIngRow(id){
   if(!r) return;
   if(!r.cliente||!r.fecha){toast('Completá fecha y cliente','err');return;}
   
-  // PASO 1: GUARDAR SIEMPRE EN LOCALSTORAGE PRIMERO (garantiza persistencia)
+  // Preparar registro limpio
+  const recordToSave = {
+    id: r.id,
+    fecha: r.fecha,
+    cliente: r.cliente,
+    tipo: r.tipo || '',
+    efectivo: r.efectivo || null,
+    transferencia: r.transferencia || null,
+    a_pagar: r.a_pagar || null,
+    quien_cobro: r.quien_cobro || '',
+    comentario: r.comentario || '',
+    comprobante: r.comprobante || '',
+    gestor: r.gestor || curG,
+    cliente_id: r.cliente_id || null
+  };
+  
+  // PASO 1: GUARDAR EN LOCALSTORAGE PRIMERO
   try {
     const localIngresos = JSON.parse(localStorage.getItem('zittano_ingresos') || '[]');
     const index = localIngresos.findIndex(x => x.id === id);
-    const recordToSave = {...r};
-    delete recordToSave._new; // limpiar flag temporal
-    recordToSave.gestor = recordToSave.gestor || curG;
     
     if(index >= 0) {
       localIngresos[index] = recordToSave;
@@ -2464,28 +2564,24 @@ async function saveIngRow(id){
       localIngresos.push(recordToSave);
     }
     localStorage.setItem('zittano_ingresos', JSON.stringify(localIngresos));
-    console.log('✅ Ingreso guardado en localStorage:', id);
+    console.log('✅ Guardado en localStorage:', id);
   } catch(e) {
-    console.error('Error guardando en localStorage:', e);
-    toast('Error al guardar localmente','err');
+    console.error('Error en localStorage:', e);
+    toast('Error al guardar','err');
     return;
   }
   
-  // PASO 2: Intentar guardar en Supabase (opcional, si está disponible)
-  const{_new,...record}=r;
-  record.gestor=record.gestor||curG;
-  let error;
+  // PASO 2: UPSERT en Supabase (evita duplicados)
   try {
-    if(_new){
-      ({error}=await SB.from('ingresos').insert(record));
-      if(!error) r._new=false;
+    const {error} = await SB.from('ingresos').upsert(recordToSave, {onConflict: 'id'});
+    if(error) {
+      console.warn('Error Supabase:', error.message);
     } else {
-      ({error}=await SB.from('ingresos').update(record).eq('id',id));
+      console.log('✅ Guardado en Supabase:', id);
+      if(r._new) delete r._new;
     }
-    if(error) console.warn('Supabase error (datos guardados localmente):', error.message);
-    if(!error && r.cliente_id) await syncIngresoPagoEnFicha(r);
   } catch(e) {
-    console.warn('Supabase no disponible (datos guardados localmente):', e);
+    console.warn('Supabase no disponible:', e);
   }
   
   toast('✅ Guardado','ok');
@@ -3761,6 +3857,77 @@ function limpiarIngresosLocal(){
   }
 }
 
+// Descargar ingresos en Excel
+function descargarIngresosExcel(){
+  if(!ingresosFiltrados || ingresosFiltrados.length === 0){
+    toast('⚠️ No hay ingresos para descargar','err');
+    return;
+  }
+  
+  try {
+    // Crear CSV con punto y coma (;) como separador para Excel Argentina
+    const headers = ['Fecha', 'Cliente', 'Tipo', 'Efectivo', 'Transferencia', 'A Pagar', 'Quien Cobró', 'Gestor'];
+    let csv = headers.join(';') + '\n';
+    
+    ingresosFiltrados.forEach(r => {
+      const fila = [
+        r.fecha || '',
+        r.cliente || '',
+        r.tipo || '',
+        r.efectivo || '0',
+        r.transferencia || '0',
+        r.a_pagar || '0',
+        r.quien_cobro || '',
+        r.gestor || ''
+      ];
+      
+      // Escapar comillas y punto y coma
+      const valores = fila.map(val => {
+        let v = String(val);
+        if(v.includes(';') || v.includes('"') || v.includes('\n')){
+          v = '"' + v.replace(/"/g, '""') + '"';
+        }
+        return v;
+      });
+      
+      csv += valores.join(';') + '\n';
+    });
+    
+    // Crear archivo con BOM para que Excel reconozca UTF-8
+    const BOM = '\uFEFF';
+    const blob = new Blob([BOM + csv], { type: 'text/csv;charset=utf-8;' });
+    const url = URL.createObjectURL(blob);
+    
+    // Nombre del archivo con fecha actual
+    const hoy = new Date();
+    const fecha = hoy.getFullYear() + '-' + 
+                  String(hoy.getMonth() + 1).padStart(2, '0') + '-' + 
+                  String(hoy.getDate()).padStart(2, '0');
+    const filename = `Ingresos_Zittano_${fecha}.csv`;
+    
+    // Crear link y forzar descarga
+    const link = document.createElement('a');
+    link.style.display = 'none';
+    link.href = url;
+    link.download = filename;
+    link.setAttribute('download', filename);
+    
+    document.body.appendChild(link);
+    link.click();
+    
+    // Limpiar
+    setTimeout(() => {
+      document.body.removeChild(link);
+      URL.revokeObjectURL(url);
+    }, 100);
+    
+    toast('✅ Excel descargado correctamente', 'ok');
+  } catch(error) {
+    console.error('Error descargando Excel:', error);
+    toast('❌ Error al descargar. Intentá de nuevo.', 'err');
+  }
+}
+
 function fmtFechaIng(f){
   if(!f) return '—';
   // handle both yyyy-mm-dd and dd/mm/yyyy
@@ -3769,6 +3936,187 @@ function fmtFechaIng(f){
     return d+'/'+m+'/'+y;
   }
   return f;
+}
+
+
+/* ════════════════════════════════════════
+   GASTOS
+════════════════════════════════════════ */
+
+async function loadGastos(){
+  const localData = localStorage.getItem('zittano_gastos');
+  const localGastos = localData ? JSON.parse(localData) : [];
+  const {data: supabaseData} = await SB.from('gastos').select('*');
+  const supabaseGastos = supabaseData || [];
+  const todosGastos = [...localGastos];
+  supabaseGastos.forEach(sg => {
+    if(!todosGastos.find(lg => lg.id === sg.id)) todosGastos.push(sg);
+  });
+  gastosData = todosGastos.sort((a,b) => (b.fecha||'').localeCompare(a.fecha||''));
+  actualizarMesesGastos();
+  filterGastos();
+}
+
+function actualizarMesesGastos(){
+  const selAnio = document.getElementById('gas-anio');
+  const anioActual = selAnio ? (selAnio.value || new Date().getFullYear()) : new Date().getFullYear();
+  const selMes = document.getElementById('gas-mes');
+  if(selMes){
+    const nombres = ['Enero', 'Febrero', 'Marzo', 'Abril', 'Mayo', 'Junio', 'Julio', 'Agosto', 'Septiembre', 'Octubre', 'Noviembre', 'Diciembre'];
+    const mesesDelAnio = [];
+    for(let m = 1; m <= 12; m++) mesesDelAnio.push(anioActual + '-' + String(m).padStart(2, '0'));
+    selMes.innerHTML = '<option value="">Todos los meses</option>' + mesesDelAnio.map(m => {
+      const [y, mo] = m.split('-');
+      return `<option value="${m}">${nombres[parseInt(mo) - 1]} ${y}</option>`;
+    }).join('');
+  }
+}
+
+function filterGastos(){
+  const anio = (document.getElementById("gas-anio")||{value:""}).value||"";
+  const mes = (document.getElementById("gas-mes")||{value:""}).value||"";
+  const q = ((document.getElementById("gas-q")||{value:""}).value||"").toLowerCase();
+  const gestorFiltro = curG==="Belén"?((document.getElementById("gas-gestor")||{value:""}).value||""):"";
+  gastosFiltrados = gastosData.filter(r => {
+    const fecha = r.fecha || "";
+    let mFecha = true;
+    if(anio) mFecha = fecha.startsWith(anio);
+    if(mes) mFecha = fecha.startsWith(mes);
+    const mQ = !q || (r.tipo_doc||"").toLowerCase().includes(q) || (r.cliente||"").toLowerCase().includes(q);
+    const mG = !gestorFiltro || (r.gestor||"")=== gestorFiltro;
+    return mFecha && mQ && mG;
+  });
+  renderGastos();
+}
+
+function renderGastos(){
+  const tbody = document.getElementById('gas-body');
+  if(!tbody) return;
+  let totalMonto = 0;
+  gastosFiltrados.forEach(r => totalMonto += parseFloat(r.monto || 0));
+  const resumen = document.getElementById('gas-resumen');
+  if(resumen){
+    const mesActual = new Date().getFullYear()+'-'+String(new Date().getMonth()+1).padStart(2,'0');
+    const totalMesActual = gastosFiltrados.filter(r => (r.fecha||'').startsWith(mesActual)).reduce((sum,r)=>sum+parseFloat(r.monto||0),0);
+    resumen.innerHTML = `
+      <div style="background:#fef2f2;border:1px solid #fca5a5;border-radius:10px;padding:14px">
+        <div style="font-size:11px;font-weight:600;color:#dc2626;margin-bottom:6px">💸 TOTAL GASTOS</div>
+        <div style="font-size:22px;font-weight:700;color:#b91c1c">$${totalMonto.toLocaleString('es-AR')}</div>
+      </div>
+      <div style="background:white;border:1px solid var(--bo);border-radius:10px;padding:14px">
+        <div style="font-size:11px;font-weight:600;color:#94a3b8;margin-bottom:6px">REGISTROS</div>
+        <div style="font-size:20px;font-weight:700;color:var(--grd)">${gastosFiltrados.length}</div>
+      </div>
+      <div style="background:white;border:1px solid var(--bo);border-radius:10px;padding:14px">
+        <div style="font-size:11px;font-weight:600;color:#94a3b8;margin-bottom:6px">PROMEDIO</div>
+        <div style="font-size:20px;font-weight:700;color:#6366f1">$${gastosFiltrados.length > 0 ? Math.round(totalMonto / gastosFiltrados.length).toLocaleString('es-AR') : '0'}</div>
+      </div>
+      <div style="background:white;border:1px solid var(--bo);border-radius:10px;padding:14px">
+        <div style="font-size:11px;font-weight:600;color:#94a3b8;margin-bottom:6px">MES ACTUAL</div>
+        <div style="font-size:20px;font-weight:700;color:#f59e0b">$${totalMesActual.toLocaleString('es-AR')}</div>
+      </div>
+    `;
+  }
+  const INP = 'padding:5px 7px;border:1.5px solid var(--bo);border-radius:6px;font-size:12.5px;outline:none;background:white;width:100%';
+  tbody.innerHTML = gastosFiltrados.map(r => {
+    const saved = !gasPendingSave[r.id];
+    const borderColor = saved ? 'var(--bo)' : '#fb923c';
+    return `<tr style="border-bottom:1px solid ${borderColor}">
+      <td style="padding:6px 8px"><input type="date" value="${r.fecha||''}" oninput="updGas('${r.id}','fecha',this.value)" style="${INP};width:140px"></td>
+      <td style="padding:6px 8px"><input value="${(r.tipo_doc||'').replace(/"/g,'&quot;')}" placeholder="Tipo..." oninput="updGas('${r.id}','tipo_doc',this.value)" style="${INP}"></td>
+      <td style="padding:6px 8px"><input value="${(r.cliente||'').replace(/"/g,'&quot;')}" placeholder="Cliente..." oninput="updGas('${r.id}','cliente',this.value)" style="${INP}"></td>
+      <td style="padding:6px 8px;background:#fef2f2"><input value="${r.monto||''}" placeholder="0" oninput="updGas('${r.id}','monto',this.value)" style="${INP};width:100px;color:#b91c1c;font-weight:700"></td>
+      <td style="padding:6px 8px">
+        <select oninput="updGas('${r.id}','metodo_pago',this.value)" style="${INP}">
+          <option value="" ${!r.metodo_pago?'selected':''}>-- Método --</option>
+          <option value="Efectivo" ${r.metodo_pago==='Efectivo'?'selected':''}>Efectivo</option>
+          <option value="Transferencia" ${r.metodo_pago==='Transferencia'?'selected':''}>Transferencia</option>
+          <option value="Débito" ${r.metodo_pago==='Débito'?'selected':''}>Débito</option>
+          <option value="Crédito" ${r.metodo_pago==='Crédito'?'selected':''}>Crédito</option>
+        </select>
+      </td>
+      <td style="padding:6px 8px;text-align:center">
+        <button onclick="saveGasRow('${r.id}')" style="width:28px;height:28px;border-radius:6px;border:none;background:${saved?'#d1fae5':'#fbbf24'};color:${saved?'#059669':'white'};font-size:14px;cursor:pointer" title="${saved?'Guardado':'Guardar'}">✓</button>
+      </td>
+    </tr>`;
+  }).join('');
+}
+
+function addGastoRow(){
+  const newId = 'gas-' + Date.now();
+  const hoy = new Date();
+  const fecha = hoy.getFullYear() + '-' + String(hoy.getMonth() + 1).padStart(2, '0') + '-' + String(hoy.getDate()).padStart(2, '0');
+  gastosData.unshift({id: newId, fecha, tipo_doc: '', cliente: '', monto: '', metodo_pago: '', gestor: curG});
+  gasPendingSave[newId] = true;
+  filterGastos();
+}
+
+function updGas(id, field, value){
+  const r = gastosData.find(x => x.id === id);
+  if(!r) return;
+  r[field] = value;
+  gasPendingSave[id] = true;
+  renderGastos();
+}
+
+async function saveGasRow(id){
+  const r = gastosData.find(x => x.id === id);
+  if(!r) return;
+  const recordToSave = {id: r.id, fecha: r.fecha, tipo_doc: r.tipo_doc || '', cliente: r.cliente || '', monto: r.monto || null, metodo_pago: r.metodo_pago || '', gestor: r.gestor || curG};
+  const localData = localStorage.getItem('zittano_gastos');
+  const localGastos = localData ? JSON.parse(localData) : [];
+  const idx = localGastos.findIndex(x => x.id === id);
+  if(idx >= 0) localGastos[idx] = recordToSave;
+  else localGastos.push(recordToSave);
+  localStorage.setItem('zittano_gastos', JSON.stringify(localGastos));
+  try {
+    const {error} = await SB.from('gastos').upsert(recordToSave, {onConflict: 'id'});
+    if(error) console.warn('Error Supabase:', error.message);
+  } catch(e) { console.warn('Supabase no disponible:', e); }
+  delete gasPendingSave[id];
+  renderGastos();
+  toast('Guardado ✓', 'ok');
+}
+
+function limpiarGastosLocal(){
+  if(confirm('⚠️ Esto eliminará TODOS los gastos guardados localmente.\n\n¿Estás seguro?')){
+    localStorage.removeItem('zittano_gastos');
+    toast('🗑️ Datos locales eliminados. Recargá la página.','ok');
+  }
+}
+
+function descargarGastosExcel(){
+  if(!gastosFiltrados || gastosFiltrados.length === 0){
+    toast('⚠️ No hay gastos para descargar','err');
+    return;
+  }
+  try {
+    const headers = ['Fecha', 'Tipo de Doc', 'Cliente', 'Monto', 'Método Pago', 'Gestor'];
+    let csv = headers.join(';') + '\n';
+    gastosFiltrados.forEach(r => {
+      const fila = [r.fecha || '', r.tipo_doc || '', r.cliente || '', r.monto || '0', r.metodo_pago || '', r.gestor || ''];
+      const valores = fila.map(val => {let v = String(val); if(v.includes(';') || v.includes('"') || v.includes('\n')) v = '"' + v.replace(/"/g, '""') + '"'; return v;});
+      csv += valores.join(';') + '\n';
+    });
+    const BOM = '\uFEFF';
+    const blob = new Blob([BOM + csv], { type: 'text/csv;charset=utf-8;' });
+    const url = URL.createObjectURL(blob);
+    const hoy = new Date();
+    const fecha = hoy.getFullYear() + '-' + String(hoy.getMonth() + 1).padStart(2, '0') + '-' + String(hoy.getDate()).padStart(2, '0');
+    const filename = `Gastos_Zittano_${fecha}.csv`;
+    const link = document.createElement('a');
+    link.style.display = 'none';
+    link.href = url;
+    link.download = filename;
+    link.setAttribute('download', filename);
+    document.body.appendChild(link);
+    link.click();
+    setTimeout(() => {document.body.removeChild(link); URL.revokeObjectURL(url);}, 100);
+    toast('✅ Excel descargado correctamente', 'ok');
+  } catch(error) {
+    console.error('Error descargando Excel:', error);
+    toast('❌ Error al descargar. Intentá de nuevo.', 'err');
+  }
 }
 
 
@@ -4332,12 +4680,36 @@ function scheduleAutoSave(){
   }, 2000); // guarda 2 segundos después de la última edición
 }
 // CLEAR
-function clearAll(){
-  if(!confirm('¿Nuevo presupuesto? Se borrará el actual.'))return;
-  ['e-nom','e-ape','e-dni','e-cel','e-mail','e-dom','e-asc','e-par','e-nac','e-com','e-cas','e-pad','e-obj'].forEach(id=>{const el=document.getElementById(id);if(el)el.value='';});
-  document.getElementById('e-cons').value='';document.getElementById('e-tipo').value='';
+function clearAll(skipConfirm = false){
+  if(!skipConfirm && !confirm('¿Nuevo presupuesto? Se borrará el actual.')) return;
+  
+  ['e-nom','e-ape','e-dni','e-cel','e-mail','e-dom','e-asc','e-par','e-nac','e-com','e-cas','e-pad','e-obj'].forEach(id=>{
+    const el=document.getElementById(id);
+    if(el){
+      el.value='';
+      el.defaultValue='';
+      el.setAttribute('value','');
+    }
+  });
+  
+  const ec=document.getElementById('e-cons');
+  if(ec){ec.value='';ec.selectedIndex=0;}
+  
+  const et=document.getElementById('e-tipo');
+  if(et){et.value='';et.selectedIndex=0;}
+  
   document.getElementById('chk-prev').style.display='none';
-  srvs=[];etas=[];renderEtas();renderSrvs();render();
+  
+  srvs=[];
+  etas=[];
+  chkItems=[];
+  curId=null;
+  
+  renderEtas();
+  renderSrvs();
+  render();
+  
+  const d=new Date();
   document.getElementById('e-fec').value=d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0');
 }
 </script>
