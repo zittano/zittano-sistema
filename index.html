@@ -1107,7 +1107,7 @@ textarea{resize:vertical;}
               <th style="padding:9px 12px;text-align:left;font-size:10px;font-weight:600;color:#94a3b8;border-bottom:1px solid var(--bo)">Fecha Ingreso</th>
               <th style="padding:9px 12px;text-align:left;font-size:10px;font-weight:600;color:#94a3b8;border-bottom:1px solid var(--bo)">Expediente</th>
               <th style="padding:9px 12px;text-align:left;font-size:10px;font-weight:600;color:#94a3b8;border-bottom:1px solid var(--bo)">Tipo Doc.</th>
-              <th style="padding:9px 12px;text-align:left;font-size:10px;font-weight:600;color:#94a3b8;border-bottom:1px solid var(--bo)">Cliente</th>
+              <th style="padding:9px 12px;text-align:left;font-size:10px;font-weight:600;color:#94a3b8;border-bottom:1px solid var(--bo)">Nombre y apellido (cliente)</th>
               <th style="padding:9px 12px;text-align:center;font-size:10px;font-weight:600;color:#94a3b8;border-bottom:1px solid var(--bo);width:90px">Estado</th>
               <th style="padding:9px 8px;border-bottom:1px solid var(--bo);width:60px"></th>
             </tr>
@@ -1371,10 +1371,16 @@ Adjuntar: Presupuesto PDF`
    PLANILLAS (Cámaras y Apostillas)
 ══════════════════════════════ */
 async function loadPlanillas(){
-  const {data} = await SB.from('planillas').select('*');
+  // 🔒 FILTRAR POR GESTOR - Solo Belén ve todo
+  let query = SB.from('planillas').select('*');
+  if(curG !== 'Belén') query = query.eq('gestor', curG);
+  
+  const {data} = await query;
   const rows = data || [];
   planillasData.camaras = rows.filter(r => r.tipo === 'camara');
   planillasData.apostillas = rows.filter(r => r.tipo === 'apostilla');
+  
+  console.log(`🔒 Planillas cargadas para ${curG}: Cámaras=${planillasData.camaras.length}, Apostillas=${planillasData.apostillas.length}`);
   renderPlanillas();
 }
 
@@ -1454,7 +1460,7 @@ function renderPlanilla(tipo){
             style="${INP}">
         </td>
         <td style="padding:6px 8px">
-          <input value="${(r.cliente||'').replace(/"/g,'&quot;')}" placeholder="Nombre cliente..."
+          <input value="${(r.cliente||'').replace(/"/g,'&quot;')}" placeholder="Nombre y apellido..."
             oninput="updPlanilla('apostillas','${r.id}','cliente',this.value)"
             style="${INP}">
         </td>
@@ -1482,18 +1488,21 @@ function addPlanillaRow(tipo){
   const tipoSingular = tipo === 'camaras' ? 'camara' : 'apostilla';
   const newRow = {
     id: tipoSingular + '-' + Date.now(),
-    tipo: tipoSingular
+    tipo: tipoSingular,
+    gestor: curG  // 🔒 Asignar gestor actual
   };
   
   if(tipo === 'camaras'){
     newRow.numero = '';
     newRow.fecha = '';
     newRow.mail = '';
+    newRow.estado = '';
   } else {
     newRow.fecha_ingreso = '';
     newRow.expediente = '';
     newRow.tipo_doc = '';
     newRow.cliente = '';
+    newRow.estado = '';
   }
   
   planillasData[tipo].push(newRow);
@@ -1505,12 +1514,20 @@ async function updPlanilla(tipo, id, field, value){
   if(!r) return;
   r[field] = value;
   
-  // Auto-save
-  const {data:existing} = await SB.from('planillas').select('id').eq('id',id).single();
-  if(existing){
-    await SB.from('planillas').update({[field]:value}).eq('id',id);
-  } else {
-    await SB.from('planillas').insert(r);
+  // Auto-save con mejor manejo de errores
+  try {
+    const {data:existing} = await SB.from('planillas').select('id').eq('id',id).single();
+    if(existing){
+      const {error} = await SB.from('planillas').update({[field]:value}).eq('id',id);
+      if(error) throw error;
+    } else {
+      const {error} = await SB.from('planillas').insert(r);
+      if(error) throw error;
+    }
+    console.log('✓ Guardado:', tipo, field, value);
+  } catch(error) {
+    console.error('Error al guardar planilla:', error);
+    toast('Error al guardar', 'err');
   }
   
   // Re-renderizar para mostrar el cambio de estado/color
@@ -2350,19 +2367,8 @@ function renderIngRow(r){
         </select>
       </div>
     </td>
-    <td style="${cellStyle}" id="td-cli-${r.id}">
-      ${r.cliente_id
-        ? `<div style="display:flex;align-items:center;gap:5px;padding:4px 6px">
-             <span style="font-size:13px;font-weight:600;color:var(--grd)">${escH(r.cliente||'')}</span>
-             <span style="font-size:9px;background:#dbeafe;color:#1e40af;border-radius:6px;padding:1px 5px;font-weight:700">vinculado</span>
-             <button onclick="desvincularCliente('${r.id}')" style="border:none;background:transparent;cursor:pointer;font-size:11px;color:#94a3b8">✏️</button>
-           </div>`
-        : `<div style="position:relative">
-             <input value="${escH(r.cliente||'')}" placeholder="Nombre cliente..." id="cli-inp-${r.id}"
-               oninput="buscarCliente('${r.id}',this.value)" onblur="setTimeout(()=>cerrarSugerencias('${r.id}'),200)"
-               style="${inp};min-width:160px" autocomplete="off">
-             <div id="cli-sug-${r.id}" style="display:none;position:absolute;top:100%;left:0;right:0;background:white;border:1.5px solid var(--az);border-radius:8px;box-shadow:var(--sh);z-index:999;max-height:180px;overflow-y:auto"></div>
-           </div>`}
+    <td style="${cellStyle}">
+      <input value="${escH(r.cliente||'')}" placeholder="Nombre del cliente..." oninput="updIng('${r.id}','cliente',this.value)" style="${inp};min-width:180px">
     </td>
     <td style="${cellStyle}"><input value="${escH(r.tipo||'')}" placeholder="consulta, AIRE..." oninput="updIng('${r.id}','tipo',this.value)" style="${inp};min-width:120px"></td>
     <td style="${cellStyle}"><input type="number" value="${r.efectivo||''}" placeholder="0" oninput="updIngNum('${r.id}','efectivo',this.value)" style="${inp};min-width:100px;color:#1e40af;font-weight:600"></td>
@@ -2519,7 +2525,7 @@ function desvincularCliente(rowId){
   const td=document.getElementById('td-cli-'+rowId);
   const s='padding:6px 8px;border:1.5px solid var(--bo);border-radius:6px;font-size:12.5px;outline:none;background:white;width:100%';
   if(td) td.innerHTML=`<div style="position:relative">
-    <input value="${escH(nombre)}" placeholder="Nombre cliente..." id="cli-inp-${rowId}"
+    <input value="${escH(nombre)}" placeholder="Nombre y apellido..." id="cli-inp-${rowId}"
       oninput="buscarCliente('${rowId}',this.value)" onblur="setTimeout(()=>cerrarSugerencias('${rowId}'),200)"
       style="${s};min-width:160px" autocomplete="off">
     <div id="cli-sug-${rowId}" style="display:none;position:absolute;top:100%;left:0;right:0;background:white;border:1.5px solid var(--az);border-radius:8px;box-shadow:var(--sh);z-index:999;max-height:180px;overflow-y:auto"></div>
@@ -3946,13 +3952,24 @@ function fmtFechaIng(f){
 async function loadGastos(){
   const localData = localStorage.getItem('zittano_gastos');
   const localGastos = localData ? JSON.parse(localData) : [];
-  const {data: supabaseData} = await SB.from('gastos').select('*');
+  
+  // 🔒 FILTRAR POR GESTOR - Solo Belén ve todo
+  let query = SB.from('gastos').select('*');
+  if(curG !== 'Belén') query = query.eq('gestor', curG);
+  
+  const {data: supabaseData} = await query;
   const supabaseGastos = supabaseData || [];
   const todosGastos = [...localGastos];
   supabaseGastos.forEach(sg => {
     if(!todosGastos.find(lg => lg.id === sg.id)) todosGastos.push(sg);
   });
-  gastosData = todosGastos.sort((a,b) => (b.fecha||'').localeCompare(a.fecha||''));
+  
+  // 🔒 FILTRAR localStorage también por gestor
+  gastosData = todosGastos
+    .filter(g => curG === 'Belén' || g.gestor === curG)
+    .sort((a,b) => (b.fecha||'').localeCompare(a.fecha||''));
+  
+  console.log(`🔒 Gastos cargados para ${curG}:`, gastosData.length);
   actualizarMesesGastos();
   filterGastos();
 }
