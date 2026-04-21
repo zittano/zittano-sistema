@@ -430,12 +430,14 @@ textarea{resize:vertical;}
           <button class="bsm" onclick="addActa('nacimiento')" style="background:#3b82f6">+ Nacimiento</button>
           <button class="bsm" onclick="addActa('matrimonio')" style="background:#8b5cf6">+ Matrimonio</button>
           <button class="bsm" onclick="addActa('defuncion')" style="background:#6b7280">+ Defunción</button>
-          <button class="bsm" onclick="addItemSimple('expediente')" style="background:#0891b2">+ Expte. Cámara</button>
+          <button class="bsm" onclick="addItemSimple('expediente')" style="background:#0891b2">+ Expediente de Cámara + Legalización + Traducción Pública</button>
           <button class="bsm" onclick="addItemSimple('traduccion')" style="background:#059669">+ Traducción</button>
           <button class="bsm" onclick="addItemSimple('aire')" style="background:#d97706">+ AIRE</button>
           <button class="bsm" onclick="addItemSimple('codice')" style="background:#7c3aed">+ Codice Fiscale</button>
           <button class="bsm" onclick="addItemSimple('cie')" style="background:#be185d">+ CIE</button>
           <button class="bsm" onclick="addItemSimple('spid')" style="background:#1d4ed8">+ SPID</button>
+          <button class="bsm" onclick="addItemSimple('pasaporte')" style="background:#dc2626">+ Pasaporte</button>
+          <button class="bsm" onclick="addItemSimple('divorcio')" style="background:#ea580c">+ Divorcio</button>
           <button class="bsm" onclick="addItemSimple('honorarios')" style="background:#064e3b">+ Honorarios</button>
         </div>
       </div>
@@ -482,7 +484,7 @@ textarea{resize:vertical;}
             </optgroup>
             <optgroup label="Otros">
               <option value="Divorcio|$420.000|$300.000|—">Divorcio</option>
-              <option value="Apostilla Extra Cámara 30 días|$112.000|$80.000|—">Apostilla Extra Cámara 30 días</option>
+              <option value="Apostilla|$112.000|$80.000|—">Apostilla</option>
               <option value="Correo|$35.000|$35.000|—">Correo ($35.000)</option>
             </optgroup>
           </select>
@@ -1107,7 +1109,7 @@ textarea{resize:vertical;}
               <th style="padding:9px 12px;text-align:left;font-size:10px;font-weight:600;color:#94a3b8;border-bottom:1px solid var(--bo)">Fecha Ingreso</th>
               <th style="padding:9px 12px;text-align:left;font-size:10px;font-weight:600;color:#94a3b8;border-bottom:1px solid var(--bo)">Expediente</th>
               <th style="padding:9px 12px;text-align:left;font-size:10px;font-weight:600;color:#94a3b8;border-bottom:1px solid var(--bo)">Tipo Doc.</th>
-              <th style="padding:9px 12px;text-align:left;font-size:10px;font-weight:600;color:#94a3b8;border-bottom:1px solid var(--bo)">Nombre y apellido (cliente)</th>
+              <th style="padding:9px 12px;text-align:left;font-size:10px;font-weight:600;color:#94a3b8;border-bottom:1px solid var(--bo)">Cliente</th>
               <th style="padding:9px 12px;text-align:center;font-size:10px;font-weight:600;color:#94a3b8;border-bottom:1px solid var(--bo);width:90px">Estado</th>
               <th style="padding:9px 8px;border-bottom:1px solid var(--bo);width:60px"></th>
             </tr>
@@ -1371,16 +1373,10 @@ Adjuntar: Presupuesto PDF`
    PLANILLAS (Cámaras y Apostillas)
 ══════════════════════════════ */
 async function loadPlanillas(){
-  // 🔒 FILTRAR POR GESTOR - Solo Belén ve todo
-  let query = SB.from('planillas').select('*');
-  if(curG !== 'Belén') query = query.eq('gestor', curG);
-  
-  const {data} = await query;
+  const {data} = await SB.from('planillas').select('*');
   const rows = data || [];
   planillasData.camaras = rows.filter(r => r.tipo === 'camara');
   planillasData.apostillas = rows.filter(r => r.tipo === 'apostilla');
-  
-  console.log(`🔒 Planillas cargadas para ${curG}: Cámaras=${planillasData.camaras.length}, Apostillas=${planillasData.apostillas.length}`);
   renderPlanillas();
 }
 
@@ -1460,7 +1456,7 @@ function renderPlanilla(tipo){
             style="${INP}">
         </td>
         <td style="padding:6px 8px">
-          <input value="${(r.cliente||'').replace(/"/g,'&quot;')}" placeholder="Nombre y apellido..."
+          <input value="${(r.cliente||'').replace(/"/g,'&quot;')}" placeholder="Nombre cliente..."
             oninput="updPlanilla('apostillas','${r.id}','cliente',this.value)"
             style="${INP}">
         </td>
@@ -1489,20 +1485,19 @@ function addPlanillaRow(tipo){
   const newRow = {
     id: tipoSingular + '-' + Date.now(),
     tipo: tipoSingular,
-    gestor: curG  // 🔒 Asignar gestor actual
+    gestor: curG,
+    estado: ''
   };
   
   if(tipo === 'camaras'){
     newRow.numero = '';
     newRow.fecha = '';
     newRow.mail = '';
-    newRow.estado = '';
   } else {
     newRow.fecha_ingreso = '';
     newRow.expediente = '';
     newRow.tipo_doc = '';
     newRow.cliente = '';
-    newRow.estado = '';
   }
   
   planillasData[tipo].push(newRow);
@@ -1514,20 +1509,12 @@ async function updPlanilla(tipo, id, field, value){
   if(!r) return;
   r[field] = value;
   
-  // Auto-save con mejor manejo de errores
-  try {
-    const {data:existing} = await SB.from('planillas').select('id').eq('id',id).single();
-    if(existing){
-      const {error} = await SB.from('planillas').update({[field]:value}).eq('id',id);
-      if(error) throw error;
-    } else {
-      const {error} = await SB.from('planillas').insert(r);
-      if(error) throw error;
-    }
-    console.log('✓ Guardado:', tipo, field, value);
-  } catch(error) {
-    console.error('Error al guardar planilla:', error);
-    toast('Error al guardar', 'err');
+  // Auto-save
+  const {data:existing} = await SB.from('planillas').select('id').eq('id',id).single();
+  if(existing){
+    await SB.from('planillas').update({[field]:value}).eq('id',id);
+  } else {
+    await SB.from('planillas').insert(r);
   }
   
   // Re-renderizar para mostrar el cambio de estado/color
@@ -1595,13 +1582,15 @@ const ACTA_TIPOS = {
   nacimiento:  {label:'Acta de Nacimiento',  color:'#3b82f6', bg:'#eff6ff'},
   matrimonio:  {label:'Acta de Matrimonio',  color:'#8b5cf6', bg:'#f5f3ff'},
   defuncion:   {label:'Acta de Defuncion',   color:'#6b7280', bg:'#f9fafb'},
-  expediente:  {label:'Expte. de Camara (Legalizacion + Traduccion)', color:'#0891b2', bg:'#ecfeff', simple:true},
+  expediente:  {label:'Expediente de Cámara + Legalización + Traducción Pública', color:'#0891b2', bg:'#ecfeff', simple:true},
   traduccion:  {label:'Traducciones Tecnico Juridicas', color:'#059669', bg:'#f0fdf4', simple:true},
   aire:        {label:'AIRE', color:'#d97706', bg:'#fffbeb', simple:true},
   codice:      {label:'Codice Fiscale', color:'#7c3aed', bg:'#f5f3ff', simple:true},
   cie:         {label:'CIE (DNI Europeo)', color:'#be185d', bg:'#fdf2f8', simple:true},
   spid:        {label:'SPID', color:'#1d4ed8', bg:'#eff6ff', simple:true},
   honorarios:  {label:'Honorarios', color:'#064e3b', bg:'#f0fdf4', simple:true},
+  pasaporte:   {label:'Pasaporte', color:'#dc2626', bg:'#fef2f2', simple:true},
+  divorcio:    {label:'Divorcio', color:'#ea580c', bg:'#fff7ed', simple:true},
 };
 
 function addItemSimple(tipo){
@@ -1663,6 +1652,13 @@ function updActa(i,field,value){
 
 function addEt(txt=''){
   etas.push({tipo:'nacimiento', origen:'italiana', titular:txt, notas:''});
+  renderEtas();
+  render();
+}
+
+// Función para agregar acta con tipo específico
+function addActa(tipo){
+  etas.push({tipo: tipo, origen:'italiana', titular:'', notas:''});
   renderEtas();
   render();
 }
@@ -2367,8 +2363,19 @@ function renderIngRow(r){
         </select>
       </div>
     </td>
-    <td style="${cellStyle}">
-      <input value="${escH(r.cliente||'')}" placeholder="Nombre del cliente..." oninput="updIng('${r.id}','cliente',this.value)" style="${inp};min-width:180px">
+    <td style="${cellStyle}" id="td-cli-${r.id}">
+      ${r.cliente_id
+        ? `<div style="display:flex;align-items:center;gap:5px;padding:4px 6px">
+             <span style="font-size:13px;font-weight:600;color:var(--grd)">${escH(r.cliente||'')}</span>
+             <span style="font-size:9px;background:#dbeafe;color:#1e40af;border-radius:6px;padding:1px 5px;font-weight:700">vinculado</span>
+             <button onclick="desvincularCliente('${r.id}')" style="border:none;background:transparent;cursor:pointer;font-size:11px;color:#94a3b8">✏️</button>
+           </div>`
+        : `<div style="position:relative">
+             <input value="${escH(r.cliente||'')}" placeholder="Nombre cliente..." id="cli-inp-${r.id}"
+               oninput="buscarCliente('${r.id}',this.value)" onblur="setTimeout(()=>cerrarSugerencias('${r.id}'),200)"
+               style="${inp};min-width:160px" autocomplete="off">
+             <div id="cli-sug-${r.id}" style="display:none;position:absolute;top:100%;left:0;right:0;background:white;border:1.5px solid var(--az);border-radius:8px;box-shadow:var(--sh);z-index:999;max-height:180px;overflow-y:auto"></div>
+           </div>`}
     </td>
     <td style="${cellStyle}"><input value="${escH(r.tipo||'')}" placeholder="consulta, AIRE..." oninput="updIng('${r.id}','tipo',this.value)" style="${inp};min-width:120px"></td>
     <td style="${cellStyle}"><input type="number" value="${r.efectivo||''}" placeholder="0" oninput="updIngNum('${r.id}','efectivo',this.value)" style="${inp};min-width:100px;color:#1e40af;font-weight:600"></td>
@@ -2525,7 +2532,7 @@ function desvincularCliente(rowId){
   const td=document.getElementById('td-cli-'+rowId);
   const s='padding:6px 8px;border:1.5px solid var(--bo);border-radius:6px;font-size:12.5px;outline:none;background:white;width:100%';
   if(td) td.innerHTML=`<div style="position:relative">
-    <input value="${escH(nombre)}" placeholder="Nombre y apellido..." id="cli-inp-${rowId}"
+    <input value="${escH(nombre)}" placeholder="Nombre cliente..." id="cli-inp-${rowId}"
       oninput="buscarCliente('${rowId}',this.value)" onblur="setTimeout(()=>cerrarSugerencias('${rowId}'),200)"
       style="${s};min-width:160px" autocomplete="off">
     <div id="cli-sug-${rowId}" style="display:none;position:absolute;top:100%;left:0;right:0;background:white;border:1.5px solid var(--az);border-radius:8px;box-shadow:var(--sh);z-index:999;max-height:180px;overflow-y:auto"></div>
@@ -3952,24 +3959,13 @@ function fmtFechaIng(f){
 async function loadGastos(){
   const localData = localStorage.getItem('zittano_gastos');
   const localGastos = localData ? JSON.parse(localData) : [];
-  
-  // 🔒 FILTRAR POR GESTOR - Solo Belén ve todo
-  let query = SB.from('gastos').select('*');
-  if(curG !== 'Belén') query = query.eq('gestor', curG);
-  
-  const {data: supabaseData} = await query;
+  const {data: supabaseData} = await SB.from('gastos').select('*');
   const supabaseGastos = supabaseData || [];
   const todosGastos = [...localGastos];
   supabaseGastos.forEach(sg => {
     if(!todosGastos.find(lg => lg.id === sg.id)) todosGastos.push(sg);
   });
-  
-  // 🔒 FILTRAR localStorage también por gestor
-  gastosData = todosGastos
-    .filter(g => curG === 'Belén' || g.gestor === curG)
-    .sort((a,b) => (b.fecha||'').localeCompare(a.fecha||''));
-  
-  console.log(`🔒 Gastos cargados para ${curG}:`, gastosData.length);
+  gastosData = todosGastos.sort((a,b) => (b.fecha||'').localeCompare(a.fecha||''));
   actualizarMesesGastos();
   filterGastos();
 }
@@ -4566,7 +4562,7 @@ const PRECIOS_DEFAULT = [
   {id:'p16', nombre:'Turno Pasaporte (CABA/Morón/LP/Lomas)', transf:'USD 280', efect:'USD 200', tiempo:'2 meses', cat:'Pasaportes'},
   {id:'p17', nombre:'Turno Pasaporte Adicional', transf:'USD 70', efect:'USD 50', tiempo:'—', cat:'Pasaportes'},
   {id:'p18', nombre:'Divorcio', transf:'$420.000', efect:'$300.000', tiempo:'—', cat:'Otros'},
-  {id:'p19', nombre:'Apostilla Extra Cámara 30 días', transf:'$112.000', efect:'$80.000', tiempo:'—', cat:'Otros'},
+  {id:'p19', nombre:'Apostilla', transf:'$112.000', efect:'$80.000', tiempo:'—', cat:'Otros'},
   {id:'p20', nombre:'Correo', transf:'$35.000', efect:'$35.000', tiempo:'—', cat:'Otros'},
 ];
 
