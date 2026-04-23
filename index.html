@@ -436,8 +436,6 @@ textarea{resize:vertical;}
           <button class="bsm" onclick="addItemSimple('codice')" style="background:#7c3aed">+ Codice Fiscale</button>
           <button class="bsm" onclick="addItemSimple('cie')" style="background:#be185d">+ CIE</button>
           <button class="bsm" onclick="addItemSimple('spid')" style="background:#1d4ed8">+ SPID</button>
-          <button class="bsm" onclick="addItemSimple('pasaporte')" style="background:#dc2626">+ Pasaporte</button>
-          <button class="bsm" onclick="addItemSimple('divorcio')" style="background:#ea580c">+ Divorcio</button>
           <button class="bsm" onclick="addItemSimple('honorarios')" style="background:#064e3b">+ Honorarios</button>
         </div>
       </div>
@@ -692,16 +690,20 @@ textarea{resize:vertical;}
 
   <!-- Tabla inline editable -->
   <div class="twrap" style="overflow-x:auto">
-    <table style="width:100%;border-collapse:collapse;min-width:900px" id="ing-tbl">
+    <table style="width:100%;border-collapse:collapse;min-width:1400px" id="ing-tbl">
       <thead>
         <tr style="background:var(--grl)">
           <th style="padding:10px 10px;text-align:left;font-size:10px;font-weight:600;color:#94a3b8;letter-spacing:.5px;text-transform:uppercase;border-bottom:1px solid var(--bo);white-space:nowrap">Fecha</th>
           <th style="padding:10px 10px;text-align:left;font-size:10px;font-weight:600;color:#94a3b8;letter-spacing:.5px;text-transform:uppercase;border-bottom:1px solid var(--bo)">Cliente</th>
+          <th style="padding:10px 10px;text-align:left;font-size:10px;font-weight:600;color:#94a3b8;letter-spacing:.5px;text-transform:uppercase;border-bottom:1px solid var(--bo)">DNI</th>
           <th style="padding:10px 10px;text-align:left;font-size:10px;font-weight:600;color:#94a3b8;letter-spacing:.5px;text-transform:uppercase;border-bottom:1px solid var(--bo)">Tipo</th>
           <th style="padding:10px 10px;text-align:left;font-size:10px;font-weight:600;color:#94a3b8;letter-spacing:.5px;text-transform:uppercase;border-bottom:1px solid var(--bo);white-space:nowrap">Efectivo $</th>
           <th style="padding:10px 10px;text-align:left;font-size:10px;font-weight:600;color:#94a3b8;letter-spacing:.5px;text-transform:uppercase;border-bottom:1px solid var(--bo);white-space:nowrap">Transf. $</th>
+          <th style="padding:10px 8px;text-align:center;font-size:10px;font-weight:600;color:#94a3b8;letter-spacing:.5px;text-transform:uppercase;border-bottom:1px solid var(--bo);white-space:nowrap">Cons.</th>
+          <th style="padding:10px 8px;text-align:center;font-size:10px;font-weight:600;color:#94a3b8;letter-spacing:.5px;text-transform:uppercase;border-bottom:1px solid var(--bo);white-space:nowrap">Int.</th>
           <th style="padding:10px 10px;text-align:left;font-size:10px;font-weight:600;color:#94a3b8;letter-spacing:.5px;text-transform:uppercase;border-bottom:1px solid var(--bo);white-space:nowrap;background:#f0f9f4">A Pagar</th>
           <th style="padding:10px 10px;text-align:left;font-size:10px;font-weight:600;color:#94a3b8;letter-spacing:.5px;text-transform:uppercase;border-bottom:1px solid var(--bo)">Quién cobró</th>
+          <th style="padding:10px 10px;text-align:left;font-size:10px;font-weight:600;color:#94a3b8;letter-spacing:.5px;text-transform:uppercase;border-bottom:1px solid var(--bo)">Comentario</th>
           <th style="padding:10px 8px;border-bottom:1px solid var(--bo);width:70px">📎</th>
           <th style="padding:10px 8px;border-bottom:1px solid var(--bo);width:32px"></th>
         </tr>
@@ -709,7 +711,7 @@ textarea{resize:vertical;}
       <tbody id="ing-body"></tbody>
       <tfoot>
         <tr>
-          <td colspan="10" style="padding:8px 10px">
+          <td colspan="13" style="padding:8px 10px">
             <button onclick="addIngresoRow()" style="width:100%;padding:9px;border:1.5px dashed var(--bo);border-radius:8px;background:transparent;font-size:13px;font-weight:600;color:#94a3b8;cursor:pointer;transition:all .13s" onmouseover="this.style.borderColor='var(--vd)';this.style.color='var(--vd)'" onmouseout="this.style.borderColor='var(--bo)';this.style.color='#94a3b8'">+ Agregar ingreso</button>
           </td>
         </tr>
@@ -1484,9 +1486,7 @@ function addPlanillaRow(tipo){
   const tipoSingular = tipo === 'camaras' ? 'camara' : 'apostilla';
   const newRow = {
     id: tipoSingular + '-' + Date.now(),
-    tipo: tipoSingular,
-    gestor: curG,
-    estado: ''
+    tipo: tipoSingular
   };
   
   if(tipo === 'camaras'){
@@ -1582,15 +1582,13 @@ const ACTA_TIPOS = {
   nacimiento:  {label:'Acta de Nacimiento',  color:'#3b82f6', bg:'#eff6ff'},
   matrimonio:  {label:'Acta de Matrimonio',  color:'#8b5cf6', bg:'#f5f3ff'},
   defuncion:   {label:'Acta de Defuncion',   color:'#6b7280', bg:'#f9fafb'},
-  expediente:  {label:'Expediente de Cámara + Legalización + Traducción Pública', color:'#0891b2', bg:'#ecfeff', simple:true},
+  expediente:  {label:'Expte. de Camara (Legalizacion + Traduccion)', color:'#0891b2', bg:'#ecfeff', simple:true},
   traduccion:  {label:'Traducciones Tecnico Juridicas', color:'#059669', bg:'#f0fdf4', simple:true},
   aire:        {label:'AIRE', color:'#d97706', bg:'#fffbeb', simple:true},
   codice:      {label:'Codice Fiscale', color:'#7c3aed', bg:'#f5f3ff', simple:true},
   cie:         {label:'CIE (DNI Europeo)', color:'#be185d', bg:'#fdf2f8', simple:true},
   spid:        {label:'SPID', color:'#1d4ed8', bg:'#eff6ff', simple:true},
   honorarios:  {label:'Honorarios', color:'#064e3b', bg:'#f0fdf4', simple:true},
-  pasaporte:   {label:'Pasaporte', color:'#dc2626', bg:'#fef2f2', simple:true},
-  divorcio:    {label:'Divorcio', color:'#ea580c', bg:'#fff7ed', simple:true},
 };
 
 function addItemSimple(tipo){
@@ -1652,11 +1650,6 @@ function updActa(i,field,value){
 
 function addEt(txt=''){
   etas.push({tipo:'nacimiento', origen:'italiana', titular:txt, notas:''});
-  renderEtas();
-  render();
-}
-function addActa(tipo){
-  etas.push({tipo: tipo, origen:'italiana', titular:'', notas:''});
   renderEtas();
   render();
 }
@@ -2286,7 +2279,7 @@ function renderIngresos(){
     // Month header con diseño mejorado
     const headerColor = isCurrentMonth ? '#1ea5f7' : '#64748b';
     html+=`<tr style="background:linear-gradient(to right,${headerColor},${headerColor}dd);cursor:pointer;border-bottom:2px solid var(--bg)" onclick="toggleMes('${mes}')">
-      <td colspan="3" style="padding:14px 16px">
+      <td colspan="4" style="padding:14px 16px">
         <div style="display:flex;align-items:center;gap:8px">
           <span style="font-size:15px;font-weight:700;color:#fff;letter-spacing:.5px">${collapsed?'▶':'▼'} ${mesLabel}</span>
           ${isCurrentMonth?'<span style="background:rgba(255,255,255,.2);color:#fff;padding:2px 8px;border-radius:12px;font-size:10px;font-weight:700;letter-spacing:.5px">ACTUAL</span>':''}
@@ -2298,10 +2291,11 @@ function renderIngresos(){
       <td style="padding:14px 10px;text-align:right;color:rgba(255,255,255,.9);font-size:12px;font-weight:600">
         ${!isEmpty?'$'+Math.round(mT).toLocaleString('es-AR'):'—'}
       </td>
+      <td colspan="2"></td>
       <td style="padding:14px 10px;text-align:right;color:#fff;font-size:13px;font-weight:700;background:rgba(0,0,0,.15)">
         ${!isEmpty?'$'+Math.round(mP).toLocaleString('es-AR'):'—'}
       </td>
-      <td colspan="3" style="padding:14px 16px;text-align:right">
+      <td colspan="4" style="padding:14px 16px;text-align:right">
         <span style="font-size:11px;color:rgba(255,255,255,.7);font-weight:600">${rows.length} ${rows.length===1?'ingreso':'ingresos'}</span>
       </td>
     </tr>`;
@@ -2312,7 +2306,7 @@ function renderIngresos(){
         html+=rows.map(r=>renderIngRow(r)).join('');
       } else {
         html+=`<tr style="background:#fafcff">
-          <td colspan="9" style="padding:20px 14px;color:#94a3b8;font-size:13px;text-align:center;font-style:italic">
+          <td colspan="13" style="padding:20px 14px;color:#94a3b8;font-size:13px;text-align:center;font-style:italic">
             Sin ingresos registrados en ${mesLabel}
           </td>
         </tr>`;
@@ -2320,7 +2314,7 @@ function renderIngresos(){
     }
 
     // Spacer entre meses
-    html+=`<tr><td colspan="9" style="padding:6px;background:var(--bg)"></td></tr>`;
+    html+=`<tr><td colspan="13" style="padding:6px;background:var(--bg)"></td></tr>`;
   });
 
   tbody.innerHTML=html;
@@ -2375,9 +2369,16 @@ function renderIngRow(r){
              <div id="cli-sug-${r.id}" style="display:none;position:absolute;top:100%;left:0;right:0;background:white;border:1.5px solid var(--az);border-radius:8px;box-shadow:var(--sh);z-index:999;max-height:180px;overflow-y:auto"></div>
            </div>`}
     </td>
+    <td style="${cellStyle}"><input value="${escH(r.dni_cliente||'')}" placeholder="DNI..." oninput="updIng('${r.id}','dni_cliente',this.value)" style="${inp};min-width:90px"></td>
     <td style="${cellStyle}"><input value="${escH(r.tipo||'')}" placeholder="consulta, AIRE..." oninput="updIng('${r.id}','tipo',this.value)" style="${inp};min-width:120px"></td>
     <td style="${cellStyle}"><input type="number" value="${r.efectivo||''}" placeholder="0" oninput="updIngNum('${r.id}','efectivo',this.value)" style="${inp};min-width:100px;color:#1e40af;font-weight:600"></td>
     <td style="${cellStyle}"><input type="number" value="${r.transferencia||''}" placeholder="0" oninput="updIngNum('${r.id}','transferencia',this.value)" style="${inp};min-width:100px;color:#0891b2;font-weight:600"></td>
+    <td style="${cellStyle};text-align:center">
+      <input type="checkbox" ${r.consulta?'checked':''} onchange="updIng('${r.id}','consulta',this.checked)" style="width:20px;height:20px;cursor:pointer" title="Marcar si es consulta">
+    </td>
+    <td style="${cellStyle};text-align:center">
+      <input type="checkbox" ${r.es_interior?'checked':''} onchange="updIng('${r.id}','es_interior',this.checked)" style="width:20px;height:20px;cursor:pointer" title="Marcar si es del interior">
+    </td>
     <td style="${cellStyle};background:#f0fdf4"><input type="number" value="${r.a_pagar||''}" placeholder="auto" id="apagar-${r.id}" style="${inp};background:#f0fdf4;font-weight:700;color:var(--vd);min-width:100px"></td>
     <td style="${cellStyle}">
       <select onchange="updIng('${r.id}','quien_cobro',this.value)" style="${inp};min-width:140px;cursor:pointer">
@@ -2390,6 +2391,7 @@ function renderIngRow(r){
         <option value="Transferencia MP"${r.quien_cobro==='Transferencia MP'?' selected':''}>Transferencia MP</option>
       </select>
     </td>
+    <td style="${cellStyle}"><input value="${escH(r.comentario||'')}" placeholder="Notas..." oninput="updIng('${r.id}','comentario',this.value)" style="${inp};min-width:150px"></td>
 
     <td style="${cellStyle};text-align:center">
       ${r.comprobante
@@ -2445,7 +2447,16 @@ async function autoSaveIngRow(id){
 function updIng(id,field,value){
   const r=ingresosData.find(x=>x.id===id);
   if(r){ 
-    r[field]=value; 
+    r[field]=value;
+    
+    // Si cambió tipo, consulta, o es_interior → recalcular A PAGAR
+    if(field === 'tipo' || field === 'consulta' || field === 'es_interior') {
+      const pagar = calcularAPagarExcel(r);
+      r.a_pagar = pagar || null;
+      const el = document.getElementById('apagar-' + id);
+      if(el) el.value = pagar || '';
+    }
+    
     // Marcar visualmente que hay cambios sin guardar
     const row=document.getElementById('row-'+id);
     if(row && !row.classList.contains('unsaved')) {
@@ -2463,20 +2474,62 @@ function esSoloBelen(tipo){
   const t=(tipo||'').toLowerCase();
   return t.includes('divorcio')||t.includes('correo')||t.includes('cie');
 }
+
+/* ══════════════════════════════════════════════════════════════════
+   FÓRMULA EXCEL - CÁLCULO AUTOMÁTICO DE "A PAGAR"
+   ══════════════════════════════════════════════════════════════════
+   LÓGICA:
+   1. Si TIPO contiene "correo" o "divorcio" → A PAGAR = 0
+   2. Si tiene CONSULTA ☑️ Y ES DEL INTERIOR ☑️ → A PAGAR = TRANSFERENCIA
+   3. Si solo ES DEL INTERIOR ☑️ → A PAGAR = TRANSFERENCIA / 1.4
+   4. Si solo CONSULTA ☑️ → A PAGAR = TRANSFERENCIA
+   5. Si tiene TRANSFERENCIA sin checkboxes → A PAGAR = TRANSFERENCIA / 1.4
+   6. Si no hay TRANSFERENCIA → A PAGAR = EFECTIVO
+   ══════════════════════════════════════════════════════════════════ */
+
+function calcularAPagarExcel(r) {
+  const tipo = (r.tipo || '').toLowerCase();
+  const efectivo = parseFloat(r.efectivo) || 0;
+  const transferencia = parseFloat(r.transferencia) || 0;
+  const consulta = r.consulta || false;
+  const esInterior = r.es_interior || false;
+  
+  // 1. Si TIPO contiene "correo" o "divorcio" → A PAGAR = 0
+  if (tipo.includes('correo') || tipo.includes('divorcio')) {
+    return 0;
+  }
+  
+  // 2. Si tiene CONSULTA Y ES DEL INTERIOR → A PAGAR = TRANSFERENCIA
+  if (consulta && esInterior) {
+    return transferencia;
+  }
+  
+  // 3. Si solo tiene ES DEL INTERIOR → A PAGAR = TRANSFERENCIA / 1.4
+  if (esInterior) {
+    return Math.round(transferencia / 1.4);
+  }
+  
+  // 4. Si solo tiene CONSULTA → A PAGAR = TRANSFERENCIA
+  if (consulta) {
+    return transferencia;
+  }
+  
+  // 5. Si tiene TRANSFERENCIA sin marcas → A PAGAR = TRANSFERENCIA / 1.4
+  if (transferencia > 0) {
+    return Math.round(transferencia / 1.4);
+  }
+  
+  // 6. Si no hay TRANSFERENCIA → A PAGAR = EFECTIVO
+  return efectivo;
+}
+
 function updIngNum(id,field,value){
   const r=ingresosData.find(x=>x.id===id);
   if(!r) return;
   r[field]=value?parseFloat(value):null;
-  // Calcular A Pagar según tipo de trámite
-  let pagar=0;
-  if(esSoloBelen(r.tipo)){
-    pagar=0; // Divorcio/Correo/CIE: va directo a Belén, no se acredita al empleado
-  } else if(esConsulta(r.tipo)){
-    pagar=parseFloat(r.efectivo||r.transferencia||0); // Consulta: monto exacto sin factor
-  } else {
-    if(r.efectivo) pagar=parseFloat(r.efectivo);
-    else if(r.transferencia) pagar=Math.round(parseFloat(r.transferencia)/1.4);
-  }
+  
+  // Calcular A PAGAR con fórmula Excel
+  const pagar = calcularAPagarExcel(r);
   r.a_pagar=pagar||null;
   const el=document.getElementById('apagar-'+id);
   if(el) el.value=pagar||'';
@@ -2897,26 +2950,66 @@ function generarReciboPago(i){
 }
 
 function generarRecibo(r){
-  var detectarMoneda=function(texto){if(!texto)return 'ARS';var str=String(texto).toUpperCase();return(str.includes('USD')||str.includes('U$S')||str.includes('DOLAR'))?'USD':'ARS'};
-  var extraerMonto=function(valor){if(!valor)return 0;return parseFloat(String(valor).replace(/[^0-9.]/g,''))||0};
-  var monedaTipo=detectarMoneda(r.tipo||r.concepto);
-  var monedaMonto=detectarMoneda(r.a_pagar||r.efectivo||r.transferencia);
-  var esUSD=monedaTipo==='USD'||monedaMonto==='USD';
-  var montoNum=extraerMonto(r.a_pagar||r.efectivo||r.transferencia);
-  var montoFmt='$'+Math.round(montoNum).toLocaleString('es-AR')+(esUSD?' USD':'');
-  var moneda=esUSD?'dólares':'pesos';
-  var montoLetras=numeroALetras(Math.round(montoNum))+' '+moneda;
-  var formaPago=r.transferencia&&!r.efectivo?'por transferencia bancaria':'en efectivo';
-  var fecha=fmtFechaLarga(r.fecha)||fmtFechaLarga(new Date().toISOString().slice(0,10));
-  var cliente=r.cliente||'—';
-  var concepto=r.tipo||r.concepto||'—';
-  var esMujer=cliente.match(/(María|Ana|Laura|Sofia|Sofía|Paula|Valeria|Claudia|Gabriela|del Carmen|Carmen|Cecilia|Patricia)/i);
-  var tratamiento=esMujer?'Sra.':'Sr.';
-  var win=window.open('','_blank','width=850,height=1100');
-  var h='<!DOCTYPE html><html lang="es"><head><meta charset="UTF-8"><title>Recibo</title>';
-  h+='<style>*{margin:0;padding:0;box-sizing:border-box}body{font-family:Segoe UI,Arial,sans-serif;padding:60px 80px;color:#2c3e50;font-size:11.5pt;line-height:1.6;max-width:21cm;margin:0 auto;background:#fff;position:relative}.italia-border{position:fixed;top:0;left:0;width:100%;height:8px;background:linear-gradient(to right,#009246 0%,#009246 33.33%,#fff 33.33%,#fff 66.66%,#ce2b37 66.66%,#ce2b37 100%);z-index:999}.watermark{position:fixed;top:50%;left:50%;transform:translate(-50%,-50%) rotate(-15deg);font-size:110pt;font-weight:300;color:rgba(0,146,70,0.06);z-index:0;pointer-events:none;letter-spacing:18px;user-select:none}.watermark-sub{position:fixed;top:58%;left:50%;transform:translate(-50%,-50%) rotate(-15deg);font-size:24pt;font-weight:300;color:rgba(206,43,55,0.05);z-index:0;pointer-events:none;letter-spacing:5px;user-select:none}.content{position:relative;z-index:1}.header{margin-bottom:35px;padding-bottom:20px;border-bottom:3px solid;border-image:linear-gradient(to right,#009246,#fff,#ce2b37) 1}.brand{font-size:22pt;font-weight:300;letter-spacing:14px;color:#2c3e50;margin-bottom:8px}.subbrand{font-size:11pt;font-weight:400;color:#7f8c8d;letter-spacing:0.5px}.fecha{text-align:right;margin:30px 0;font-size:10.5pt;color:#7f8c8d;font-style:italic}.cuerpo{margin:35px 0;text-align:justify;line-height:1.7;font-size:11.5pt;color:#34495e}.cuerpo strong{color:#009246;font-weight:600}.tabla-container{margin:40px 0;border:1px solid #e8e8e8;border-radius:8px;overflow:hidden}.tabla-header{display:flex;justify-content:space-between;padding:12px 20px;background:linear-gradient(135deg,#009246 0%,#00a854 100%);color:#fff;font-weight:500;font-size:10pt;letter-spacing:1px;text-transform:uppercase}.tabla-row{display:flex;justify-content:space-between;padding:14px 20px;font-size:11pt;border-bottom:1px solid #f5f5f5}.tabla-total{display:flex;justify-content:space-between;padding:14px 20px;background:linear-gradient(135deg,#ce2b37 0%,#d63447 100%);color:#fff;font-weight:600;font-size:12pt}.firma{margin-top:80px;text-align:center;font-size:9pt;color:#95a5a6;padding-top:20px;border-top:1px solid #ecf0f1}.acento-italia{width:60px;height:3px;background:linear-gradient(to right,#009246,#fff,#ce2b37);margin:15px auto}@media print{body{padding:50px 70px}.watermark{font-size:100pt;color:rgba(0,146,70,0.05)}.watermark-sub{font-size:22pt;color:rgba(206,43,55,0.04)}}</style>';
-  h+='</head><body><div class="italia-border"></div><div class="watermark">ZITTANO</div><div class="watermark-sub">GESTORÍA DE CIUDADANÍAS</div><div class="content"><div class="header"><div class="brand">Z I T T A N O</div><div class="subbrand">Buenos Aires – Estudio Jurídico</div></div><div class="fecha">Ciudad Autónoma de Buenos Aires, '+fecha+'</div><div class="cuerpo">Recibimos de la '+tratamiento+' <strong>'+cliente+'</strong>, la cantidad de <strong>'+montoFmt+'</strong> - ('+montoLetras+') '+formaPago+' para ser aplicados, según:</div><div class="tabla-container"><div class="tabla-header"><span>Detalle</span><span>Importe</span></div><div class="tabla-row"><span>'+concepto+'</span><span style="font-weight:600;color:#009246">'+montoFmt+'</span></div><div class="tabla-total"><span>Total</span><span>'+montoFmt+'</span></div></div><div class="acento-italia"></div><div class="firma">Zittano · Gestoría de Ciudadanías · Buenos Aires</div></div><script>window.onload=function(){setTimeout(function(){window.print()},700)}<\/script></body></html>';
-  win.document.write(h);
+  const monto=parseFloat(String(r.a_pagar||r.efectivo||r.transferencia||'0').replace(/[^0-9.]/g,''))||0;
+  const montoFmt='$'+Math.round(monto).toLocaleString('es-AR');
+  const montoLetras=numeroALetras(Math.round(monto))+' pesos';
+  const formaPago=r.transferencia&&!r.efectivo?'por transferencia bancaria':'en efectivo';
+  const fecha=fmtFechaLarga(r.fecha)||fmtFechaLarga(new Date().toISOString().slice(0,10));
+  const cliente=r.cliente||'—';
+  const concepto=r.tipo||r.concepto||'—';
+
+  // Detect Sr/Sra from client name (simple heuristic)
+  const tratamiento=cliente.match(/(María|Ana|Laura|Sofia|Sofía|Paula|Valeria|Claudia|Gabriela|Cecilia|Marcela|Patricia|Sandra|Beatriz|Rosa|Carmen|Elena|Diana|Silvia|Marta|Lucía|Lucia|Victoria|Vanesa|Vanessa|Liliana|Monica|Mónica|Adriana|Natalia|Carolina|Alejandra|Andrea|Jessica|Daniela|Florencia|Romina|Verónica|Veronica|Graciela|Susana|Alicia)/i)?'Sra.':'Sr.';
+
+  const win=window.open('','_blank');
+  win.document.write(`<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<title>Recibo - ${cliente}</title>
+<style>
+  *{margin:0;padding:0;box-sizing:border-box;}
+  body{font-family:'Times New Roman',serif;padding:60px 70px;color:#111;font-size:13px;line-height:1.6;}
+  .logo-section{margin-bottom:30px;}
+  .brand{font-size:28px;font-weight:700;letter-spacing:6px;font-family:'Arial',sans-serif;color:#000;}
+  .subbrand{font-size:13px;font-weight:700;margin-top:4px;font-family:'Arial',sans-serif;}
+  .divider{border:none;border-top:1.5px solid #000;margin:20px 0;}
+  .fecha{text-align:center;margin-bottom:24px;font-size:13px;}
+  .cuerpo{margin-bottom:28px;text-align:justify;}
+  .tabla{width:100%;border-collapse:collapse;margin:20px 0;}
+  .tabla th{border-top:1.5px solid #000;border-bottom:1.5px solid #000;padding:8px 12px;text-align:left;font-weight:700;font-size:13px;}
+  .tabla th.r{text-align:right;}
+  .tabla td{padding:7px 12px;font-size:13px;}
+  .tabla td.r{text-align:right;}
+  .tabla .tot td{border-top:1.5px solid #000;padding-top:8px;text-decoration:underline;font-weight:700;}
+  .firma{margin-top:60px;text-align:center;font-size:12px;color:#555;}
+  @media print{body{padding:40px 50px;}}
+</style>
+</head>
+<body>
+  <div class="logo-section">
+    <div class="brand">Z I T T A N O</div>
+    <div class="subbrand">Buenos Aires – Estudio Jurídico</div>
+  </div>
+  <hr class="divider">
+  <div class="fecha">Ciudad Autónoma de Buenos Aires, ${fecha}</div>
+  <div class="cuerpo">
+    Recibimos del ${tratamiento} <strong>${cliente}</strong>, la cantidad de <strong>${montoFmt}</strong> - (${montoLetras}) ${formaPago} para ser aplicados, según:
+  </div>
+  <table class="tabla">
+    <thead><tr><th>DETALLE</th><th class="r">IMPORTE</th></tr></thead>
+    <tbody>
+      <tr><td>${concepto}</td><td class="r">${montoFmt}</td></tr>
+    </tbody>
+    <tfoot>
+      <tr class="tot"><td>Total</td><td class="r">${montoFmt}</td></tr>
+    </tfoot>
+  </table>
+  <div class="firma">Zittano · Gestoría de Ciudadanías · Buenos Aires</div>
+  <script>window.onload=()=>{window.print();}<\/script>
+<\/script>
+<\/body>
+<\/html>`);
   win.document.close();
 }
 
@@ -4027,12 +4120,7 @@ function updGas(id, field, value){
   if(!r) return;
   r[field] = value;
   gasPendingSave[id] = true;
-  const btn = document.querySelector(`button[onclick="saveGasRow('${id}')"]`);
-  if(btn){
-    btn.style.background = '#fbbf24';
-    btn.style.color = 'white';
-    btn.title = 'Guardar';
-  }
+  renderGastos();
 }
 
 async function saveGasRow(id){
@@ -4525,7 +4613,7 @@ const PRECIOS_DEFAULT = [
   {id:'p16', nombre:'Turno Pasaporte (CABA/Morón/LP/Lomas)', transf:'USD 280', efect:'USD 200', tiempo:'2 meses', cat:'Pasaportes'},
   {id:'p17', nombre:'Turno Pasaporte Adicional', transf:'USD 70', efect:'USD 50', tiempo:'—', cat:'Pasaportes'},
   {id:'p18', nombre:'Divorcio', transf:'$420.000', efect:'$300.000', tiempo:'—', cat:'Otros'},
-  {id:'p19', nombre:'Apostilla', transf:'$112.000', efect:'$80.000', tiempo:'—', cat:'Otros'},
+  {id:'p19', nombre:'Apostilla Extra Cámara 30 días', transf:'$112.000', efect:'$80.000', tiempo:'—', cat:'Otros'},
   {id:'p20', nombre:'Correo', transf:'$35.000', efect:'$35.000', tiempo:'—', cat:'Otros'},
 ];
 
