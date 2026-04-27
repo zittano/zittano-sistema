@@ -331,7 +331,7 @@ textarea{resize:vertical;}
       <button class="htab" onclick="showTab('info',this)">📌 Info</button>
       <button class="htab" onclick="showTab('planillas',this)">📋 Planillas</button>
       <button class="htab" id="tab-panel" onclick="showTab('panel',this)" style="display:none">📊 Panel</button>
-      <button class="htab" id="tab-precios" onclick="showTab('precios',this)" style="display:none">💲 Precios</button>
+      <button class="htab" onclick="showTab('precios',this)">💲 Precios</button>
     </div>
     <div class="hrgt">
       <div class="sychip"><div class="sydot sp" id="sydot"></div><span id="sytxt">Conectando</span></div>
@@ -690,28 +690,27 @@ textarea{resize:vertical;}
 
   <!-- Tabla inline editable -->
   <div class="twrap" style="overflow-x:auto">
-    <table style="width:100%;border-collapse:collapse;min-width:1400px" id="ing-tbl">
+    <table style="width:100%;border-collapse:collapse;min-width:1100px" id="ing-tbl">
       <thead>
         <tr style="background:var(--grl)">
-          <th style="padding:10px 10px;text-align:left;font-size:10px;font-weight:600;color:#94a3b8;letter-spacing:.5px;text-transform:uppercase;border-bottom:1px solid var(--bo);white-space:nowrap">Fecha</th>
-          <th style="padding:10px 10px;text-align:left;font-size:10px;font-weight:600;color:#94a3b8;letter-spacing:.5px;text-transform:uppercase;border-bottom:1px solid var(--bo)">Cliente</th>
-          <th style="padding:10px 10px;text-align:left;font-size:10px;font-weight:600;color:#94a3b8;letter-spacing:.5px;text-transform:uppercase;border-bottom:1px solid var(--bo)">DNI</th>
-          <th style="padding:10px 10px;text-align:left;font-size:10px;font-weight:600;color:#94a3b8;letter-spacing:.5px;text-transform:uppercase;border-bottom:1px solid var(--bo)">Tipo</th>
-          <th style="padding:10px 10px;text-align:left;font-size:10px;font-weight:600;color:#94a3b8;letter-spacing:.5px;text-transform:uppercase;border-bottom:1px solid var(--bo);white-space:nowrap">Efectivo $</th>
-          <th style="padding:10px 10px;text-align:left;font-size:10px;font-weight:600;color:#94a3b8;letter-spacing:.5px;text-transform:uppercase;border-bottom:1px solid var(--bo);white-space:nowrap">Transf. $</th>
-          <th style="padding:10px 8px;text-align:center;font-size:10px;font-weight:600;color:#94a3b8;letter-spacing:.5px;text-transform:uppercase;border-bottom:1px solid var(--bo);white-space:nowrap">Cons.</th>
-          <th style="padding:10px 8px;text-align:center;font-size:10px;font-weight:600;color:#94a3b8;letter-spacing:.5px;text-transform:uppercase;border-bottom:1px solid var(--bo);white-space:nowrap">Int.</th>
-          <th style="padding:10px 10px;text-align:left;font-size:10px;font-weight:600;color:#94a3b8;letter-spacing:.5px;text-transform:uppercase;border-bottom:1px solid var(--bo);white-space:nowrap;background:#f0f9f4">A Pagar</th>
-          <th style="padding:10px 10px;text-align:left;font-size:10px;font-weight:600;color:#94a3b8;letter-spacing:.5px;text-transform:uppercase;border-bottom:1px solid var(--bo)">Quién cobró</th>
-          <th style="padding:10px 10px;text-align:left;font-size:10px;font-weight:600;color:#94a3b8;letter-spacing:.5px;text-transform:uppercase;border-bottom:1px solid var(--bo)">Comentario</th>
-          <th style="padding:10px 8px;border-bottom:1px solid var(--bo);width:70px">📎</th>
-          <th style="padding:10px 8px;border-bottom:1px solid var(--bo);width:32px"></th>
+          <th style="padding:7px 6px;text-align:left;font-size:9px;font-weight:600;color:#94a3b8;letter-spacing:.4px;text-transform:uppercase;border-bottom:1px solid var(--bo);white-space:nowrap">Fecha</th>
+          <th style="padding:7px 6px;text-align:left;font-size:9px;font-weight:600;color:#94a3b8;letter-spacing:.4px;text-transform:uppercase;border-bottom:1px solid var(--bo)">Cliente</th>
+          <th style="padding:7px 6px;text-align:left;font-size:9px;font-weight:600;color:#94a3b8;letter-spacing:.4px;text-transform:uppercase;border-bottom:1px solid var(--bo)">DNI</th>
+          <th style="padding:7px 6px;text-align:left;font-size:9px;font-weight:600;color:#94a3b8;letter-spacing:.4px;text-transform:uppercase;border-bottom:1px solid var(--bo)">Tipo</th>
+          <th style="padding:7px 6px;text-align:left;font-size:9px;font-weight:600;color:#94a3b8;letter-spacing:.4px;text-transform:uppercase;border-bottom:1px solid var(--bo);white-space:nowrap">Efectivo $</th>
+          <th style="padding:7px 6px;text-align:left;font-size:9px;font-weight:600;color:#94a3b8;letter-spacing:.4px;text-transform:uppercase;border-bottom:1px solid var(--bo);white-space:nowrap">Transf. $</th>
+          <th style="padding:7px 5px;text-align:center;font-size:9px;font-weight:600;color:#94a3b8;letter-spacing:.4px;text-transform:uppercase;border-bottom:1px solid var(--bo);white-space:nowrap">Cons.</th>
+          <th style="padding:7px 5px;text-align:center;font-size:9px;font-weight:600;color:#94a3b8;letter-spacing:.4px;text-transform:uppercase;border-bottom:1px solid var(--bo);white-space:nowrap">Int.</th>
+          <th style="padding:7px 6px;text-align:left;font-size:9px;font-weight:600;color:#94a3b8;letter-spacing:.4px;text-transform:uppercase;border-bottom:1px solid var(--bo);white-space:nowrap;background:#f0f9f4">A Pagar</th>
+          <th style="padding:7px 6px;text-align:left;font-size:9px;font-weight:600;color:#94a3b8;letter-spacing:.4px;text-transform:uppercase;border-bottom:1px solid var(--bo)">Quién cobró</th>
+          <th style="padding:7px 6px;text-align:left;font-size:9px;font-weight:600;color:#94a3b8;letter-spacing:.4px;text-transform:uppercase;border-bottom:1px solid var(--bo)">Comentario</th>
+          <th style="padding:7px 5px;border-bottom:1px solid var(--bo);width:28px"></th>
         </tr>
       </thead>
       <tbody id="ing-body"></tbody>
       <tfoot>
         <tr>
-          <td colspan="13" style="padding:8px 10px">
+          <td colspan="12" style="padding:8px 10px">
             <button onclick="addIngresoRow()" style="width:100%;padding:9px;border:1.5px dashed var(--bo);border-radius:8px;background:transparent;font-size:13px;font-weight:600;color:#94a3b8;cursor:pointer;transition:all .13s" onmouseover="this.style.borderColor='var(--vd)';this.style.color='var(--vd)'" onmouseout="this.style.borderColor='var(--bo)';this.style.color='#94a3b8'">+ Agregar ingreso</button>
           </td>
         </tr>
@@ -1126,18 +1125,15 @@ textarea{resize:vertical;}
 </div>
 </div>
 
-<!-- VIEW PRECIOS (solo Belén) -->
+<!-- VIEW PRECIOS -->
 <div class="view" id="view-precios">
 <div class="vbody">
   <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:20px;flex-wrap:wrap;gap:12px">
     <div>
       <div class="dbtitle">Lista de Precios</div>
-      <div style="font-size:13px;color:#94a3b8;margin-top:4px">Solo vos podés editar esto. Los cambios se aplican a nuevos presupuestos automáticamente.</div>
+      <div id="precios-subtitle" style="font-size:13px;color:#94a3b8;margin-top:4px"></div>
     </div>
-    <div style="display:flex;gap:8px">
-      <button onclick="addPrecio()" style="padding:8px 16px;background:var(--az);color:#fff;border:none;border-radius:8px;font-size:13px;font-weight:600;cursor:pointer">+ Agregar ítem</button>
-      <button onclick="guardarPrecios()" style="padding:8px 16px;background:var(--vd);color:#fff;border:none;border-radius:8px;font-size:13px;font-weight:600;cursor:pointer">💾 Guardar cambios</button>
-    </div>
+    <div id="precios-buttons" style="display:flex;gap:8px"></div>
   </div>
   <div class="twrap" style="overflow-x:auto">
     <table style="width:100%;border-collapse:collapse">
@@ -1247,8 +1243,6 @@ function initApp(){
     // Mostrar filtro de gestor en gastos
     const ggf=document.getElementById('gas-gestor');
     if(ggf) ggf.style.display='block';
-    const tp=document.getElementById('tab-precios');
-    if(tp) tp.style.display='block';
   }
   (async()=>{setSY('sp','Conectando...');try{const{error}=await SB.from(TB).select('id').limit(1);setSY(error?'err':'ok',error?'Error de conexión':'Conectado ✓');}catch{setSY('err','Sin conexión');}})();
   // Cargar precios siempre para que el dropdown del presupuesto esté actualizado
@@ -1544,7 +1538,11 @@ function showTab(name,btn){
   if(name==='base')loadDb();
   if(name==='ingresos')loadIngresos();
   if(name==='gastos')loadGastos();
-  if(name==='precios')loadPrecios();
+  if(name==='precios'){
+    loadPrecios();
+    // Force render after view is visible
+    setTimeout(renderPrecios, 100);
+  }
   if(name==='panel')loadPanel();
   if(name==='planillas')loadPlanillas();
   if(name==='finalizados')loadFinalizados();
@@ -2279,24 +2277,24 @@ function renderIngresos(){
     // Month header con diseño mejorado
     const headerColor = isCurrentMonth ? '#1ea5f7' : '#64748b';
     html+=`<tr style="background:linear-gradient(to right,${headerColor},${headerColor}dd);cursor:pointer;border-bottom:2px solid var(--bg)" onclick="toggleMes('${mes}')">
-      <td colspan="4" style="padding:14px 16px">
-        <div style="display:flex;align-items:center;gap:8px">
-          <span style="font-size:15px;font-weight:700;color:#fff;letter-spacing:.5px">${collapsed?'▶':'▼'} ${mesLabel}</span>
-          ${isCurrentMonth?'<span style="background:rgba(255,255,255,.2);color:#fff;padding:2px 8px;border-radius:12px;font-size:10px;font-weight:700;letter-spacing:.5px">ACTUAL</span>':''}
+      <td colspan="4" style="padding:10px 12px">
+        <div style="display:flex;align-items:center;gap:6px">
+          <span style="font-size:13px;font-weight:700;color:#fff;letter-spacing:.4px">${collapsed?'▶':'▼'} ${mesLabel}</span>
+          ${isCurrentMonth?'<span style="background:rgba(255,255,255,.2);color:#fff;padding:2px 6px;border-radius:10px;font-size:9px;font-weight:700;letter-spacing:.4px">ACTUAL</span>':''}
         </div>
       </td>
-      <td style="padding:14px 10px;text-align:right;color:rgba(255,255,255,.9);font-size:12px;font-weight:600">
+      <td style="padding:10px 6px;text-align:right;color:rgba(255,255,255,.9);font-size:11px;font-weight:600">
         ${!isEmpty?'$'+Math.round(mE).toLocaleString('es-AR'):'—'}
       </td>
-      <td style="padding:14px 10px;text-align:right;color:rgba(255,255,255,.9);font-size:12px;font-weight:600">
+      <td style="padding:10px 6px;text-align:right;color:rgba(255,255,255,.9);font-size:11px;font-weight:600">
         ${!isEmpty?'$'+Math.round(mT).toLocaleString('es-AR'):'—'}
       </td>
       <td colspan="2"></td>
-      <td style="padding:14px 10px;text-align:right;color:#fff;font-size:13px;font-weight:700;background:rgba(0,0,0,.15)">
+      <td style="padding:10px 6px;text-align:right;color:#fff;font-size:12px;font-weight:700;background:rgba(0,0,0,.15)">
         ${!isEmpty?'$'+Math.round(mP).toLocaleString('es-AR'):'—'}
       </td>
-      <td colspan="4" style="padding:14px 16px;text-align:right">
-        <span style="font-size:11px;color:rgba(255,255,255,.7);font-weight:600">${rows.length} ${rows.length===1?'ingreso':'ingresos'}</span>
+      <td colspan="4" style="padding:10px 12px;text-align:right">
+        <span style="font-size:10px;color:rgba(255,255,255,.7);font-weight:600">${rows.length} ${rows.length===1?'ingreso':'ingresos'}</span>
       </td>
     </tr>`;
 
@@ -2306,7 +2304,7 @@ function renderIngresos(){
         html+=rows.map(r=>renderIngRow(r)).join('');
       } else {
         html+=`<tr style="background:#fafcff">
-          <td colspan="13" style="padding:20px 14px;color:#94a3b8;font-size:13px;text-align:center;font-style:italic">
+          <td colspan="12" style="padding:20px 14px;color:#94a3b8;font-size:13px;text-align:center;font-style:italic">
             Sin ingresos registrados en ${mesLabel}
           </td>
         </tr>`;
@@ -2314,7 +2312,7 @@ function renderIngresos(){
     }
 
     // Spacer entre meses
-    html+=`<tr><td colspan="13" style="padding:6px;background:var(--bg)"></td></tr>`;
+    html+=`<tr><td colspan="12" style="padding:6px;background:var(--bg)"></td></tr>`;
   });
 
   tbody.innerHTML=html;
@@ -2327,19 +2325,19 @@ function toggleMes(mes){
 
 function renderIngRow(r){
   const isNew=r._new;
-  const cellStyle=`padding:4px 5px;border-bottom:1px solid var(--grl);vertical-align:middle`;
-  const inp=`padding:6px 8px;border:1.5px solid var(--bo);border-radius:6px;font-size:12.5px;outline:none;background:white;width:100%`;
+  const cellStyle=`padding:3px 4px;border-bottom:1px solid var(--grl);vertical-align:middle`;
+  const inp=`padding:5px 6px;border:1.5px solid var(--bo);border-radius:5px;font-size:11.5px;outline:none;background:white;width:100%`;
   // Badge de origen: si vino de una ficha de cliente
-  const badgeFicha=r.source_ficha?`<span title="Sincronizado automáticamente desde la ficha del cliente" style="display:inline-block;padding:1px 6px;border-radius:8px;font-size:9px;font-weight:700;background:#dbeafe;color:#1e40af;margin-left:4px;letter-spacing:.3px">AUTO</span>`:'';
+  const badgeFicha=r.source_ficha?`<span title="Sincronizado automáticamente desde la ficha del cliente" style="display:inline-block;padding:1px 5px;border-radius:7px;font-size:8px;font-weight:700;background:#dbeafe;color:#1e40af;margin-left:3px;letter-spacing:.2px">AUTO</span>`:'';
   // Badge de gestor visible solo para admin (Belén)
-  const badgeGestor=curG==='Belén'&&r.gestor?`<span class="gb3 ${gbCl(r.gestor)}" style="font-size:9px;padding:1px 6px;margin-left:4px">${r.gestor}</span>`:'';
+  const badgeGestor=curG==='Belén'&&r.gestor?`<span class="gb3 ${gbCl(r.gestor)}" style="font-size:8px;padding:1px 5px;margin-left:3px">${r.gestor}</span>`:'';
   return `<tr id="row-${r.id}" style="${isNew?'background:#f0fdf4':r.source_ficha?'background:#fafcff':''}">
     <td style="${cellStyle}">
-      <div style="display:flex;gap:3px;align-items:center">
+      <div style="display:flex;gap:2px;align-items:center">
         <input type="number" min="1" max="31" value="${(r.fecha||'').slice(8,10)||''}" placeholder="Día"
           oninput="updIngFecha('${r.id}','dia',this.value)"
-          style="width:44px;padding:6px 4px;border:1.5px solid var(--bo);border-radius:6px;font-size:12px;outline:none;background:white;text-align:center">
-        <select onchange="updIngFecha('${r.id}','mes',this.value)" style="padding:6px 4px;border:1.5px solid var(--bo);border-radius:6px;font-size:12px;outline:none;background:white;cursor:pointer">
+          style="width:40px;padding:5px 3px;border:1.5px solid var(--bo);border-radius:5px;font-size:11px;outline:none;background:white;text-align:center">
+        <select onchange="updIngFecha('${r.id}','mes',this.value)" style="padding:5px 3px;border:1.5px solid var(--bo);border-radius:5px;font-size:11px;outline:none;background:white;cursor:pointer">
           <option value="">Mes</option>
           ${['Ene','Feb','Mar','Abr','May','Jun','Jul','Ago','Sep','Oct','Nov','Dic'].map((m,i)=>{
             const mo=String(i+1).padStart(2,'0');
@@ -2347,7 +2345,7 @@ function renderIngRow(r){
             return`<option value="${mo}"${cur===mo?' selected':''}>${m}</option>`;
           }).join('')}
         </select>
-        <select onchange="updIngFecha('${r.id}','anio',this.value)" style="padding:6px 4px;border:1.5px solid var(--bo);border-radius:6px;font-size:12px;outline:none;background:white;cursor:pointer">
+        <select onchange="updIngFecha('${r.id}','anio',this.value)" style="padding:5px 3px;border:1.5px solid var(--bo);border-radius:5px;font-size:11px;outline:none;background:white;cursor:pointer">
           ${[2026,2027,2028,2029,2030,2031,2032,2033,2034,2035,2036].map(y=>{
             const cur=(r.fecha||'').slice(0,4);
             return`<option value="${y}"${cur===String(y)||(!cur&&y===2026)?' selected':''}>${y}</option>`;
@@ -2393,12 +2391,6 @@ function renderIngRow(r){
     </td>
     <td style="${cellStyle}"><input value="${escH(r.comentario||'')}" placeholder="Notas..." oninput="updIng('${r.id}','comentario',this.value)" style="${inp};min-width:150px"></td>
 
-    <td style="${cellStyle};text-align:center">
-      ${r.comprobante
-        ?`<a href="${r.comprobante}" target="_blank" title="Ver comprobante" style="font-size:16px;text-decoration:none">📄</a>
-           <button onclick="setComprobante('${r.id}')" style="border:none;background:transparent;cursor:pointer;font-size:12px;color:var(--az)">✏️</button>`
-        :`<button onclick="setComprobante('${r.id}')" style="padding:4px 8px;border:1.5px dashed var(--bo);border-radius:6px;background:transparent;font-size:11px;font-weight:600;color:#94a3b8;cursor:pointer">📎 Link</button>`}
-    </td>
     <td style="${cellStyle};text-align:center">
       <div style="display:flex;gap:3px">
         <button onclick="saveIngRow('${r.id}')" title="Guardar" style="padding:4px 7px;border:none;border-radius:6px;background:var(--vdl);color:var(--vd);font-size:12px;font-weight:700;cursor:pointer">✓</button>
@@ -4627,6 +4619,22 @@ async function loadPrecios(){
   } else {
     preciosData=[...PRECIOS_DEFAULT];
   }
+  
+  // Configurar UI según usuario
+  const subtitle = document.getElementById('precios-subtitle');
+  const buttons = document.getElementById('precios-buttons');
+  
+  if(curG === 'Belén') {
+    if(subtitle) subtitle.textContent = 'Solo vos podés editar esto. Los cambios se aplican a nuevos presupuestos automáticamente.';
+    if(buttons) buttons.innerHTML = `
+      <button onclick="addPrecio()" style="padding:8px 16px;background:var(--az);color:#fff;border:none;border-radius:8px;font-size:13px;font-weight:600;cursor:pointer">+ Agregar ítem</button>
+      <button onclick="guardarPrecios()" style="padding:8px 16px;background:var(--vd);color:#fff;border:none;border-radius:8px;font-size:13px;font-weight:600;cursor:pointer">💾 Guardar cambios</button>
+    `;
+  } else {
+    if(subtitle) subtitle.innerHTML = '<span style="color:#f59e0b">👁️ Modo solo lectura</span> — Solo Belén puede editar precios.';
+    if(buttons) buttons.innerHTML = '';
+  }
+  
   renderPrecios();
   // También actualizar los dropdowns del presupuesto
   actualizarDropdownPrecios();
@@ -4634,16 +4642,31 @@ async function loadPrecios(){
 
 function renderPrecios(){
   const tbody=document.getElementById('precios-tbody');
-  if(!tbody) return;
+  if(!tbody) {
+    console.log('No se encontró precios-tbody');
+    return;
+  }
+  
+  if(!preciosData || preciosData.length === 0) {
+    console.log('preciosData está vacío, usando defaults');
+    preciosData = [...PRECIOS_DEFAULT];
+  }
+  
+  console.log('Renderizando precios:', preciosData.length, 'items');
+  
   const INP='padding:6px 8px;border:1.5px solid var(--bo);border-radius:6px;font-size:12.5px;outline:none;background:white;width:100%';
+  const readonly = curG !== 'Belén'; // Solo Belén puede editar
+  const roStyle = readonly ? ';background:#f8fafc;cursor:not-allowed' : '';
+  const roAttr = readonly ? ' readonly' : '';
+  
   tbody.innerHTML=preciosData.map((p,i)=>`<tr style="border-bottom:1px solid var(--grl)">
-    <td style="padding:5px 8px"><input value="${escH(p.nombre||'')}" oninput="updPrecio(${i},'nombre',this.value)" style="${INP};min-width:220px"></td>
-    <td style="padding:5px 8px"><input value="${escH(p.transf||'')}" placeholder="USD 200 / $50.000" oninput="updPrecio(${i},'transf',this.value)" style="${INP};min-width:120px;color:#1e40af;font-weight:600"></td>
-    <td style="padding:5px 8px"><input value="${escH(p.efect||'')}" placeholder="USD 150 / $35.000" oninput="updPrecio(${i},'efect',this.value)" style="${INP};min-width:120px;color:#0891b2;font-weight:600"></td>
-    <td style="padding:5px 8px"><input value="${escH(p.tiempo||'')}" placeholder="1 mes / —" oninput="updPrecio(${i},'tiempo',this.value)" style="${INP};min-width:100px"></td>
-    <td style="padding:5px 8px"><input value="${escH(p.cat||'')}" placeholder="Categoría" oninput="updPrecio(${i},'cat',this.value)" style="${INP};min-width:120px"></td>
+    <td style="padding:5px 8px"><input value="${escH(p.nombre||'')}" ${roAttr} oninput="updPrecio(${i},'nombre',this.value)" style="${INP};min-width:220px${roStyle}"></td>
+    <td style="padding:5px 8px"><input value="${escH(p.transf||'')}" ${roAttr} placeholder="USD 200 / $50.000" oninput="updPrecio(${i},'transf',this.value)" style="${INP};min-width:120px;color:#1e40af;font-weight:600${roStyle}"></td>
+    <td style="padding:5px 8px"><input value="${escH(p.efect||'')}" ${roAttr} placeholder="USD 150 / $35.000" oninput="updPrecio(${i},'efect',this.value)" style="${INP};min-width:120px;color:#0891b2;font-weight:600${roStyle}"></td>
+    <td style="padding:5px 8px"><input value="${escH(p.tiempo||'')}" ${roAttr} placeholder="1 mes / —" oninput="updPrecio(${i},'tiempo',this.value)" style="${INP};min-width:100px${roStyle}"></td>
+    <td style="padding:5px 8px"><input value="${escH(p.cat||'')}" ${roAttr} placeholder="Categoría" oninput="updPrecio(${i},'cat',this.value)" style="${INP};min-width:120px${roStyle}"></td>
     <td style="padding:5px 8px;text-align:center">
-      <button onclick="delPrecio(${i})" style="padding:4px 8px;border:none;border-radius:6px;background:#fee2e2;color:#b91c1c;font-size:12px;font-weight:700;cursor:pointer">✕</button>
+      ${readonly ? '<span style="color:#94a3b8;font-size:11px">Solo lectura</span>' : `<button onclick="delPrecio(${i})" style="padding:4px 8px;border:none;border-radius:6px;background:#fee2e2;color:#b91c1c;font-size:12px;font-weight:700;cursor:pointer">✕</button>`}
     </td>
   </tr>`).join('');
 }
@@ -4653,12 +4676,20 @@ function updPrecio(i,field,value){
 }
 
 function delPrecio(i){
+  if(curG !== 'Belén') {
+    toast('⛔ Solo Belén puede editar precios','err');
+    return;
+  }
   if(!confirm('¿Eliminar este ítem?')) return;
   preciosData.splice(i,1);
   renderPrecios();
 }
 
 function addPrecio(){
+  if(curG !== 'Belén') {
+    toast('⛔ Solo Belén puede agregar precios','err');
+    return;
+  }
   preciosData.push({id:'p-'+Date.now(),nombre:'',transf:'',efect:'',tiempo:'—',cat:''});
   renderPrecios();
   // Scroll al final
@@ -4667,6 +4698,10 @@ function addPrecio(){
 }
 
 async function guardarPrecios(){
+  if(curG !== 'Belén') {
+    toast('⛔ Solo Belén puede guardar cambios en precios','err');
+    return;
+  }
   // Guardar en info_equipo con tipo='precios'
   const json=JSON.stringify(preciosData);
   const{data:existing}=await SB.from('info_equipo').select('id').eq('tipo','precios').single();
