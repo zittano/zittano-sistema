@@ -367,8 +367,20 @@ body {
       <div class="recibo">
         <div class="header">
           <div class="logo-section">
-            <!-- Pegá acá la URL de tu logo o subilo -->
-            <img src="PHOTO-2020-08-07-16-46-40.jpg" alt="Zittano Logo" class="logo-img" style="width: 280px; height: auto;">
+            <!-- IMPORTANTE: Cambiá "PHOTO-2020-08-07-16-46-40.jpg" por el nombre de tu logo -->
+            <img src="PHOTO-2020-08-07-16-46-40.jpg" 
+                 alt="Zittano - Gestoría de Ciudadanías" 
+                 class="logo-img" 
+                 style="width: 280px; height: auto;"
+                 onerror="this.style.display='none'; this.nextElementSibling.style.display='block';">
+            <!-- Si no carga la imagen, muestra esto -->
+            <div style="display:none; text-align:center; padding:20px 0;">
+              <div style="font-size: 48px; font-weight: bold; color: #5a5a5a; letter-spacing: 4px; margin-bottom: 10px;">ZITTANO</div>
+              <div style="font-size: 14px; color: #8a8a8a; letter-spacing: 1px;">GESTORÍA DE CIUDADANÍAS</div>
+              <div style="font-size: 11px; color: #999; margin-top: 15px; padding: 8px; background: #fff3cd; border: 1px solid #ffc107; border-radius: 4px;">
+                ⚠️ Subí la imagen del logo en la misma carpeta que este HTML
+              </div>
+            </div>
           </div>
         </div>
         
