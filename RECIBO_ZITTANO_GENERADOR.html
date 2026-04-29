@@ -84,10 +84,19 @@ body {
 
 .concepto-item {
   display: grid;
-  grid-template-columns: 2fr 1fr 40px;
+  grid-template-columns: 2fr 1fr 100px 40px;
   gap: 10px;
   margin-bottom: 10px;
   align-items: end;
+}
+
+.concepto-item select {
+  padding: 10px;
+  border: 2px solid #e0e0e0;
+  border-radius: 6px;
+  font-size: 14px;
+  font-weight: 600;
+  background: white;
 }
 
 .concepto-item input {
@@ -142,11 +151,17 @@ body {
   background: white;
   border-radius: 8px;
   border: 2px solid #009246;
-  text-align: right;
+}
+
+.total-preview div {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin: 5px 0;
 }
 
 .total-preview strong {
-  font-size: 20px;
+  font-size: 18px;
   color: #009246;
 }
 
@@ -331,16 +346,6 @@ body {
         </div>
       </div>
       
-      <div class="form-row">
-        <div class="form-group">
-          <label>Moneda</label>
-          <select id="input-moneda">
-            <option value="ARS">Pesos Argentinos ($)</option>
-            <option value="USD">Dólares (USD)</option>
-          </select>
-        </div>
-      </div>
-      
       <!-- CONCEPTOS -->
       <div class="conceptos-section">
         <h3>💰 Conceptos</h3>
@@ -348,6 +353,10 @@ body {
           <div class="concepto-item">
             <input type="text" placeholder="Concepto (ej: Consulta AIRE)" class="concepto-desc" value="Consulta AIRE">
             <input type="number" placeholder="Monto" class="concepto-monto" value="5000" oninput="calcularTotal()">
+            <select class="concepto-moneda" onchange="calcularTotal()">
+              <option value="ARS">$ ARS</option>
+              <option value="USD">USD</option>
+            </select>
             <button class="btn-eliminar" onclick="eliminarConcepto(this)" title="Eliminar">✕</button>
           </div>
         </div>
@@ -355,7 +364,8 @@ body {
         <button class="btn-agregar-concepto" onclick="agregarConcepto()">+ Agregar otro concepto</button>
         
         <div class="total-preview">
-          <span>Total: </span><strong id="total-display">$5.000</strong>
+          <div><span>Total Pesos:</span><strong id="total-ars">$0</strong></div>
+          <div><span>Total Dólares:</span><strong id="total-usd">USD $0</strong></div>
         </div>
       </div>
       
@@ -429,6 +439,10 @@ body {
       nuevoConcepto.innerHTML = `
         <input type="text" placeholder="Concepto (ej: Traducción de actas)" class="concepto-desc">
         <input type="number" placeholder="Monto" class="concepto-monto" value="0" oninput="calcularTotal()">
+        <select class="concepto-moneda" onchange="calcularTotal()">
+          <option value="ARS">$ ARS</option>
+          <option value="USD">USD</option>
+        </select>
         <button class="btn-eliminar" onclick="eliminarConcepto(this)" title="Eliminar">✕</button>
       `;
       lista.appendChild(nuevoConcepto);
@@ -449,38 +463,47 @@ body {
     }
     
     function calcularTotal() {
-      const montos = document.querySelectorAll('.concepto-monto');
-      let total = 0;
-      montos.forEach(input => {
-        total += parseFloat(input.value) || 0;
+      const conceptosItems = document.querySelectorAll('.concepto-item');
+      let totalARS = 0;
+      let totalUSD = 0;
+      
+      conceptosItems.forEach(item => {
+        const monto = parseFloat(item.querySelector('.concepto-monto').value) || 0;
+        const moneda = item.querySelector('.concepto-moneda').value;
+        
+        if (moneda === 'USD') {
+          totalUSD += monto;
+        } else {
+          totalARS += monto;
+        }
       });
       
-      const moneda = document.getElementById('input-moneda').value;
-      let totalFmt;
-      if (moneda === 'USD') {
-        totalFmt = 'USD $' + Math.round(total).toLocaleString('es-AR');
-      } else {
-        totalFmt = '$' + Math.round(total).toLocaleString('es-AR');
-      }
-      
-      document.getElementById('total-display').textContent = totalFmt;
+      document.getElementById('total-ars').textContent = '$' + Math.round(totalARS).toLocaleString('es-AR');
+      document.getElementById('total-usd').textContent = 'USD $' + Math.round(totalUSD).toLocaleString('es-AR');
     }
     
     function generarRecibo() {
       const cliente = document.getElementById('input-cliente').value || 'Cliente';
       const fecha = document.getElementById('input-fecha').value;
-      const moneda = document.getElementById('input-moneda').value;
       
-      // Obtener todos los conceptos
+      // Obtener todos los conceptos con sus monedas
       const conceptosItems = document.querySelectorAll('.concepto-item');
       const conceptos = [];
-      let total = 0;
+      let totalARS = 0;
+      let totalUSD = 0;
       
       conceptosItems.forEach(item => {
         const desc = item.querySelector('.concepto-desc').value || 'Servicio';
         const monto = parseFloat(item.querySelector('.concepto-monto').value) || 0;
-        conceptos.push({ desc, monto });
-        total += monto;
+        const moneda = item.querySelector('.concepto-moneda').value;
+        
+        conceptos.push({ desc, monto, moneda });
+        
+        if (moneda === 'USD') {
+          totalUSD += monto;
+        } else {
+          totalARS += monto;
+        }
       });
       
       if (conceptos.length === 0) {
@@ -500,20 +523,21 @@ body {
       const anio = fechaObj.getFullYear();
       const fechaFormateada = `${dia} de ${mes} del ${anio}`;
       
-      // Formatear total
-      let totalFmt;
-      if (moneda === 'USD') {
-        totalFmt = 'USD $' + Math.round(total).toLocaleString('es-AR');
+      // Armar texto del monto recibido
+      let montoTexto = '';
+      if (totalARS > 0 && totalUSD > 0) {
+        montoTexto = `$${Math.round(totalARS).toLocaleString('es-AR')} (pesos) y USD $${Math.round(totalUSD).toLocaleString('es-AR')} (dólares)`;
+      } else if (totalUSD > 0) {
+        montoTexto = `USD $${Math.round(totalUSD).toLocaleString('es-AR')}`;
       } else {
-        totalFmt = '$' + Math.round(total).toLocaleString('es-AR');
+        montoTexto = `$${Math.round(totalARS).toLocaleString('es-AR')}`;
       }
       
       // Actualizar recibo
       document.getElementById('cliente-display').textContent = cliente;
       document.getElementById('tratamiento').textContent = tratamiento;
       document.getElementById('fecha-display').textContent = 'Ciudad Autónoma de Buenos Aires, ' + fechaFormateada;
-      document.getElementById('monto-texto').textContent = totalFmt;
-      document.getElementById('monto-total').textContent = totalFmt;
+      document.getElementById('monto-texto').textContent = montoTexto;
       
       // Renderizar conceptos en la tabla
       const tablaConceptos = document.getElementById('tabla-conceptos');
@@ -521,7 +545,7 @@ body {
       
       conceptos.forEach(c => {
         let montoFmt;
-        if (moneda === 'USD') {
+        if (c.moneda === 'USD') {
           montoFmt = 'USD $' + Math.round(c.monto).toLocaleString('es-AR');
         } else {
           montoFmt = '$' + Math.round(c.monto).toLocaleString('es-AR');
@@ -536,6 +560,17 @@ body {
         tablaConceptos.appendChild(row);
       });
       
+      // Actualizar total
+      let totalTexto = '';
+      if (totalARS > 0 && totalUSD > 0) {
+        totalTexto = `$${Math.round(totalARS).toLocaleString('es-AR')} + USD $${Math.round(totalUSD).toLocaleString('es-AR')}`;
+      } else if (totalUSD > 0) {
+        totalTexto = `USD $${Math.round(totalUSD).toLocaleString('es-AR')}`;
+      } else {
+        totalTexto = `$${Math.round(totalARS).toLocaleString('es-AR')}`;
+      }
+      document.getElementById('monto-total').textContent = totalTexto;
+      
       // Mostrar recibo y botón de imprimir
       document.getElementById('recibo').style.display = 'block';
       document.querySelector('.btn-imprimir').style.display = 'block';
@@ -544,8 +579,7 @@ body {
       document.getElementById('recibo').scrollIntoView({ behavior: 'smooth' });
     }
     
-    // Recalcular cuando cambia la moneda
-    document.getElementById('input-moneda').addEventListener('change', calcularTotal);
+    // Recalcular cuando cambia cualquier cosa
   </script>
 </body>
 </html>
