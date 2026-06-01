@@ -1539,7 +1539,10 @@ async function updPlanilla(tipo, id, field, value){
   r[field] = value;
   
   // Auto-save con upsert para evitar duplicados
-  await SB.from('planillas').upsert({...r}, {onConflict:'id'});
+  const rowToSave = {...r};
+  if(rowToSave.fecha === '') rowToSave.fecha = null;
+  if(rowToSave.fecha_ingreso === '') rowToSave.fecha_ingreso = null;
+  await SB.from('planillas').upsert(rowToSave, {onConflict:'id'});
   
   // Re-renderizar solo cuando cambia el estado (para colores)
   if(field === 'estado'){
