@@ -2075,7 +2075,8 @@ function addMChk(){const inp=document.getElementById('nchk');if(!inp||!inp.value
 async function saveM(){
   const notas=(document.getElementById('m-notas')||{value:''}).value;
   const pagos=modC.pagos_manual||[];
-  const fechaTurno=(document.getElementById('m-fecha-turno')||{value:''}).value||modC.fecha_turno||'';
+  const fechaTurnoRaw=(document.getElementById('m-fecha-turno')||{value:''}).value||modC.fecha_turno||'';
+  const fechaTurno=fechaTurnoRaw||null;
   const hoy=new Date().toISOString().slice(0,10);
   const{error}=await SB.from(TB).update({estado:modC.estado,gestor:modC.gestor,checklist:modC.checklist,notas_internas:notas,tags:modC.tags||[],documentacion:modC.documentacion||{},tipo_tramite:modC.tipo_tramite||'',aire_datos:modC.aire_datos||{},doc_secciones:modC.doc_secciones||{},pagos_manual:pagos,ultima_actividad:hoy,fecha_turno:fechaTurno}).eq('id',modC.id);
   if(error){toast('Error al guardar','err');return;}
