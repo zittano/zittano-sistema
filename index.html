@@ -1025,9 +1025,29 @@ textarea{resize:vertical;}
 <div class="view" id="view-planillas">
 <div class="vbody">
 
-  <div style="margin-bottom:24px">
-    <div class="dbtitle">Planillas de Seguimiento</div>
-    <div style="font-size:13px;color:#94a3b8;margin-top:4px">Registros de cámaras y apostillas — se guarda automáticamente</div>
+  <div style="margin-bottom:20px;display:flex;align-items:flex-start;justify-content:space-between;flex-wrap:wrap;gap:12px">
+    <div>
+      <div class="dbtitle">Planillas de Seguimiento</div>
+      <div style="font-size:13px;color:#94a3b8;margin-top:4px">Registros de cámaras y apostillas — se guarda automáticamente</div>
+    </div>
+    <div style="display:flex;gap:8px;align-items:center">
+      <select id="plan-mes" onchange="loadPlanillas()" style="padding:7px 12px;border:1.5px solid var(--bo);border-radius:8px;font-size:13px;color:var(--gr);background:white;outline:none;cursor:pointer">
+        <option value="">Todos los meses</option>
+        <option value="2026-01">Enero 2026</option>
+        <option value="2026-02">Febrero 2026</option>
+        <option value="2026-03">Marzo 2026</option>
+        <option value="2026-04">Abril 2026</option>
+        <option value="2026-05">Mayo 2026</option>
+        <option value="2026-06">Junio 2026</option>
+        <option value="2026-07">Julio 2026</option>
+        <option value="2026-08">Agosto 2026</option>
+        <option value="2026-09">Septiembre 2026</option>
+        <option value="2026-10">Octubre 2026</option>
+        <option value="2026-11">Noviembre 2026</option>
+        <option value="2026-12">Diciembre 2026</option>
+      </select>
+      <button onclick="loadPlanillas()" style="padding:7px 12px;border:1.5px solid var(--bo);border-radius:8px;background:white;font-size:13px;color:#94a3b8;cursor:pointer">↺</button>
+    </div>
   </div>
 
   <div style="display:grid;grid-template-columns:1fr 1fr;gap:24px">
@@ -1395,10 +1415,20 @@ Adjuntar: Presupuesto PDF`
    PLANILLAS (Cámaras y Apostillas)
 ══════════════════════════════ */
 async function loadPlanillas(){
+  const mes = (document.getElementById('plan-mes')||{value:''}).value || '';
   let query = SB.from('planillas').select('*');
   if(curG !== 'Belén') query = query.eq('gestor', curG);
   const {data} = await query;
-  const rows = data || [];
+  let rows = data || [];
+  
+  // Filtrar por mes si está seleccionado
+  if(mes){
+    rows = rows.filter(r => {
+      const fecha = r.fecha || r.fecha_ingreso || '';
+      return fecha.startsWith(mes);
+    });
+  }
+  
   planillasData.camaras = rows.filter(r => r.tipo === 'camara');
   planillasData.apostillas = rows.filter(r => r.tipo === 'apostilla');
   renderPlanillas();
@@ -1577,7 +1607,15 @@ function showTab(name,btn){
     setTimeout(renderPrecios, 100);
   }
   if(name==='panel')loadPanel();
-  if(name==='planillas')loadPlanillas();
+  if(name==='planillas'){
+    // Seleccionar mes actual por defecto
+    const sel = document.getElementById('plan-mes');
+    if(sel && !sel.value){
+      const hoy = new Date();
+      sel.value = hoy.getFullYear()+'-'+String(hoy.getMonth()+1).padStart(2,'0');
+    }
+    loadPlanillas();
+  }
   if(name==='finalizados')loadFinalizados();
   loadInfo();
 }
@@ -1794,11 +1832,17 @@ async function saveClient(){
 async function loadDb(){
   document.getElementById('db-wrap').innerHTML='<div class="empty"><i>⏳</i><h3>Cargando clientes...</h3></div>';
   setSY('sp','Cargando...');
-  let query=SB.from(TB).select('*');
-  if(curG!=='Belén') query=query.eq('gestor',curG);
-  const{data,error}=await query.order('created_at',{ascending:false});
-  if(error){setSY('err','Error');toast('Error: '+error.message,'err');return;}
-  allC=data||[];setSY('ok',allC.length+' clientes');
+  let allRows=[], from=0, pageSize=1000;
+  while(true){
+    let query=SB.from(TB).select('*');
+    if(curG!=='Belén') query=query.eq('gestor',curG);
+    const{data,error}=await query.order('created_at',{ascending:false}).range(from,from+pageSize-1);
+    if(error){setSY('err','Error');toast('Error: '+error.message,'err');return;}
+    allRows=allRows.concat(data||[]);
+    if(!data||data.length<pageSize) break;
+    from+=pageSize;
+  }
+  allC=allRows;setSY('ok',allC.length+' clientes');
   updStats();filterDb();
 }
 function updStats(){
