@@ -4322,7 +4322,8 @@ function updGas(id, field, value){
   if(!r) return;
   r[field] = value;
   gasPendingSave[id] = true;
-  renderGastos();
+  // Solo re-renderizar si cambia el método de pago (select), no en inputs de texto
+  if(field === 'metodo_pago') renderGastos();
 }
 
 async function saveGasRow(id){
