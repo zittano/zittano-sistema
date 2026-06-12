@@ -1801,13 +1801,13 @@ async function saveClient(){
   btn.disabled=true;btn.textContent='Guardando...';setSY('sp','Guardando...');
   const tipoSel=g('e-tipo');
   const rec={
-    id:curId||('new-'+Date.now()),fecha:fmtD(g('e-fec')),nombre:nom,
+    id:curId||(crypto.randomUUID?crypto.randomUUID():('new-'+Date.now()+'-'+Math.random().toString(36).slice(2))),fecha:fmtD(g('e-fec')),nombre:nom,
     dni:g('e-dni'),mail:g('e-mail'),celular:g('e-cel'),
     domicilio:g('e-dom'),consulado:g('e-cons'),
     ascendiente:g('e-asc'),parentesco:g('e-par'),nacimiento:g('e-nac'),
     comuna:g('e-com'),casado:g('e-cas'),padres:g('e-pad'),objetivo:g('e-obj'),
     etapas:etas.map(e=>({...e})),servicios:srvs.map(s=>({...s})),
-    estado:'En proceso',gestor:curG,checklist:chkItems,notas_internas:'',
+    estado:'En proceso',gestor:curG,checklist:chkItems,notas_internas:'',tags:[],
     tipo_tramite:tipoSel,
     doc_secciones:{},documentacion:{},aire_datos:{},pagos_manual:[],
   };
@@ -1820,6 +1820,7 @@ async function saveClient(){
   } else {
     setSY('ok','Guardado ✓');
     toast('✅ '+nom+' guardado','ok');
+    curId=null; // Resetear de inmediato para que un guardado rápido no sobreescriba este cliente
     // Limpiar formulario automáticamente después de guardar (sin pedir confirmación)
     setTimeout(() => {
       clearAll(true); // true = skipConfirm
