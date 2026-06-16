@@ -329,6 +329,7 @@ textarea{resize:vertical;}
       <button class="htab" onclick="showTab('planillas',this)">📋 Planillas</button>
       
       <button class="htab" onclick="showTab('precios',this)">💲 Precios</button>
+      <button class="htab" onclick="showTab('checklist',this)">✅ Mi Checklist</button>
     </div>
     <div class="hrgt">
       <div class="sychip"><div class="sydot sp" id="sydot"></div><span id="sytxt">Conectando</span></div>
@@ -574,7 +575,14 @@ textarea{resize:vertical;}
 <!-- VIEW BASE -->
 <div class="view" id="view-base">
 <div class="vbody">
-  <div class="dbtop"><div class="dbtitle">Base de Clientes</div></div>
+  <div class="dbtop" style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:12px">
+    <div class="dbtitle">Base de Clientes</div>
+    <div style="display:flex;gap:6px">
+      <button onclick="filtroRapido('')" id="fr-todos" style="padding:6px 14px;border-radius:20px;border:2px solid #1e3a5f;background:#1e3a5f;font-size:12px;font-weight:700;color:#fff;cursor:pointer">Todos</button>
+      <button onclick="filtroRapido('potencial')" id="fr-pot" style="padding:6px 14px;border-radius:20px;border:2px solid #e2e8f0;background:transparent;font-size:12px;font-weight:700;color:#94a3b8;cursor:pointer">👀 Potenciales</button>
+      <button onclick="filtroRapido('alerta')" id="fr-alerta" style="padding:6px 14px;border-radius:20px;border:2px solid #e2e8f0;background:transparent;font-size:12px;font-weight:700;color:#94a3b8;cursor:pointer">🔴 Sin seguimiento</button>
+    </div>
+  </div>
   <div class="stats" style="grid-template-columns:repeat(3,1fr)">
     <div class="stat"><div class="stv" id="st-tot">—</div><div class="stl">Total</div></div>
     <div class="stat vd"><div class="stv" id="st-pro">—</div><div class="stl">En Proceso</div></div>
@@ -1103,6 +1111,29 @@ textarea{resize:vertical;}
 </div>
 </div>
 
+<!-- VIEW CHECKLIST -->
+<div class="view" id="view-checklist">
+  <div style="margin-bottom:20px">
+    <div class="dbtitle">✅ Mi Checklist</div>
+    <div style="font-size:13px;color:#94a3b8;margin-top:4px">Tu cuaderno de tareas — anotá, tachá, repetí</div>
+  </div>
+
+  <div id="chk-selector-gestor" style="display:none;margin-bottom:16px">
+    <select id="chk-gestor-view" onchange="loadChecklist()" style="padding:8px 14px;border:1.5px solid var(--bo);border-radius:10px;font-size:13px;font-weight:600;outline:none;background:white">
+      <option value="">Mi checklist</option>
+      <option>Malena</option><option>Sofía</option><option>Belén</option><option>Germán</option>
+    </select>
+  </div>
+
+  <div style="display:flex;gap:8px;margin-bottom:24px">
+    <input id="chk-nueva" placeholder="Escribí una tarea nueva y apretá Enter..." onkeydown="if(event.key==='Enter')addChecklistItem()"
+      style="flex:1;padding:14px 18px;border:2px solid #fde68a;border-radius:14px;font-size:14px;outline:none;background:#fffbeb;box-shadow:2px 2px 0 #fcd34d">
+    <button onclick="addChecklistItem()" style="padding:14px 22px;background:#1e3a5f;color:#fff;border:none;border-radius:14px;font-size:14px;font-weight:700;cursor:pointer">+ Agregar</button>
+  </div>
+
+  <div id="chk-wrap" style="display:grid;grid-template-columns:repeat(auto-fill,minmax(220px,1fr));gap:16px"></div>
+</div>
+
 <!-- VIEW PRECIOS -->
 <div class="view" id="view-precios">
 <div class="vbody">
@@ -1224,6 +1255,17 @@ function initApp(){
   (async()=>{setSY('sp','Conectando...');try{const{error}=await SB.from(TB).select('id').limit(1);setSY(error?'err':'ok',error?'Error de conexión':'Conectado ✓');}catch{setSY('err','Sin conexión');}})();
   loadPrecios();
   showWelcome();
+
+  // Auto-refresh: recargar la base de clientes cada 3 minutos
+  // para evitar que dos personas trabajen con datos desactualizados
+  setInterval(()=>{
+    const baseView = document.getElementById('view-base');
+    const modalAbierto = document.getElementById('mbg')?.classList.contains('on');
+    // Solo refresca si estamos viendo la base y NO hay una ficha abierta (para no perder lo que se está editando)
+    if(baseView && baseView.classList.contains('on') && !modalAbierto){
+      loadDb();
+    }
+  }, 180000); // 3 minutos
 }
 
 const MENSAJES_DIA = [
@@ -1415,6 +1457,11 @@ Adjuntar: Presupuesto PDF`
    PLANILLAS (Cámaras y Apostillas)
 ══════════════════════════════ */
 async function loadPlanillas(){
+  // No recargar si hay foco activo en un input de planillas (evita perder ediciones en curso)
+  const activo = document.activeElement;
+  if(activo && activo.closest && (activo.closest('#planillas-camaras') || activo.closest('#planillas-apostillas'))){
+    return;
+  }
   const mes = (document.getElementById('plan-mes')||{value:''}).value || '';
   let query = SB.from('planillas').select('*');
   if(curG !== 'Belén') query = query.eq('gestor', curG);
@@ -1567,13 +1614,14 @@ async function updPlanilla(tipo, id, field, value){
   const r = planillasData[tipo].find(x => x.id === id);
   if(!r) return;
   r[field] = value;
-  
+  if(!r.gestor) r.gestor = curG; // Aseguramos que nunca se guarde sin gestor
+
   // Auto-save con upsert para evitar duplicados
   const rowToSave = {...r};
   if(rowToSave.fecha === '') rowToSave.fecha = null;
   if(rowToSave.fecha_ingreso === '') rowToSave.fecha_ingreso = null;
   await SB.from('planillas').upsert(rowToSave, {onConflict:'id'});
-  
+
   // Re-renderizar solo cuando cambia el estado (para colores)
   if(field === 'estado'){
     renderPlanilla(tipo);
@@ -1617,6 +1665,7 @@ function showTab(name,btn){
     loadPlanillas();
   }
   if(name==='finalizados')loadFinalizados();
+  if(name==='checklist')loadChecklist();
   loadInfo();
 }
 
@@ -1851,6 +1900,47 @@ function updStats(){
   document.getElementById('st-pro').textContent=allC.filter(c=>!Array.isArray(c.tags)||!c.tags.includes('Finalizado')&&!c.tags.includes('Cerrado')).length;
   document.getElementById('st-fin').textContent=allC.filter(c=>Array.isArray(c.tags)&&(c.tags.includes('Finalizado')||c.tags.includes('Cerrado'))).length;
 }
+let filtroActivo = '';
+
+function filtroRapido(tipo){
+  filtroActivo = tipo;
+  ['todos','pot','alerta'].forEach(id => {
+    const btn = document.getElementById('fr-'+id);
+    if(!btn) return;
+    btn.style.background = 'transparent';
+    btn.style.borderColor = '#e2e8f0';
+    btn.style.color = '#94a3b8';
+  });
+  const activo = tipo===''?'todos':tipo==='potencial'?'pot':'alerta';
+  const btn = document.getElementById('fr-'+activo);
+  if(btn){ btn.style.background='#1e3a5f'; btn.style.borderColor='#1e3a5f'; btn.style.color='#fff'; }
+  filterDb();
+}
+
+async function leadAvanzó(id){
+  const c = allC.find(x => x.id === id);
+  if(!c) return;
+  let tags = (c.tags||[]).filter(t => !t.startsWith('Potencial'));
+  if(!tags.includes('Consulta inicial')) tags.unshift('Consulta inicial');
+  const {error} = await SB.from(TB).update({tags}).eq('id', id);
+  if(error){toast('Error','err');return;}
+  c.tags = tags;
+  toast('✅ Marcado como cliente activo','ok');
+  filterDb();
+}
+
+async function leadNoAvanzó(id){
+  const c = allC.find(x => x.id === id);
+  if(!c) return;
+  let tags = (c.tags||[]).filter(t => !t.startsWith('Potencial'));
+  if(!tags.includes('Cerrado')) tags.push('Cerrado');
+  const {error} = await SB.from(TB).update({tags}).eq('id', id);
+  if(error){toast('Error','err');return;}
+  c.tags = tags;
+  toast('❌ Lead descartado','err');
+  filterDb();
+}
+
 function filterDb(){
   const q=(document.getElementById('db-q').value||'').toLowerCase();
   const gest=curG==='Belén'?(document.getElementById('db-g')?document.getElementById('db-g').value:''):''
@@ -1861,7 +1951,12 @@ function filterDb(){
     const mG=!gest||(c.gestor||'')==gest;
     const mE=!est||(Array.isArray(c.tags)&&c.tags.includes(est))||c.estado===est;
     const mC=!cons||(c.consulado||'').toLowerCase().includes(cons.toLowerCase());
-    return mQ&&mG&&mE&&mC;
+    const esPot = Array.isArray(c.tags)&&c.tags.some(t=>t.startsWith('Potencial'));
+    const sinContacto = esPot&&(!c.ultimo_contacto||diasSinActividad(c.ultimo_contacto)>15);
+    const mF = filtroActivo===''||
+      (filtroActivo==='potencial'&&esPot)||
+      (filtroActivo==='alerta'&&sinContacto);
+    return mQ&&mG&&mE&&mC&&mF;
   });
   renderTbl(f);
 }
@@ -1874,8 +1969,26 @@ function renderTbl(list){
     const done=cl.filter(x=>x.done).length,total=cl.length,pct=total?Math.round(done/total*100):0;
     const pagos=Array.isArray(c.servicios)?c.servicios.filter(p=>p&&p.monto&&(String(p.monto).match(/\d/)||String(p.monto).toUpperCase().includes('USD'))):[];
     const consShort=(c.consulado||'—').replace(/Consulado\s+(Gral\.\s+de\s+|de\s+)/i,'').replace('General de ','').replace('Buenos Aires','Bs As');
-    return`<tr onclick="openM('${c.id}')">
-      <td><div class="cn">${c.nombre||'—'}</div><div class="cs">${c.dni?'DNI '+c.dni:'Sin DNI'}${c.mail?' · '+c.mail:''}</div></td>
+    const esPotencial = Array.isArray(c.tags)&&c.tags.some(t=>t.startsWith('Potencial'));
+    const diasContacto = diasSinActividad(c.ultimo_contacto);
+    const alertaContacto = esPotencial && (!c.ultimo_contacto || diasContacto > 15);
+
+    return`<tr onclick="openM('${c.id}')" style="${alertaContacto?'background:#fff8f0':''}">
+      <td>
+        <div style="display:flex;align-items:center;gap:6px">
+          <div>
+            <div class="cn">${c.nombre||'—'}</div>
+            <div class="cs">${c.dni?'DNI '+c.dni:'Sin DNI'}${c.mail?' · '+c.mail:''}</div>
+          </div>
+          ${alertaContacto?`<span title="${c.ultimo_contacto?'Sin contacto hace '+diasContacto+' días':'Sin contacto registrado'}" style="font-size:13px">🔴</span>`:''}
+          ${esPotencial?`<div onclick="event.stopPropagation()" style="display:flex;gap:4px;margin-left:4px">
+            <button onclick="leadAvanzó('${c.id}')" title="Avanzó — convertir a cliente" 
+              style="padding:3px 10px;border-radius:8px;border:none;background:#dcfce7;color:#166534;font-size:11px;font-weight:700;cursor:pointer">✅ Avanzó</button>
+            <button onclick="leadNoAvanzó('${c.id}')" title="No avanzó — descartar"
+              style="padding:3px 10px;border-radius:8px;border:none;background:#fee2e2;color:#b91c1c;font-size:11px;font-weight:700;cursor:pointer">❌ No</button>
+          </div>`:''}
+        </div>
+      </td>
       <td style="font-size:12.5px;color:var(--gr);max-width:160px">${consShort}</td>
       <td><span class="gb3 ${gbCl(c.gestor)}">${c.gestor||'—'}</span></td>
       <td>
@@ -1901,8 +2014,15 @@ async function delC(id){
 }
 
 // MODAL
-function openM(id){
-  const c=allC.find(x=>x.id===id);if(!c)return;
+async function openM(id){
+  // Buscar SIEMPRE el dato más reciente desde Supabase antes de abrir,
+  // para no editar sobre una copia local vieja y pisar cambios de otra persona
+  const {data, error} = await SB.from(TB).select('*').eq('id', id).single();
+  const c = error ? allC.find(x=>x.id===id) : data;
+  if(!c) return;
+  // Actualizar también la copia local para mantenerla sincronizada
+  const idx = allC.findIndex(x=>x.id===id);
+  if(idx>=0) allC[idx] = c;
   modC={...c,checklist:Array.isArray(c.checklist)?[...c.checklist.map(x=>({...x}))]:[]};
   document.getElementById('mtit').textContent=c.nombre||'Ficha';
   renderMBody();
@@ -1956,8 +2076,16 @@ function renderMBody(){
       </div>`).join('')}
     </div>
 
-    <!-- TURNO Y ACTIVIDAD -->
-    <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px">
+    <!-- TURNO, CONTACTO Y ACTIVIDAD -->
+    <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:10px">
+      <div style="background:#f0f9ff;border:1.5px solid #bfdbfe;border-radius:10px;padding:11px 14px">
+        <div style="font-size:9px;font-weight:700;color:#3b82f6;letter-spacing:.8px;text-transform:uppercase;margin-bottom:6px">📞 Último contacto</div>
+        <input type="date" id="m-ultimo-contacto" value="${c.ultimo_contacto||''}"
+          style="width:100%;border:1.5px solid #bfdbfe;border-radius:7px;padding:6px 9px;font-size:13px;font-weight:600;outline:none;background:#fff;color:#1e40af">
+        ${c.ultimo_contacto?`<div style="font-size:10px;margin-top:4px;font-weight:600;color:${diasSinActividad(c.ultimo_contacto)>15?'#f43f5e':'#3b82f6'}">
+          ${diasSinActividad(c.ultimo_contacto)===0?'Hoy':'Hace '+diasSinActividad(c.ultimo_contacto)+' días'}
+        </div>`:'<div style="font-size:10px;margin-top:4px;color:#f59e0b;font-weight:600">Sin registrar</div>'}
+      </div>
       <div style="background:${c.fecha_turno&&diasHastaTurno(c.fecha_turno)<=7?'#fff1f2':'#f0fdf4'};border:1.5px solid ${c.fecha_turno&&diasHastaTurno(c.fecha_turno)<=7?'#fda4af':'#a7f3d0'};border-radius:10px;padding:11px 14px">
         <div style="font-size:9px;font-weight:700;color:${c.fecha_turno&&diasHastaTurno(c.fecha_turno)<=7?'#f43f5e':'#10b981'};letter-spacing:.8px;text-transform:uppercase;margin-bottom:6px">
           📅 Fecha de turno ${c.fecha_turno&&diasHastaTurno(c.fecha_turno)<=7?'⚠️ PRÓXIMO!':''}
@@ -2125,10 +2253,12 @@ async function saveM(){
   const pagos=modC.pagos_manual||[];
   const fechaTurnoRaw=(document.getElementById('m-fecha-turno')||{value:''}).value||modC.fecha_turno||'';
   const fechaTurno=fechaTurnoRaw||null;
+  const ultimoContactoRaw=(document.getElementById('m-ultimo-contacto')||{value:''}).value||modC.ultimo_contacto||'';
+  const ultimoContacto=ultimoContactoRaw||null;
   const hoy=new Date().toISOString().slice(0,10);
-  const{error}=await SB.from(TB).update({estado:modC.estado,gestor:modC.gestor,checklist:modC.checklist,notas_internas:notas,tags:modC.tags||[],documentacion:modC.documentacion||{},tipo_tramite:modC.tipo_tramite||'',aire_datos:modC.aire_datos||{},doc_secciones:modC.doc_secciones||{},pagos_manual:pagos,ultima_actividad:hoy,fecha_turno:fechaTurno}).eq('id',modC.id);
+  const{error}=await SB.from(TB).update({estado:modC.estado,gestor:modC.gestor,checklist:modC.checklist,notas_internas:notas,tags:modC.tags||[],documentacion:modC.documentacion||{},tipo_tramite:modC.tipo_tramite||'',aire_datos:modC.aire_datos||{},doc_secciones:modC.doc_secciones||{},pagos_manual:pagos,ultima_actividad:hoy,fecha_turno:fechaTurno,ultimo_contacto:ultimoContacto}).eq('id',modC.id);
   if(error){toast('Error al guardar','err');return;}
-  modC.ultima_actividad=hoy; modC.fecha_turno=fechaTurno;
+  modC.ultima_actividad=hoy; modC.fecha_turno=fechaTurno; modC.ultimo_contacto=ultimoContacto;
   const idx=allC.findIndex(c=>c.id===modC.id);
   if(idx>=0)allC[idx]={...allC[idx],...modC,notas_internas:notas,tags:modC.tags||[],documentacion:modC.documentacion||{},tipo_tramite:modC.tipo_tramite||'',aire_datos:modC.aire_datos||{},doc_secciones:modC.doc_secciones||{},pagos_manual:pagos,ultima_actividad:hoy,fecha_turno:fechaTurno};
   
@@ -4058,6 +4188,76 @@ function updPago(i,field,value){
 /* ════════════════════════════════════════
    INGRESOS
 ════════════════════════════════════════ */
+
+// ════════════════════════════════════════
+// CHECKLIST PERSONAL — post-its de colores
+// ════════════════════════════════════════
+let checklistData = [];
+const POSTIT_COLORS = ['#fef08a','#fbcfe8','#bfdbfe','#bbf7d0','#fed7aa','#ddd6fe','#fecaca'];
+const POSTIT_ROTS = ['-1.5deg','1deg','-0.5deg','1.5deg','-1deg','0.5deg','-2deg'];
+
+async function loadChecklist(){
+  const selGestor = document.getElementById('chk-selector-gestor');
+  if(selGestor) selGestor.style.display = curG==='Belén' ? 'block' : 'none';
+  
+  const viendoGestor = curG==='Belén' ? ((document.getElementById('chk-gestor-view')||{value:''}).value || curG) : curG;
+  
+  const {data, error} = await SB.from('checklist_personal').select('*').eq('gestor', viendoGestor).order('created_at',{ascending:true});
+  checklistData = data || [];
+  renderChecklist();
+}
+
+function renderChecklist(){
+  const wrap = document.getElementById('chk-wrap');
+  if(!wrap) return;
+  
+  if(!checklistData.length){
+    wrap.innerHTML = '<div style="grid-column:1/-1;text-align:center;padding:50px;color:#cbd5e1"><div style="font-size:40px;margin-bottom:10px">📝</div><div style="font-size:14px">Tu cuaderno está vacío — agregá tu primera tarea</div></div>';
+    return;
+  }
+
+  wrap.innerHTML = checklistData.map((item, i) => {
+    const color = POSTIT_COLORS[i % POSTIT_COLORS.length];
+    const rot = POSTIT_ROTS[i % POSTIT_ROTS.length];
+    return `<div style="background:${color};border-radius:4px 4px 16px 4px;padding:18px 16px;box-shadow:3px 4px 8px rgba(0,0,0,.12);transform:rotate(${rot});transition:transform .2s;position:relative;min-height:90px;display:flex;flex-direction:column;justify-content:space-between"
+      onmouseover="this.style.transform='rotate(0deg) scale(1.03)'" onmouseout="this.style.transform='rotate(${rot}) scale(1)'">
+      <div onclick="toggleChecklistItem('${item.id}')" style="cursor:pointer;font-size:14px;font-weight:600;color:#3f3f1f;line-height:1.4;${item.hecho?'text-decoration:line-through;opacity:.5':''}">
+        ${item.hecho?'✅ ':'☐ '}${item.texto}
+      </div>
+      <div style="display:flex;justify-content:flex-end;margin-top:10px">
+        <button onclick="delChecklistItem('${item.id}')" style="width:22px;height:22px;border-radius:50%;border:none;background:rgba(0,0,0,.1);color:#3f3f1f;font-size:11px;font-weight:700;cursor:pointer">✕</button>
+      </div>
+    </div>`;
+  }).join('');
+}
+
+async function addChecklistItem(){
+  const input = document.getElementById('chk-nueva');
+  const texto = input.value.trim();
+  if(!texto) return;
+  const item = {id:'chk-'+Date.now(), gestor:curG, texto, hecho:false};
+  const {error} = await SB.from('checklist_personal').insert(item);
+  if(error){toast('Error al guardar','err');return;}
+  checklistData.push(item);
+  input.value='';
+  renderChecklist();
+}
+
+async function toggleChecklistItem(id){
+  const item = checklistData.find(x => x.id === id);
+  if(!item) return;
+  item.hecho = !item.hecho;
+  await SB.from('checklist_personal').update({hecho:item.hecho}).eq('id', id);
+  renderChecklist();
+  if(item.hecho) toast('✅ ¡Tarea completada!','ok');
+}
+
+async function delChecklistItem(id){
+  await SB.from('checklist_personal').delete().eq('id', id);
+  checklistData = checklistData.filter(x => x.id !== id);
+  renderChecklist();
+}
+
 async function loadIngresos(){
   console.log('🔄 Cargando ingresos...');
   
