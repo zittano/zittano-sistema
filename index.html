@@ -6,6 +6,7 @@
 <title>Zittano — Sistema de Gestión</title>
 <link href="https://fonts.googleapis.com/css2?family=DM+Sans:ital,opsz,wght@0,9..40,300..700;1,9..40,300..700&family=DM+Serif+Display&display=swap" rel="stylesheet">
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
 <style>
 :root{
   --az:#003399;--az2:#0044cc;--azl:#e8efff;
@@ -334,6 +335,7 @@ textarea{resize:vertical;}
     <div class="hrgt">
       <div class="sychip"><div class="sydot sp" id="sydot"></div><span id="sytxt">Conectando</span></div>
       <div class="gchip"><div class="gdot" id="gdot"></div><span id="gname">—</span></div>
+      <button class="btnx" id="btn-excel-todo" onclick="descargarTodoExcel()" style="border-color:#86efac;color:#16a34a" onmouseover="this.style.background='#f0fdf4'" onmouseout="this.style.background='transparent'" title="Descarga un Excel con todas las hojas: Clientes, Ingresos, Gastos, Planillas y Precios">📥 Descargar todo</button>
       <button class="btnx" onclick="logout()">Salir</button>
     </div>
   </div>
@@ -406,16 +408,23 @@ textarea{resize:vertical;}
       <div class="ehead"><div class="eico" style="background:#fef9c3">📋</div><div class="etit">Tipo de Trámite</div></div>
       <div class="ebody">
         <div class="fld"><label>Tipo</label>
-          <select id="e-tipo">
-            <option value="">— Seleccionar tipo de trámite —</option>
-            <option value="reconstruccion">Reconstrucción</option>
-            <option value="hijo_directo">Hijo Directo</option>
-            <option value="aire">AIRE / SPID</option>
-            <option value="pasaporte">Turno Pasaporte</option>
-            <option value="menor">Inscripción Menor</option>
-            <option value="matrimonio">Inscripción Matrimonio</option>
-            <option value="divorcio">Divorcio</option>
-          </select>
+          <div style="display:flex;gap:8px">
+            <select id="e-tipo" onchange="toggleBtnPlantilla()" style="flex:1">
+              <option value="">— Seleccionar tipo de trámite —</option>
+              <option value="reconstruccion">Reconstrucción</option>
+              <option value="hijo_directo">Hijo Directo</option>
+              <option value="aire">AIRE / SPID</option>
+              <option value="pasaporte">Turno Pasaporte</option>
+              <option value="menor">Inscripción Menor</option>
+              <option value="matrimonio">Inscripción Matrimonio</option>
+              <option value="divorcio">Divorcio</option>
+            </select>
+            <button type="button" id="btn-plantilla" onclick="cargarPlantillaTramite()" disabled
+              style="padding:0 14px;border:none;border-radius:8px;background:var(--az);color:#fff;font-size:12px;font-weight:700;cursor:not-allowed;white-space:nowrap;opacity:.4;transition:opacity .13s">
+              ⚡ Cargar plantilla
+            </button>
+          </div>
+          <div style="font-size:10.5px;color:#94a3b8;margin-top:5px">Agrega de una las actas y servicios típicos de este trámite. Después podés sumar, sacar o ajustar lo que haga falta.</div>
         </div>
       </div>
     </div>
@@ -689,6 +698,40 @@ textarea{resize:vertical;}
     </div>
   </div>
 
+  <!-- ✨ Tarjeta motivacional personal — puramente visual, no toca datos ni cálculos -->
+  <style>
+  .motiv-card{position:relative;border-radius:16px;padding:18px 22px;margin-bottom:16px;color:#fff;overflow:hidden;cursor:pointer;transition:transform .15s,box-shadow .15s;box-shadow:0 4px 18px rgba(0,0,0,.12);}
+  .motiv-card:hover{transform:translateY(-2px);box-shadow:0 8px 26px rgba(0,0,0,.18);}
+  .motiv-card.mood-build{background:linear-gradient(135deg,#0ea5a5,#0369a1);}
+  .motiv-card.mood-good{background:linear-gradient(135deg,#f97316,#db2777);}
+  .motiv-card.mood-record{background:linear-gradient(135deg,#f59e0b,#a855f7,#ec4899);background-size:220% 220%;animation:motivGrad 5s ease infinite;}
+  @keyframes motivGrad{0%{background-position:0% 50%}50%{background-position:100% 50%}100%{background-position:0% 50%}}
+  .motiv-top{display:flex;align-items:center;gap:14px;}
+  .motiv-emoji{font-size:32px;line-height:1;animation:motivFloat 2.4s ease-in-out infinite;flex-shrink:0;}
+  @keyframes motivFloat{0%,100%{transform:translateY(0)}50%{transform:translateY(-5px)}}
+  .motiv-txt{flex:1;min-width:0;}
+  .motiv-msg{font-size:14.5px;font-weight:700;margin-bottom:2px;}
+  .motiv-sub{font-size:11.5px;opacity:.88;line-height:1.4;}
+  .motiv-chev{font-size:13px;opacity:.75;transition:transform .2s;flex-shrink:0;}
+  .motiv-card.open .motiv-chev{transform:rotate(180deg);}
+  .motiv-bar-wrap{margin-top:13px;background:rgba(255,255,255,.25);border-radius:20px;height:8px;overflow:hidden;}
+  .motiv-bar-fill{height:100%;background:#fff;border-radius:20px;width:0%;transition:width 1s cubic-bezier(.22,1,.36,1);}
+  .motiv-detail{display:none;margin-top:15px;padding-top:13px;border-top:1px solid rgba(255,255,255,.25);}
+  .motiv-card.open .motiv-detail{display:block;}
+  .motiv-stats-row{display:flex;gap:20px;flex-wrap:wrap;margin-bottom:14px;}
+  .motiv-stat b{display:block;font-size:16px;font-weight:800;}
+  .motiv-stat span{font-size:9.5px;opacity:.8;text-transform:uppercase;letter-spacing:.5px;}
+  .motiv-chart{display:flex;align-items:flex-end;gap:6px;height:54px;padding-bottom:16px;position:relative;}
+  .motiv-mbar{flex:1;background:rgba(255,255,255,.35);border-radius:5px 5px 0 0;min-height:3px;position:relative;transition:height .8s cubic-bezier(.22,1,.36,1);}
+  .motiv-mbar.hoy{background:#fff;}
+  .motiv-mbar-lbl{position:absolute;bottom:-16px;left:0;right:0;text-align:center;font-size:8.5px;opacity:.8;}
+  .motiv-confetti{position:absolute;inset:0;pointer-events:none;overflow:hidden;border-radius:16px;}
+  .motiv-confetti span{position:absolute;top:-10px;font-size:16px;animation:motivFall linear forwards;}
+  @keyframes motivFall{to{transform:translateY(220px) rotate(360deg);opacity:0;}}
+  @media(max-width:640px){.motiv-stats-row{gap:14px}}
+  </style>
+  <div id="motiv-wrap"></div>
+
   <!-- Cards resumen -->
   <div id="ing-resumen" style="display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin-bottom:16px"></div>
 
@@ -703,8 +746,8 @@ textarea{resize:vertical;}
           <th style="padding:7px 6px;text-align:left;font-size:9px;font-weight:600;color:#94a3b8;letter-spacing:.4px;text-transform:uppercase;border-bottom:1px solid var(--bo)">Tipo</th>
           <th style="padding:7px 6px;text-align:left;font-size:9px;font-weight:600;color:#94a3b8;letter-spacing:.4px;text-transform:uppercase;border-bottom:1px solid var(--bo);white-space:nowrap">Efectivo $</th>
           <th style="padding:7px 6px;text-align:left;font-size:9px;font-weight:600;color:#94a3b8;letter-spacing:.4px;text-transform:uppercase;border-bottom:1px solid var(--bo);white-space:nowrap">Transf. $</th>
-          <th style="padding:7px 5px;text-align:center;font-size:9px;font-weight:600;color:#94a3b8;letter-spacing:.4px;text-transform:uppercase;border-bottom:1px solid var(--bo);white-space:nowrap">Cons.</th>
-          <th style="padding:7px 5px;text-align:center;font-size:9px;font-weight:600;color:#94a3b8;letter-spacing:.4px;text-transform:uppercase;border-bottom:1px solid var(--bo);white-space:nowrap">Int.</th>
+          <th style="padding:7px 5px;text-align:center;font-size:9px;font-weight:600;color:#94a3b8;letter-spacing:.4px;text-transform:uppercase;border-bottom:1px solid var(--bo);white-space:nowrap" title="Marcá si el pago corresponde a una consulta">Cons.</th>
+          <th style="padding:7px 5px;text-align:center;font-size:9px;font-weight:600;color:#94a3b8;letter-spacing:.4px;text-transform:uppercase;border-bottom:1px solid var(--bo);white-space:nowrap" title="Marcá si el cliente es del interior del país">Int.</th>
           <th style="padding:7px 6px;text-align:left;font-size:9px;font-weight:600;color:#94a3b8;letter-spacing:.4px;text-transform:uppercase;border-bottom:1px solid var(--bo);white-space:nowrap;background:#f0f9f4">A Pagar</th>
           <th style="padding:7px 6px;text-align:left;font-size:9px;font-weight:600;color:#94a3b8;letter-spacing:.4px;text-transform:uppercase;border-bottom:1px solid var(--bo)">Quién cobró</th>
           <th style="padding:7px 6px;text-align:left;font-size:9px;font-weight:600;color:#94a3b8;letter-spacing:.4px;text-transform:uppercase;border-bottom:1px solid var(--bo)">Comentario</th>
@@ -721,6 +764,7 @@ textarea{resize:vertical;}
       </tfoot>
     </table>
   </div>
+  <datalist id="ing-tipo-list"></datalist>
 
 </div>
 </div>
@@ -815,29 +859,276 @@ textarea{resize:vertical;}
     </div>
   </div>
 
-  <!-- CONSULADOS -->
-  <div style="margin-bottom:32px">
-    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:12px">
-      <div style="font-size:11px;font-weight:700;color:#94a3b8;letter-spacing:1px;text-transform:uppercase">🏛️ Consulados</div>
-      <button onclick="addInfoRow('consulado')" style="padding:5px 14px;border:1.5px dashed var(--bo);border-radius:8px;background:transparent;font-size:12px;font-weight:600;color:#94a3b8;cursor:pointer" onmouseover="this.style.color='var(--az)'" onmouseout="this.style.color='#94a3b8'">+ Agregar consulado</button>
-    </div>
-    <div class="twrap" style="overflow-x:auto">
-      <table style="width:100%;border-collapse:collapse;min-width:800px">
-        <thead>
-          <tr style="background:var(--grl)">
-            <th style="padding:9px 12px;text-align:left;font-size:10px;font-weight:600;color:#94a3b8;border-bottom:1px solid var(--bo)">Consulado</th>
-            <th style="padding:9px 12px;text-align:left;font-size:10px;font-weight:600;color:#94a3b8;border-bottom:1px solid var(--bo)">AIRE de 0</th>
-            <th style="padding:9px 12px;text-align:left;font-size:10px;font-weight:600;color:#94a3b8;border-bottom:1px solid var(--bo)">Tiempo hasta turno</th>
-            <th style="padding:9px 12px;text-align:left;font-size:10px;font-weight:600;color:#94a3b8;border-bottom:1px solid var(--bo)">Pide OTP</th>
-            <th style="padding:9px 12px;text-align:left;font-size:10px;font-weight:600;color:#94a3b8;border-bottom:1px solid var(--bo)">Notas</th>
-            <th style="padding:9px 12px;text-align:left;font-size:10px;font-weight:600;color:#94a3b8;border-bottom:1px solid var(--bo)">Web</th>
-            <th style="padding:9px 8px;border-bottom:1px solid var(--bo);width:60px"></th>
-          </tr>
-        </thead>
-        <tbody id="info-consulados"></tbody>
-      </table>
+  <!-- CONSULADOS (interactivo) -->
+<style>
+/* ── Consulados interactivos ── */
+.cons-top{display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap;margin-bottom:14px;}
+.cons-ctrl{display:flex;gap:8px;flex-wrap:wrap;align-items:center;}
+.cons-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(340px,1fr));gap:14px;}
+.ccard{background:var(--wh);border:1px solid var(--bo);border-radius:12px;box-shadow:var(--sh);overflow:hidden;transition:border-color .15s;}
+.ccard.open{border-color:var(--az);}
+.ccard-h{display:flex;align-items:center;gap:10px;padding:14px 16px;cursor:pointer;user-select:none;}
+.ccard-h:hover{background:#f8faff;}
+.ccard-name{font-size:15px;font-weight:700;color:var(--grd);flex:1;min-width:0;}
+.ccard-name small{display:block;font-size:10.5px;font-weight:600;color:#94a3b8;letter-spacing:.4px;text-transform:uppercase;margin-top:2px;}
+.ccar{width:22px;height:22px;border-radius:6px;background:var(--grl);display:flex;align-items:center;justify-content:center;font-size:11px;color:var(--gr);flex-shrink:0;transition:transform .18s;}
+.ccard.open .ccar{transform:rotate(180deg);background:var(--azl);color:var(--az);}
+.cbadges{display:flex;gap:6px;flex-wrap:wrap;padding:0 16px 12px;}
+.cbdg{display:inline-flex;align-items:center;gap:5px;padding:4px 10px;border-radius:20px;font-size:11px;font-weight:700;white-space:nowrap;}
+.cbdg::before{content:"";width:6px;height:6px;border-radius:50%;background:currentColor;}
+.cbdg.t-ok{background:#dcfce7;color:#166534;}
+.cbdg.t-med{background:#fef9c3;color:#854d0e;}
+.cbdg.t-slow{background:#fee2e2;color:#991b1b;}
+.cbdg.otp-si{background:#ede9fe;color:#5b21b6;}
+.cbdg.otp-no{background:var(--grl);color:#475569;}
+.cbdg.mails{background:#e0f2fe;color:#075985;}
+.cbdg.multi{background:#fce7f3;color:#9d174d;}
+.ccard-b{display:none;border-top:1px solid var(--grl);padding:14px 16px;flex-direction:column;gap:12px;}
+.ccard.open .ccard-b{display:flex;}
+.cblk-l{font-size:10px;font-weight:700;color:#94a3b8;letter-spacing:1px;text-transform:uppercase;margin-bottom:4px;}
+.cblk-t{font-size:12.5px;line-height:1.6;color:var(--grd);white-space:pre-wrap;}
+.cblk-t.hint{background:var(--aml);border-radius:8px;padding:8px 10px;border-left:3px solid var(--am);}
+.cblk-t.warn{background:var(--rol);border-radius:8px;padding:8px 10px;border-left:3px solid var(--ro);}
+.ccontact{display:flex;flex-direction:column;gap:3px;background:var(--grl);border-radius:8px;padding:10px 12px;}
+.ccrow{display:flex;gap:8px;font-size:12.5px;color:var(--grd);align-items:baseline;}
+.ccrow b{font-size:10px;font-weight:700;color:#94a3b8;letter-spacing:.4px;text-transform:uppercase;min-width:56px;flex-shrink:0;}
+.ccrow a{color:var(--az);text-decoration:none;font-weight:600;}
+.ccrow a:hover{text-decoration:underline;}
+.cjur{display:flex;flex-wrap:wrap;gap:5px;}
+.cjch{background:var(--azl);color:var(--az);font-size:11px;font-weight:600;padding:3px 9px;border-radius:20px;}
+.clinks{display:flex;gap:8px;flex-wrap:wrap;}
+.clink{display:inline-flex;align-items:center;gap:5px;padding:6px 12px;border-radius:8px;background:var(--azl);color:var(--az);font-size:12px;font-weight:600;text-decoration:none;border:1px solid transparent;transition:all .13s;}
+.clink:hover{border-color:var(--az);}
+.cons-empty{padding:40px;text-align:center;color:#94a3b8;font-size:13px;background:var(--wh);border:1px dashed var(--bo);border-radius:12px;}
+@media(max-width:720px){.cons-grid{grid-template-columns:1fr;}}
+</style>
+
+<div style="margin-bottom:32px">
+  <div class="cons-top">
+    <div style="font-size:11px;font-weight:700;color:#94a3b8;letter-spacing:1px;text-transform:uppercase">🏛️ Consulados</div>
+    <div class="cons-ctrl">
+      <input class="sinp" id="cons-q" placeholder="🔍 Buscar consulado o requisito..." oninput="renderConsulados()" style="min-width:240px">
+      <select class="fsel" id="cons-sort" onchange="renderConsulados()">
+        <option value="nombre">Ordenar: A → Z</option>
+        <option value="tiempo">Ordenar: menor espera primero</option>
+      </select>
+      <select class="fsel" id="cons-otp" onchange="renderConsulados()">
+        <option value="">OTP: todos</option>
+        <option value="si">Pide OTP</option>
+        <option value="no">Sin OTP</option>
+      </select>
     </div>
   </div>
+  <div class="cons-grid" id="cons-grid"></div>
+</div>
+
+<script>
+/* ══════════ DATOS — editá acá para sumar o corregir info ══════════
+   tiempoMeses se usa para el semáforo y el orden:
+   ≤1 verde · 2–5 amarillo · ≥6 rojo. Usá decimales (3.5 = 3 meses y medio). */
+const CONSULADOS_DATA = [
+  {
+    nombre:'CABA', sub:'Consulado Gral. de Buenos Aires',
+    tiempo:'8 meses y medio (ambos)', tiempoMeses:8.5, otp:'si', mails:false,
+    direccion:'Reconquista 572 – (C1003ABL), CABA',
+    tel:'Call Center 0800-345-5623 (L-V 8 a 12 hs)', mail:'PEC: con.buenosaires@cert.esteri.it',
+    jurisdiccion:['CABA'],
+    aire:'6 meses corridos de servicio',
+    residencia:'Luz, gas, cable, teléfono fijo e internet. 6 meses de antigüedad antes de la reserva.',
+    confirmacion:'Confirmación de ciudadanía: 2 meses.',
+    horarios:'Domingo a jueves 19 o 20 hs, o turnos aleatorios (según horario de verano).',
+    multiples:'',
+    requisitos:'El día del turno se paga el arancel consular de 600 EUR por cada persona mayor de 18 años (a la cotización oficial consular, por transferencia en pesos). No se reembolsa aunque no se reconozca la ciudadanía. Turnos "Hijo Directo" y "Reconstrucción" solo por Prenot@mi.',
+    links:[
+      {t:'Web', u:'https://consbuenosaires.esteri.it/es/'},
+      {t:'Formularios', u:'https://consbuenosaires.esteri.it/es/news/dal_consolato/formularios/'}
+    ]
+  },
+  {
+    nombre:'La Plata', sub:'',
+    tiempo:'3 meses y medio (ambos)', tiempoMeses:3.5, otp:'si', mails:false,
+    direccion:'Calle 48 n. 869, (1900) La Plata',
+    tel:'(0221) 439-5510 — info pasaportes/ciudadanía/estado civil/Fast-it, L-V 8:30 a 11:30 hs. Emergencias: (0221) 586-2653',
+    mail:'Legal/notarial: legale.laplata@esteri.it · Asistencia social: assistenza.laplata@esteri.it',
+    jurisdiccion:['La Plata','Gran La Plata','Berisso','Ensenada'],
+    aire:'Requieren los 3 servicios: gas, agua y luz',
+    residencia:'Luz, gas, teléfono fijo, internet, TV por cable o contrato de alquiler registrado en AFIP. Estudiantes universitarios: libreta universitaria o certificado de alumno regular donde conste el domicilio.',
+    horarios:'Domingos, lunes, miércoles y jueves a las 20:00 hs.',
+    confirmacion:'', multiples:'', requisitos:'',
+    links:[{t:'Web', u:'https://conslaplata.esteri.it/es/'}]
+  },
+  {
+    nombre:'Lomas de Zamora', sub:'',
+    tiempo:'1 mes (ambos)', tiempoMeses:1, otp:'no', mails:false,
+    direccion:'Av. Meeks 701, (1834) Temperley',
+    tel:'(+54) 11 4358-4300 — atención L-V 9 a 14 hs',
+    jurisdiccion:['Lomas de Zamora','Temperley','Zona sur GBA'],
+    aire:'',
+    residencia:'Boleta de servicio de luz, gas, agua, teléfono fijo, cable, internet, alarma hogareña o contrato de alquiler registrado ante AFIP. Estudiantes menores de 30 años: certificado de alumno regular con fecha reciente e indicación de domicilio, más una boleta a nombre de uno de los padres.',
+    confirmacion:'', horarios:'', multiples:'',
+    requisitos:'Pasaportes, CIE y Ciudadanía atienden exclusivamente con turno previo.',
+    links:[{t:'Web', u:'https://conslomasdezamora.esteri.it/es/'}]
+  },
+  {
+    nombre:'Morón', sub:'Responde mails',
+    tiempo:'22 días (ambos)', tiempoMeses:0.75, otp:'no', mails:true,
+    tel:'Información general: (011) 4483-4716, L-V 9 a 11:30 hs',
+    mail:'Legal/notarial y pensiones: 4489-3395, L y V 9 a 12 hs',
+    jurisdiccion:['Morón','Zona oeste GBA'],
+    aire:'',
+    residencia:'Factura de luz, gas, teléfono, TV por cable, internet y/o contrato de alquiler que acrediten la dirección de residencia a partir de los 6 meses anteriores a la fecha del turno.',
+    confirmacion:'', horarios:'', multiples:'', requisitos:'',
+    links:[{t:'Web', u:'https://consmoron.esteri.it/es/'}]
+  },
+  {
+    nombre:'Rosario', sub:'',
+    tiempo:'Recons. 15 días · HD 8 días', tiempoMeses:0.5,
+    otp:'mixto', otpDetalle:'Reconstrucción NO · Hijo Directo SÍ', mails:false,
+    direccion:'Montevideo 2182, (S2000BSR) Rosario, Santa Fe',
+    tel:'Call Center 0800-220-2182 (L-V 8 a 14 hs) · Tel (0341) 4407020/21/22 · Chatbot "RosIta" por WhatsApp: +54 9 341 258-7798',
+    mail:'segreteria.rosario@esteri.it',
+    jurisdiccion:['Santa Fe','Entre Ríos'],
+    aire:'',
+    residencia:'Recibo de sueldo, resumen de obra social, resumen de tarjeta de crédito o cuenta bancaria, factura de abono de celular, certificado de alumno regular, jubilación, constancia de inscripción a monotributo o IVA (antigüedad no menor a 12 meses).\n\n❌ NO sirven: carnet de conducir, seguro o patente, certificados de policía/municipio, impuestos inmobiliarios, luz, agua o gas, contrato de alquiler.',
+    confirmacion:'', horarios:'Atención al público L-V de 8:30 a 11:30 hs.', multiples:'', requisitos:'',
+    links:[
+      {t:'Web', u:'https://consrosario.esteri.it/es/'},
+      {t:'Promemoria doc. Prenotami (PDF)', u:'https://consrosario.esteri.it/wp-content/uploads/2024/11/2-_promemoria_documentazione_da_presentare_-_prenotami.pdf'}
+    ]
+  },
+  {
+    nombre:'Córdoba', sub:'',
+    tiempo:'Recons. 4–5 meses · HD 3–4 meses', tiempoMeses:4.5,
+    otp:'mixto', otpDetalle:'Reconstrucción NO · Hijo Directo SÍ', mails:false,
+    direccion:'Av. Vélez Sarsfield 360, Ciudad de Córdoba',
+    tel:'Call Center +54 351 526-1000 (martes y jueves 11 a 13 hs) · Emergencias graves: (+54) 0351 156137892',
+    mail:'PEC: con.cordoba@cert.esteri.it',
+    jurisdiccion:['Córdoba','Catamarca','La Rioja','Santiago del Estero','Tucumán'],
+    aire:'',
+    residencia:'Facturas de luz, gas, teléfono fijo, internet o TV por cable: DOS facturas, una del mes del turno y otra del sexto mes anterior. Originales con firma y sello del ente prestador, o con validación online (QR/código).\n\nCertificados de alumno regular (escuelas, universidades o terciarios con título reconocido) con historia académica reciente; el lugar de cursado debe coincidir con el domicilio declarado y ser del año en curso.\n\nCertificado de afiliación a obra social o factura mensual: con datos completos y domicilio, emitido el mismo mes del turno; vale también para cónyuge e hijos si figuran como beneficiarios.',
+    requisitos:'⚠️ OJO con acta de matrimonio.\n\nLas oficinas reciben con turno de 8:30 a 14 hs (Prenot@mi para ciudadanía y pasaportes).',
+    confirmacion:'', horarios:'', multiples:'',
+    links:[{t:'Web', u:'https://conscordoba.esteri.it/es/'}]
+  },
+  {
+    nombre:'Mendoza', sub:'Responde mails',
+    tiempo:'1 mes (ambos)', tiempoMeses:1, otp:'no', mails:true,
+    direccion:'Necochea 712, Mendoza',
+    tel:'(0261) 520-1400 · Emergencias graves (fines de semana 9 a 21 hs): 261-155590570',
+    mail:'con.mendoza@cert.esteri.it',
+    jurisdiccion:['Mendoza','San Juan','San Luis'],
+    aire:'',
+    residencia:'DNI que acredite residencia en la circunscripción desde al menos 6 meses. Se reservan el derecho de pedir más documentación (recibos de luz/gas/teléfono, contrato de alquiler, contrato de trabajo, inscripción a universidad, escolaridad de hijos menores, seguro médico, seguro de vehículo, inscripción en AFIP, etc.).',
+    confirmacion:'', horarios:'Atención L-V 8:30 a 15 hs.', multiples:'',
+    requisitos:'Tiene oficinas consulares honorarias en San Juan, San Rafael, San Luis y Villa Mercedes para trámites locales.',
+    links:[
+      {t:'Web', u:'https://consmendoza.esteri.it/es/'},
+      {t:'Guía ciudadanía (PDF)', u:'https://consmendoza.esteri.it/wp-content/uploads/2025/01/NUEVA-GUIA-DE-CIUDADANIA-ITALIANA-POR-DESCENDENCIA-SANGUINEA-CG-MENDOZA.pdf'}
+    ]
+  },
+  {
+    nombre:'Bahía Blanca', sub:'Responde mails',
+    tiempo:'11–12 meses (ambos)', tiempoMeses:11.5, otp:'si', mails:true,
+    direccion:'Av. Além 309, (8000) Bahía Blanca',
+    tel:'Info general (0291) 442-8255, ver día vigente en la web (viene cambiando: L-V 9:30-13:30 o L y Mi 9-13) · Tel. general (0291) 454-5140',
+    mail:'Ciudadanía: citt.bahiablanca@esteri.it · Hijos directos: bahiablanca.figlidiretti@esteri.it · PEC: con.bahiablanca@cert.esteri.it',
+    jurisdiccion:['Chubut','La Pampa','Neuquén','Río Negro','Santa Cruz','Tierra del Fuego'],
+    aire:'',
+    residencia:'2 comprobantes a nombre del solicitante del mes en que se pidió el turno y 2 del mes del turno, con la misma dirección del DNI. Sirven: facturas de servicios residenciales, recibo de sueldo o certificado laboral, constancia de monotributo, afiliación a obra social (o factura), contrato o recibo de alquiler, certificado de alumno regular, afiliación a colegios profesionales, certificados de ANSES (jubilados).',
+    requisitos:'Actas digitales y ológrafas: apostilla + traducción.\n\n⚠️ Es la circunscripción más extensa del país (6 provincias patagónicas). No se puede ingresar con bolsos, mochilas, valijas ni notebooks — hay detector de metales; celulares permitidos pero sin uso adentro.',
+    horarios:'HD: apertura de domingos a jueves a las 20:00 hs. Reconstrucción: los turnos se habilitan una vez por mes; la fecha se publica en la web (sección Noticias) y redes oficiales.',
+    multiples:'Titular soltero/a sin hijos: puede presentarse con padre/madre/hermanos solteros sin hijos CON EL MISMO DOMICILIO.\nTitular casado o con hijos: puede presentarse con hijos mayores de 18, solteros, sin hijos CON EL MISMO DOMICILIO.',
+    confirmacion:'',
+    links:[
+      {t:'Web', u:'https://consbahiablanca.esteri.it/es/'},
+      {t:'Comprovanti di residenza', u:'https://consbahiablanca.esteri.it/it/news/dal_consolato/2023/09/apertura-extraordinaria-de-turnos-servicio-ciudadania-por-reconstruccion/'}
+    ]
+  },
+  {
+    nombre:'Mar del Plata', sub:'',
+    tiempo:'1 mes (ambos)', tiempoMeses:1, otp:'si', mails:false,
+    direccion:'Falucho 1416, (7600) Mar del Plata',
+    tel:'(0223) 451-7703 / 451-8623',
+    jurisdiccion:['Gral. Pueyrredón','Gral. Alvarado','Balcarce','Mar Chiquita','Villa Gesell','Pinamar','Gral. Madariaga','De la Costa','Ayacucho','Rauch','Tandil','Lobería','Necochea','San Cayetano','Benito Juárez','Maipú'],
+    aire:'',
+    residencia:'DNI con residencia en la circunscripción de MDP con antigüedad no menor a 6 meses (más fotocopia simple), y último recibo de obra social o servicios de consumo con nombre y dirección coincidentes con el DNI, en original y copia.',
+    multiples:'Puede incluir un acompañante que sea hermano/a, padre, madre o hijo/a. El acompañante debe compartir con el solicitante el avo (mismo ascendiente). Ambos deben presentarse el día del turno con la documentación necesaria.',
+    confirmacion:'', horarios:'',
+    requisitos:'Abarca 16 partidos: 1/5 del territorio de la provincia de Buenos Aires. Antes de pedir trámites de estado civil hay que actualizar el domicilio en la anagrafe consular.',
+    links:[
+      {t:'Web', u:'https://consmardelplata.esteri.it/es/'},
+      {t:'Instructivo (PDF)', u:'https://consmardelplata.esteri.it/wp-content/uploads/2025/02/Instructivo-Ciudadania-por-descendencia_.pdf'}
+    ]
+  },
+];
+
+let consOpen = {};
+
+function consTiempoClass(m){ return m<=1 ? 't-ok' : m<6 ? 't-med' : 't-slow'; }
+function consEsc(s){ return String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;'); }
+
+function renderConsulados(){
+  const grid = document.getElementById('cons-grid');
+  if(!grid) return;
+  const q = (document.getElementById('cons-q').value||'').toLowerCase();
+  const sort = document.getElementById('cons-sort').value;
+  const fOtp = document.getElementById('cons-otp').value;
+
+  let list = CONSULADOS_DATA.filter(c=>{
+    const blob = [c.nombre,c.sub,c.residencia,c.requisitos,c.horarios,c.multiples,c.aire,c.tiempo,c.otpDetalle,c.direccion,c.tel,c.mail,(c.jurisdiccion||[]).join(' ')].join(' ').toLowerCase();
+    const mQ = !q || blob.includes(q);
+    const mO = !fOtp || c.otp===fOtp || (fOtp==='si' && c.otp==='mixto');
+    return mQ && mO;
+  });
+  list.sort((a,b)=> sort==='tiempo' ? a.tiempoMeses-b.tiempoMeses : a.nombre.localeCompare(b.nombre));
+
+  if(!list.length){ grid.innerHTML = '<div class="cons-empty" style="grid-column:1/-1">Sin resultados. Probá con otra búsqueda.</div>'; return; }
+
+  grid.innerHTML = list.map(c=>{
+    const open = consOpen[c.nombre] ? ' open' : '';
+    const otpBadge = c.otp==='si' ? '<span class="cbdg otp-si">🔐 Pide OTP</span>'
+      : c.otp==='no' ? '<span class="cbdg otp-no">Sin OTP</span>'
+      : `<span class="cbdg otp-si" title="${consEsc(c.otpDetalle)}">🔐 OTP según trámite</span>`;
+    const blk = (label, txt, cls) => txt ? `<div><div class="cblk-l">${label}</div><div class="cblk-t${cls?' '+cls:''}">${consEsc(txt)}</div></div>` : '';
+    return `
+    <div class="ccard${open}">
+      <div class="ccard-h" onclick="togCons('${consEsc(c.nombre)}')">
+        <div class="ccard-name">${consEsc(c.nombre)}${c.sub?`<small>${consEsc(c.sub)}</small>`:''}</div>
+        <div class="ccar">▾</div>
+      </div>
+      <div class="cbadges">
+        <span class="cbdg ${consTiempoClass(c.tiempoMeses)}">⏱ ${consEsc(c.tiempo)}</span>
+        ${otpBadge}
+        ${c.mails?'<span class="cbdg mails">✉️ Responde mails</span>':''}
+        ${c.multiples?'<span class="cbdg multi">👥 Turnos múltiples</span>':''}
+      </div>
+      <div class="ccard-b">
+        ${(c.direccion||c.tel||c.mail)?`<div class="ccontact">
+          ${c.direccion?`<div class="ccrow"><b>📍 Dónde</b><span>${consEsc(c.direccion)}</span></div>`:''}
+          ${c.tel?`<div class="ccrow"><b>☎️ Tel</b><span>${consEsc(c.tel)}</span></div>`:''}
+          ${c.mail?`<div class="ccrow"><b>✉️ Mail</b><span>${consEsc(c.mail)}</span></div>`:''}
+        </div>`:''}
+        ${c.jurisdiccion&&c.jurisdiccion.length?`<div><div class="cblk-l">Jurisdicción — a dónde corresponde cada cliente</div><div class="cjur">${c.jurisdiccion.map(j=>`<span class="cjch">${consEsc(j)}</span>`).join('')}</div></div>`:''}
+        ${c.otp==='mixto'?blk('OTP', c.otpDetalle):''}
+        ${blk('AIRE de 0', c.aire)}
+        ${blk('Comprobar residencia', c.residencia)}
+        ${blk('Requisitos / atención — cosas a tener en cuenta', c.requisitos, 'hint')}
+        ${blk('Confirmación de ciudadanía', c.confirmacion)}
+        ${blk('Horarios de turnos', c.horarios)}
+        ${blk('Turnos múltiples / acompañantes', c.multiples)}
+        ${c.links&&c.links.length?`<div><div class="cblk-l">Links</div><div class="clinks">${c.links.map(l=>`<a class="clink" href="${consEsc(l.u)}" target="_blank" rel="noopener">🔗 ${consEsc(l.t)}</a>`).join('')}</div></div>`:''}
+      </div>
+    </div>`;
+  }).join('');
+}
+
+function togCons(nombre){
+  consOpen[nombre] = !consOpen[nombre];
+  renderConsulados();
+}
+
+renderConsulados();
+</script>
 
   <!-- PROVINCIAS -->
   <div>
@@ -1468,10 +1759,12 @@ async function loadPlanillas(){
   const {data} = await query;
   let rows = data || [];
   
-  // Filtrar por mes si está seleccionado
+  // Filtrar por mes si está seleccionado — las filas sin fecha cargada
+  // siempre se muestran (si no, "desaparecen" en cuanto falta la fecha)
   if(mes){
     rows = rows.filter(r => {
       const fecha = r.fecha || r.fecha_ingreso || '';
+      if(!fecha) return true;
       return fecha.startsWith(mes);
     });
   }
@@ -1586,10 +1879,10 @@ function renderPlanilla(tipo){
   }
 }
 
-function addPlanillaRow(tipo){
+async function addPlanillaRow(tipo){
   const tipoSingular = tipo === 'camaras' ? 'camara' : 'apostilla';
   const newRow = {
-    id: tipoSingular + '-' + Date.now(),
+    id: tipoSingular + '-' + (crypto.randomUUID ? crypto.randomUUID() : (Date.now()+'-'+Math.random().toString(36).slice(2))),
     tipo: tipoSingular,
     gestor: curG
   };
@@ -1597,10 +1890,10 @@ function addPlanillaRow(tipo){
   if(tipo === 'camaras'){
     newRow.numero = '';
     newRow.cliente = '';
-    newRow.fecha = '';
+    newRow.fecha = null;
     newRow.mail = '';
   } else {
-    newRow.fecha_ingreso = '';
+    newRow.fecha_ingreso = null;
     newRow.expediente = '';
     newRow.tipo_doc = '';
     newRow.cliente = '';
@@ -1608,6 +1901,14 @@ function addPlanillaRow(tipo){
   
   planillasData[tipo].push(newRow);
   renderPlanilla(tipo);
+
+  // Guardar de inmediato: si cambia de pestaña antes de tipear algo, la fila no se pierde
+  try {
+    await SB.from('planillas').upsert(newRow, {onConflict:'id'});
+  } catch(e) {
+    console.warn('No se pudo guardar la planilla nueva:', e);
+    toast('⚠️ No se pudo guardar la fila nueva, revisá la conexión','err');
+  }
 }
 
 async function updPlanilla(tipo, id, field, value){
@@ -1620,7 +1921,11 @@ async function updPlanilla(tipo, id, field, value){
   const rowToSave = {...r};
   if(rowToSave.fecha === '') rowToSave.fecha = null;
   if(rowToSave.fecha_ingreso === '') rowToSave.fecha_ingreso = null;
-  await SB.from('planillas').upsert(rowToSave, {onConflict:'id'});
+  const {error} = await SB.from('planillas').upsert(rowToSave, {onConflict:'id'});
+  if(error){
+    console.warn('Error guardando planilla:', error.message);
+    toast('⚠️ No se guardó el cambio, revisá la conexión','err');
+  }
 
   // Re-renderizar solo cuando cambia el estado (para colores)
   if(field === 'estado'){
@@ -1630,7 +1935,11 @@ async function updPlanilla(tipo, id, field, value){
 
 async function delPlanilla(tipo, id){
   if(!confirm('¿Eliminar este registro?')) return;
-  await SB.from('planillas').delete().eq('id',id);
+  const {error} = await SB.from('planillas').delete().eq('id',id);
+  if(error){
+    toast('⚠️ No se pudo eliminar, revisá la conexión','err');
+    return;
+  }
   planillasData[tipo] = planillasData[tipo].filter(x => x.id !== id);
   renderPlanilla(tipo);
   toast('Eliminado','err');
@@ -1647,7 +1956,23 @@ function showTab(name,btn){
   document.getElementById('view-'+name).classList.add('on');
   btn.classList.add('on');
   if(name==='base')loadDb();
-  if(name==='ingresos')loadIngresos();
+  if(name==='ingresos'){
+    loadIngresos().then(()=>{
+      if(!ingMesInicializado){
+        ingMesInicializado = true;
+        const selMes = document.getElementById('ing-mes');
+        if(selMes){
+          const hoy = new Date();
+          const mesActual = hoy.getFullYear()+'-'+String(hoy.getMonth()+1).padStart(2,'0');
+          const existe = Array.from(selMes.options).some(o=>o.value===mesActual);
+          if(existe){
+            selMes.value = mesActual;
+            filterIngresos();
+          }
+        }
+      }
+    });
+  }
   if(name==='gastos')loadGastos();
   if(name==='precios'){
     loadPrecios();
@@ -1666,7 +1991,7 @@ function showTab(name,btn){
   }
   if(name==='finalizados')loadFinalizados();
   if(name==='checklist')loadChecklist();
-  loadInfo();
+  if(name==='info')loadInfo();
 }
 
 // CHECKLIST
@@ -1724,6 +2049,94 @@ function addActa(tipo){
   etas.push({tipo, origen:'italiana', titular:'', notas:''});
   renderEtas();
   render();
+}
+
+/* ══════════════════════════════════════════════════════════════════
+   PLANTILLAS POR TIPO DE TRÁMITE — menos clicks para armar un presupuesto
+   Los servicios se buscan por nombre en preciosData (la MISMA fuente que
+   usa el dropdown), así que si Belén actualiza un precio, la plantilla
+   siempre usa el precio vigente, nunca uno viejo hardcodeado.
+   ══════════════════════════════════════════════════════════════════ */
+const TEMPLATES_TRAMITE = {
+  reconstruccion:{
+    actas:['nacimiento','matrimonio'],
+    itemsSimples:['expediente','traduccion','honorarios'],
+    servicios:['Expte de Cámara + Apostilla + Traducción','Honorarios'],
+  },
+  hijo_directo:{
+    actas:['nacimiento'],
+    itemsSimples:[],
+    servicios:['Actas Nacionales con Foto','Honorarios sin Acta Italiana'],
+  },
+  aire:{
+    actas:[],
+    itemsSimples:['aire'],
+    servicios:['AIRE'],
+  },
+  pasaporte:{
+    actas:[],
+    itemsSimples:[],
+    servicios:['Turno Pasaporte (CABA/Morón/LP/Lomas)'],
+  },
+  menor:{
+    actas:[{tipo:'nacimiento', origen:'argentina'}],
+    itemsSimples:[],
+    servicios:['Actas Nacionales con Foto'],
+  },
+  matrimonio:{
+    actas:[{tipo:'matrimonio', origen:'argentina'}],
+    itemsSimples:['traduccion'],
+    servicios:['Traducciones (c/u)'],
+  },
+  divorcio:{
+    actas:[],
+    itemsSimples:[],
+    servicios:['Divorcio'],
+  },
+};
+
+function toggleBtnPlantilla(){
+  const btn=document.getElementById('btn-plantilla');
+  if(!btn) return;
+  const hay=!!TEMPLATES_TRAMITE[g('e-tipo')];
+  btn.disabled=!hay;
+  btn.style.opacity=hay?'1':'.4';
+  btn.style.cursor=hay?'pointer':'not-allowed';
+}
+
+function cargarPlantillaTramite(){
+  const tipo=g('e-tipo');
+  const tpl=TEMPLATES_TRAMITE[tipo];
+  if(!tpl){ toast('Elegí primero un tipo de trámite','err'); return; }
+
+  let nActas=0, nServ=0;
+
+  (tpl.actas||[]).forEach(a=>{
+    if(typeof a==='string'){
+      etas.push({tipo:a, origen:'italiana', titular:'', notas:''});
+    } else {
+      etas.push({tipo:a.tipo, origen:a.origen||'italiana', titular:'', notas:''});
+    }
+    nActas++;
+  });
+
+  (tpl.itemsSimples||[]).forEach(t=>{
+    const cap=t.charAt(0).toUpperCase()+t.slice(1);
+    etas.push({tipo:cap, simple:true});
+    nActas++;
+  });
+
+  (tpl.servicios||[]).forEach(nombre=>{
+    const p=(preciosData||[]).find(x=>x.nombre===nombre);
+    if(!p) return; // si no está en la lista de precios actual, se omite sin romper nada
+    srvs.push({id:Date.now()+Math.random(), desc:p.nombre, transf:p.transf||'—', efect:p.efect||'—', cant:'1', tiempo:p.tiempo||'—'});
+    nServ++;
+  });
+
+  renderEtas();
+  renderSrvs();
+  render();
+  toast(`⚡ Plantilla cargada: ${nActas} actas/ítems + ${nServ} servicios`,'ok');
 }
 
 function remEt(i){etas.splice(i,1);renderEtas();render();}
@@ -2343,7 +2756,7 @@ function renderPagos(c) {
             </select>
           </div>
         </td>
-        <td style="padding:4px 6px"><input value="${escH(p.tipo||p.concepto||'')}" placeholder="consulta, AIRE..." oninput="updPago(${i},'tipo',this.value)" style="${INP_S}"></td>
+        <td style="padding:4px 6px"><input value="${escH(p.tipo||p.concepto||'')}" placeholder="consulta, AIRE..." list="ing-tipo-list" oninput="updPago(${i},'tipo',this.value)" style="${INP_S}"></td>
         <td style="padding:4px 5px"><input type="number" value="${p.efectivo||''}" placeholder="0" oninput="updPagoCalc(${i},'efectivo',this.value)" style="${INP_S};color:#1e40af;font-weight:600;width:90px"></td>
         <td style="padding:4px 5px"><input type="number" value="${p.transferencia||''}" placeholder="0" oninput="updPagoCalc(${i},'transferencia',this.value)" style="${INP_S};color:#0891b2;font-weight:600;width:90px"></td>
         <td style="padding:4px 5px;background:#f0fdf4"><input type="number" value="${p.a_pagar||''}" placeholder="auto" id="apagar-pago-${i}" style="${INP_S};background:#f0fdf4;font-weight:700;color:var(--vd);width:80px"></td>
@@ -2459,6 +2872,7 @@ function updPago(i,field,value){
    INGRESOS — TABLA INLINE
 ════════════════════════════════════════ */
 let ingresosData=[], ingresosFiltrados=[], ingPendingSave={};
+let ingMesInicializado = false; // arranca mostrando solo el mes actual, no el histórico completo
 let gastosData=[], gastosFiltrados=[], gasPendingSave={};
 
 const CING = {
@@ -2685,7 +3099,7 @@ function renderIngRow(r){
            </div>`}
     </td>
     <td style="${cellStyle}"><input value="${escH(r.dni_cliente||'')}" placeholder="DNI..." oninput="updIng('${r.id}','dni_cliente',this.value)" style="${inp};min-width:90px"></td>
-    <td style="${cellStyle}"><input value="${escH(r.tipo||'')}" placeholder="consulta, AIRE..." oninput="updIng('${r.id}','tipo',this.value)" style="${inp};min-width:120px"></td>
+    <td style="${cellStyle}"><input value="${escH(r.tipo||'')}" placeholder="consulta, AIRE..." list="ing-tipo-list" oninput="updIng('${r.id}','tipo',this.value)" style="${inp};min-width:120px"></td>
     <td style="${cellStyle}"><input type="number" value="${r.efectivo||''}" placeholder="0" oninput="updIngNum('${r.id}','efectivo',this.value)" style="${inp};min-width:100px;color:#1e40af;font-weight:600"></td>
     <td style="${cellStyle}"><input type="number" value="${r.transferencia||''}" placeholder="0" oninput="updIngNum('${r.id}','transferencia',this.value)" style="${inp};min-width:100px;color:#0891b2;font-weight:600"></td>
     <td style="${cellStyle};text-align:center">
@@ -2705,6 +3119,10 @@ function renderIngRow(r){
         <option value="Transferencia Pablo"${r.quien_cobro==='Transferencia Pablo'?' selected':''}>Transferencia Pablo</option>
         <option value="Transferencia MP"${r.quien_cobro==='Transferencia MP'?' selected':''}>Transferencia MP</option>
       </select>
+      ${r.quien_cobro==='Transferencia Belén' ? `
+      <span style="margin-top:5px;display:inline-flex;align-items:center;gap:4px;padding:4px 9px;border-radius:20px;border:1.5px solid #3b82f6;background:#eff6ff;color:#1d4ed8;font-size:9.5px;font-weight:700;white-space:nowrap">
+        📎 DESCARGAR COMPROBANTE EN DRIVE
+      </span>` : ''}
     </td>
     <td style="${cellStyle}"><input value="${escH(r.comentario||'')}" placeholder="Notas..." oninput="updIng('${r.id}','comentario',this.value)" style="${inp};min-width:150px"></td>
 
@@ -2781,14 +3199,14 @@ function esConsulta(tipo){ return (tipo||'').toLowerCase().includes('consulta');
 // Trámites que van directo a Belén — A Pagar = 0 para empleados
 function esSoloBelen(tipo){
   const t=(tipo||'').toLowerCase();
-  return t.includes('divorcio')||t.includes('correo')||t.includes('cie');
+  return t.includes('divorcio')||t.includes('correo')||/\bcie\b/.test(t);
 }
 
 /* ══════════════════════════════════════════════════════════════════
    FÓRMULA EXCEL - CÁLCULO AUTOMÁTICO DE "A PAGAR"
    ══════════════════════════════════════════════════════════════════
    LÓGICA:
-   1. Si TIPO contiene "correo" o "divorcio" → A PAGAR = 0
+   1. Si TIPO contiene "correo", "divorcio" o "CIE" (palabra completa) → A PAGAR = 0
    2. Si tiene CONSULTA ☑️ Y ES DEL INTERIOR ☑️ → A PAGAR = TRANSFERENCIA
    3. Si solo ES DEL INTERIOR ☑️ → A PAGAR = TRANSFERENCIA / 1.4
    4. Si solo CONSULTA ☑️ → A PAGAR = TRANSFERENCIA
@@ -2803,8 +3221,8 @@ function calcularAPagarExcel(r) {
   const consulta = r.consulta || false;
   const esInterior = r.es_interior || false;
   
-  // 1. Si TIPO contiene "correo" o "divorcio" → A PAGAR = 0
-  if (tipo.includes('correo') || tipo.includes('divorcio')) {
+  // 1. Si TIPO contiene "correo", "divorcio" o "CIE" (palabra completa) → A PAGAR = 0
+  if (tipo.includes('correo') || tipo.includes('divorcio') || /\bcie\b/.test(tipo)) {
     return 0;
   }
   
@@ -2958,6 +3376,7 @@ async function saveIngRow(id){
   }
   
   toast('✅ Guardado','ok');
+  renderMotivacion();
   const row=document.getElementById('row-'+id);
   if(row){
     row.style.background='#dcfce7';
@@ -3017,6 +3436,7 @@ async function delIngRow(id){
   
   ingresosData=ingresosData.filter(x=>x.id!==id);
   filterIngresos();
+  renderMotivacion();
   toast('Eliminado','err');
 }
 
@@ -4258,8 +4678,148 @@ async function delChecklistItem(id){
   renderChecklist();
 }
 
+/* ════════════════════════════════════════
+   ✨ TARJETA MOTIVACIONAL PERSONAL (Ingresos)
+   Compara el día de hoy contra el propio historial de
+   cada una (promedio reciente y mejor día personal).
+   Es puramente visual/informativa: lee ingresosData,
+   no escribe ni modifica ningún dato ni cálculo existente.
+════════════════════════════════════════ */
+let motivExpandido = false;
+let motivUltimoMood = null;
+
+function toggleMotivacion(){
+  motivExpandido = !motivExpandido;
+  renderMotivacion();
+}
+
+function renderMotivacion(){
+  const wrap = document.getElementById('motiv-wrap');
+  if(!wrap) return;
+  if(!Array.isArray(ingresosData)){ wrap.innerHTML=''; return; }
+
+  // Agrupar TODO el historial cargado por fecha (día -> total cobrado)
+  const porDia = {};
+  ingresosData.forEach(r=>{
+    const f = r.fecha;
+    if(!f) return;
+    const monto = (parseFloat(r.efectivo)||0) + (parseFloat(r.transferencia)||0);
+    if(monto<=0) return;
+    porDia[f] = (porDia[f]||0) + monto;
+  });
+
+  const hoyD = new Date();
+  const hoyKey = hoyD.getFullYear()+'-'+String(hoyD.getMonth()+1).padStart(2,'0')+'-'+String(hoyD.getDate()).padStart(2,'0');
+  const hoyTotal = porDia[hoyKey] || 0;
+
+  const diasAnteriores = Object.keys(porDia).filter(k=>k!==hoyKey).sort().reverse();
+  const totalesAnteriores = diasAnteriores.map(k=>porDia[k]);
+  const recordPersonal = totalesAnteriores.length ? Math.max(...totalesAnteriores) : 0;
+  const ultimos10 = totalesAnteriores.slice(0,10);
+  const promedioReciente = ultimos10.length ? ultimos10.reduce((a,b)=>a+b,0)/ultimos10.length : 0;
+
+  const mesActualKey = hoyD.getFullYear()+'-'+String(hoyD.getMonth()+1).padStart(2,'0');
+  const diasActivosMes = Object.keys(porDia).filter(k=>k.startsWith(mesActualKey)).length;
+
+  // Mensaje siempre en positivo — nunca "vas mal", nunca comparación con nadie más
+  let mood, emoji, msg, sub;
+  const esNuevoRecord = hoyTotal>0 && recordPersonal>0 && hoyTotal>recordPersonal;
+
+  if(esNuevoRecord){
+    mood='record'; emoji='🏆';
+    msg='¡Nuevo récord personal!';
+    sub='Hoy superaste tu mejor día hasta ahora. ¡Así se hace!';
+  } else if(hoyTotal===0){
+    mood='build'; emoji='🌱';
+    msg='Arrancá el día';
+    sub = promedioReciente>0
+      ? `Tu promedio reciente ronda los $${Math.round(promedioReciente).toLocaleString('es-AR')}. Vamos por otro buen día.`
+      : 'Cada ingreso que cargues hoy suma a tu recorrido.';
+  } else if(promedioReciente>0 && hoyTotal>=promedioReciente){
+    mood='good'; emoji='🚀';
+    msg='¡Vas mejor que tu promedio!';
+    sub = `Llevás $${Math.round(hoyTotal).toLocaleString('es-AR')} hoy, por encima de tu ritmo habitual.`;
+  } else {
+    mood='build'; emoji='🌤️';
+    msg='Vas construyendo el día';
+    sub = 'Todavía hay tiempo de sumar más. Un ingreso a la vez.';
+  }
+
+  const techo = Math.max(recordPersonal, promedioReciente, hoyTotal, 1);
+  const pct = Math.min(100, Math.round((hoyTotal/techo)*100));
+  const openCls = motivExpandido ? ' open' : '';
+
+  // Mini gráfico: últimos 7 días (hoy incluido, al final)
+  const ultimos7Keys = [];
+  for(let i=6;i>=0;i--){
+    const d = new Date(hoyD); d.setDate(d.getDate()-i);
+    ultimos7Keys.push(d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0'));
+  }
+  const maxMini = Math.max(...ultimos7Keys.map(k=>porDia[k]||0), 1);
+  const DIAS_ABR=['D','L','M','M','J','V','S'];
+  const miniBars = ultimos7Keys.map(k=>{
+    const v = porDia[k]||0;
+    const h = Math.max(4, Math.round((v/maxMini)*54));
+    const esHoy = k===hoyKey;
+    const dow = new Date(k+'T00:00:00').getDay();
+    return `<div class="motiv-mbar${esHoy?' hoy':''}" style="height:${h}px" title="$${Math.round(v).toLocaleString('es-AR')}"><span class="motiv-mbar-lbl">${DIAS_ABR[dow]}</span></div>`;
+  }).join('');
+
+  wrap.innerHTML = `
+    <div class="motiv-card mood-${mood}${openCls}" onclick="toggleMotivacion()">
+      ${mood==='record' ? '<div class="motiv-confetti" id="motiv-confetti"></div>' : ''}
+      <div class="motiv-top">
+        <div class="motiv-emoji">${emoji}</div>
+        <div class="motiv-txt">
+          <div class="motiv-msg">${msg}</div>
+          <div class="motiv-sub">${sub}</div>
+        </div>
+        <div class="motiv-chev">▾</div>
+      </div>
+      <div class="motiv-bar-wrap"><div class="motiv-bar-fill" id="motiv-bar-fill" style="width:0%"></div></div>
+      <div class="motiv-detail">
+        <div class="motiv-stats-row">
+          <div class="motiv-stat"><b>$${Math.round(hoyTotal).toLocaleString('es-AR')}</b><span>Hoy</span></div>
+          <div class="motiv-stat"><b>$${Math.round(promedioReciente).toLocaleString('es-AR')}</b><span>Tu promedio</span></div>
+          <div class="motiv-stat"><b>$${Math.round(recordPersonal).toLocaleString('es-AR')}</b><span>Tu récord</span></div>
+          <div class="motiv-stat"><b>${diasActivosMes}</b><span>Días activos este mes</span></div>
+        </div>
+        <div class="motiv-chart">${miniBars}</div>
+      </div>
+    </div>
+  `;
+
+  requestAnimationFrame(()=>{
+    setTimeout(()=>{
+      const fill = document.getElementById('motiv-bar-fill');
+      if(fill) fill.style.width = pct+'%';
+    }, 60);
+  });
+
+  if(mood==='record' && motivUltimoMood!=='record'){
+    lanzarConfettiMotiv();
+  }
+  motivUltimoMood = mood;
+}
+
+function lanzarConfettiMotiv(){
+  const cont = document.getElementById('motiv-confetti');
+  if(!cont) return;
+  const emojis=['🎉','✨','🎊','⭐','💫'];
+  let html='';
+  for(let i=0;i<18;i++){
+    const left = Math.random()*100;
+    const delay = (Math.random()*0.5).toFixed(2);
+    const dur = (1.6 + Math.random()*1).toFixed(2);
+    const em = emojis[Math.floor(Math.random()*emojis.length)];
+    html += `<span style="left:${left}%;animation-delay:${delay}s;animation-duration:${dur}s">${em}</span>`;
+  }
+  cont.innerHTML = html;
+}
+
 async function loadIngresos(){
   console.log('🔄 Cargando ingresos...');
+  actualizarListaTipos();
   
   // PASO 1: Cargar desde localStorage (persistencia garantizada)
   let localIngresos = [];
@@ -4313,6 +4873,7 @@ async function loadIngresos(){
   
   // Renderizar
   filterIngresos();
+  renderMotivacion();
 }
 
 // Función para limpiar localStorage (útil cuando borraste todos los datos)
@@ -4456,6 +5017,14 @@ function filterGastos(){
   renderGastos();
 }
 
+// Track collapsed months (gastos)
+let collapsedMonthsGas={};
+
+function toggleMesGas(mes){
+  collapsedMonthsGas[mes]=!collapsedMonthsGas[mes];
+  renderGastos();
+}
+
 function renderGastos(){
   const tbody = document.getElementById('gas-body');
   if(!tbody) return;
@@ -4484,11 +5053,88 @@ function renderGastos(){
       </div>
     `;
   }
+
+  const MESES_NOM=['Enero','Febrero','Marzo','Abril','Mayo','Junio','Julio','Agosto','Septiembre','Octubre','Noviembre','Diciembre'];
+
+  // Agrupar por mes (YYYY-MM)
+  const byMonth={};
+  gastosFiltrados.forEach(r=>{
+    const key=(r.fecha||'').slice(0,7);
+    if(!key) return;
+    if(!byMonth[key]) byMonth[key]=[];
+    byMonth[key].push(r);
+  });
+
+  const hoy=new Date();
+  const mesActual=hoy.getFullYear()+'-'+String(hoy.getMonth()+1).padStart(2,'0');
+
+  const mesesConDatos = Object.keys(byMonth).sort();
+  const mesInicio = mesesConDatos.length > 0 ? mesesConDatos[0] : mesActual;
+
+  const allMonths=[];
+  const [startY,startM]=mesInicio.split('-').map(Number);
+  const [endY,endM]=mesActual.split('-').map(Number);
+  for(let y=startY;y<=endY;y++){
+    const startMonth=(y===startY)?startM:1;
+    const endMonth=(y===endY)?endM:12;
+    for(let m=startMonth;m<=endMonth;m++){
+      allMonths.push(y+'-'+String(m).padStart(2,'0'));
+    }
+  }
+  const sortedMonths=allMonths.reverse();
+
+  let html='';
+  sortedMonths.forEach(mes=>{
+    const rows=byMonth[mes]||[];
+    const [y,mo]=mes.split('-');
+    const mesLabel=MESES_NOM[parseInt(mo)-1]+' '+y;
+    let mMonto=0;
+    rows.forEach(r=>{mMonto+=parseFloat(r.monto||0);});
+    const isEmpty=rows.length===0;
+
+    const isCurrentMonth=mes===mesActual;
+    if(collapsedMonthsGas[mes]===undefined) collapsedMonthsGas[mes]=false; // expandido por defecto
+    const collapsed=!!collapsedMonthsGas[mes];
+
+    const headerColor = isCurrentMonth ? '#dc2626' : '#64748b';
+    html+=`<tr style="background:linear-gradient(to right,${headerColor},${headerColor}dd);cursor:pointer;border-bottom:2px solid var(--bg)" onclick="toggleMesGas('${mes}')">
+      <td colspan="3" style="padding:10px 12px">
+        <div style="display:flex;align-items:center;gap:6px">
+          <span style="font-size:13px;font-weight:700;color:#fff;letter-spacing:.4px">${collapsed?'▶':'▼'} ${mesLabel}</span>
+          ${isCurrentMonth?'<span style="background:rgba(255,255,255,.2);color:#fff;padding:2px 6px;border-radius:10px;font-size:9px;font-weight:700;letter-spacing:.4px">ACTUAL</span>':''}
+        </div>
+      </td>
+      <td style="padding:10px 6px;text-align:right;color:#fff;font-size:12px;font-weight:700;background:rgba(0,0,0,.15)">
+        ${!isEmpty?'$'+Math.round(mMonto).toLocaleString('es-AR'):'—'}
+      </td>
+      <td colspan="2" style="padding:10px 12px;text-align:right">
+        <span style="font-size:10px;color:rgba(255,255,255,.7);font-weight:600">${rows.length} ${rows.length===1?'gasto':'gastos'}</span>
+      </td>
+    </tr>`;
+
+    if(!collapsed){
+      if(rows.length>0){
+        html+=rows.map(r=>renderGasRow(r)).join('');
+      } else {
+        html+=`<tr style="background:#fafcff">
+          <td colspan="6" style="padding:20px 14px;color:#94a3b8;font-size:13px;text-align:center;font-style:italic">
+            Sin gastos registrados en ${mesLabel}
+          </td>
+        </tr>`;
+      }
+    }
+
+    html+=`<tr><td colspan="6" style="padding:6px;background:var(--bg)"></td></tr>`;
+  });
+
+  tbody.innerHTML=html;
+}
+
+function renderGasRow(r){
+  const saved = !gasPendingSave[r.id];
+  const borderColor = saved ? 'var(--bo)' : '#fb923c';
   const INP = 'padding:5px 7px;border:1.5px solid var(--bo);border-radius:6px;font-size:12.5px;outline:none;background:white;width:100%';
-  tbody.innerHTML = gastosFiltrados.map(r => {
-    const saved = !gasPendingSave[r.id];
-    const borderColor = saved ? 'var(--bo)' : '#fb923c';
-    return `<tr style="border-bottom:1px solid ${borderColor}">
+  return `<tr id="gas-row-${r.id}" style="border-bottom:1px solid ${borderColor}">
       <td style="padding:6px 8px"><input type="date" value="${r.fecha||''}" oninput="updGas('${r.id}','fecha',this.value)" style="${INP};width:140px"></td>
       <td style="padding:6px 8px"><input value="${(r.tipo_doc||'').replace(/"/g,'&quot;')}" placeholder="Tipo..." oninput="updGas('${r.id}','tipo_doc',this.value)" style="${INP}"></td>
       <td style="padding:6px 8px"><input value="${(r.cliente||'').replace(/"/g,'&quot;')}" placeholder="Cliente..." oninput="updGas('${r.id}','cliente',this.value)" style="${INP}"></td>
@@ -4503,10 +5149,12 @@ function renderGastos(){
         </select>
       </td>
       <td style="padding:6px 8px;text-align:center">
-        <button onclick="saveGasRow('${r.id}')" style="width:28px;height:28px;border-radius:6px;border:none;background:${saved?'#d1fae5':'#fbbf24'};color:${saved?'#059669':'white'};font-size:14px;cursor:pointer" title="${saved?'Guardado':'Guardar'}">✓</button>
+        <div style="display:flex;gap:3px;justify-content:center">
+          <button onclick="saveGasRow('${r.id}')" style="width:28px;height:28px;border-radius:6px;border:none;background:${saved?'#d1fae5':'#fbbf24'};color:${saved?'#059669':'white'};font-size:14px;cursor:pointer" title="${saved?'Guardado':'Guardar'}">✓</button>
+          <button onclick="delGasRow('${r.id}')" style="width:28px;height:28px;border-radius:6px;border:none;background:#fee2e2;color:#b91c1c;font-size:12px;font-weight:700;cursor:pointer" title="Eliminar">✕</button>
+        </div>
       </td>
     </tr>`;
-  }).join('');
 }
 
 function addGastoRow(){
@@ -4544,6 +5192,23 @@ async function saveGasRow(id){
   delete gasPendingSave[id];
   renderGastos();
   toast('Guardado ✓', 'ok');
+}
+
+async function delGasRow(id){
+  if(!confirm('¿Eliminar este gasto?')) return;
+  try {
+    const localData = localStorage.getItem('zittano_gastos');
+    const localGastos = localData ? JSON.parse(localData) : [];
+    localStorage.setItem('zittano_gastos', JSON.stringify(localGastos.filter(x => x.id !== id)));
+  } catch(e) { console.error('Error eliminando de localStorage:', e); }
+  try {
+    const {error} = await SB.from('gastos').delete().eq('id', id);
+    if(error) console.warn('Error Supabase:', error.message);
+  } catch(e) { console.warn('Supabase no disponible:', e); }
+  gastosData = gastosData.filter(x => x.id !== id);
+  delete gasPendingSave[id];
+  filterGastos();
+  toast('Gasto eliminado', 'err');
 }
 
 function limpiarGastosLocal(){
@@ -4584,6 +5249,136 @@ function descargarGastosExcel(){
   } catch(error) {
     console.error('Error descargando Excel:', error);
     toast('❌ Error al descargar. Intentá de nuevo.', 'err');
+  }
+}
+
+
+/* ════════════════════════════════════════
+   DESCARGAR TODO EN UN SOLO EXCEL (todas las hojas)
+   Un solo click, un solo archivo .xlsx con una hoja
+   por cada sección: Clientes, Ingresos, Gastos,
+   Planillas (Cámaras/Apostillas) y Precios.
+   Respeta el mismo filtro por gestor que ve cada
+   usuaria en el resto del sistema (Belén ve todo).
+════════════════════════════════════════ */
+function _hojaOVacia(rows, colEjemplo){
+  if(rows && rows.length) return XLSX.utils.json_to_sheet(rows);
+  return XLSX.utils.json_to_sheet([{[colEjemplo]:'Sin datos cargados todavía'}]);
+}
+
+async function descargarTodoExcel(){
+  const btn = document.getElementById('btn-excel-todo');
+  const textoOriginal = btn ? btn.textContent : '';
+  if(btn){ btn.disabled=true; btn.textContent='⏳ Generando...'; btn.style.opacity='.6'; }
+  toast('Preparando el Excel con todas las hojas...','');
+
+  try{
+    // Clientes
+    let qC = SB.from(TB).select('*');
+    if(curG !== 'Belén') qC = qC.eq('gestor', curG);
+    const {data: clientesRaw} = await qC;
+
+    // Ingresos
+    let qI = SB.from('ingresos').select('*');
+    if(curG !== 'Belén') qI = qI.eq('gestor', curG);
+    const {data: ingresosRaw} = await qI;
+
+    // Gastos
+    let qG = SB.from('gastos').select('*');
+    if(curG !== 'Belén') qG = qG.eq('gestor', curG);
+    const {data: gastosRaw} = await qG;
+
+    // Planillas
+    let qP = SB.from('planillas').select('*');
+    if(curG !== 'Belén') qP = qP.eq('gestor', curG);
+    const {data: planillasRaw} = await qP;
+
+    const wb = XLSX.utils.book_new();
+
+    // Hoja Clientes
+    const clientesRows = (clientesRaw||[]).map(c=>({
+      'Fecha': c.fecha||'',
+      'Nombre': c.nombre||'',
+      'DNI': c.dni||'',
+      'Mail': c.mail||'',
+      'Celular': c.celular||'',
+      'Domicilio': c.domicilio||'',
+      'Consulado': c.consulado||'',
+      'Ascendiente Italiano': c.ascendiente||'',
+      'Parentesco': c.parentesco||'',
+      'Tipo Trámite': c.tipo_tramite||'',
+      'Estado / Etiquetas': Array.isArray(c.tags)&&c.tags.length ? c.tags.join(', ') : (c.estado||''),
+      'Gestor': c.gestor||'',
+    }));
+    XLSX.utils.book_append_sheet(wb, _hojaOVacia(clientesRows,'Clientes'), 'Clientes');
+
+    // Hoja Ingresos
+    const ingresosRows = (ingresosRaw||[]).map(r=>({
+      'Fecha': fmtFechaIng ? fmtFechaIng(r.fecha) : (r.fecha||''),
+      'Cliente': r.cliente||'',
+      'DNI': r.dni_cliente||'',
+      'Tipo': r.tipo||'',
+      'Efectivo': r.efectivo||0,
+      'Transferencia': r.transferencia||0,
+      'A Pagar': r.a_pagar||0,
+      'Quién Cobró': r.quien_cobro||'',
+      'Comentario': r.comentario||'',
+      'Gestor': r.gestor||'',
+    }));
+    XLSX.utils.book_append_sheet(wb, _hojaOVacia(ingresosRows,'Ingresos'), 'Ingresos');
+
+    // Hoja Gastos
+    const gastosRows = (gastosRaw||[]).map(r=>({
+      'Fecha': r.fecha||'',
+      'Tipo de Doc': r.tipo_doc||'',
+      'Cliente': r.cliente||'',
+      'Monto': r.monto||0,
+      'Método de Pago': r.metodo_pago||'',
+      'Gestor': r.gestor||'',
+    }));
+    XLSX.utils.book_append_sheet(wb, _hojaOVacia(gastosRows,'Gastos'), 'Gastos');
+
+    // Hoja Planillas — Cámaras
+    const camarasRows = (planillasRaw||[]).filter(p=>p.tipo==='camara').map(r=>({
+      'Número': r.numero||'',
+      'Cliente': r.cliente||'',
+      'Fecha': r.fecha||'',
+      'Mail': r.mail||'',
+      'Estado': r.estado==='listo'?'Listo':r.estado==='proceso'?'En Proceso':'',
+      'Gestor': r.gestor||'',
+    }));
+    XLSX.utils.book_append_sheet(wb, _hojaOVacia(camarasRows,'Planillas Cámaras'), 'Planillas Cámaras');
+
+    // Hoja Planillas — Apostillas
+    const apostillasRows = (planillasRaw||[]).filter(p=>p.tipo==='apostilla').map(r=>({
+      'Fecha Ingreso': r.fecha_ingreso||'',
+      'Expediente': r.expediente||'',
+      'Tipo Doc': r.tipo_doc||'',
+      'Cliente': r.cliente||'',
+      'Estado': r.estado==='listo'?'Listo':r.estado==='proceso'?'En Proceso':'',
+      'Gestor': r.gestor||'',
+    }));
+    XLSX.utils.book_append_sheet(wb, _hojaOVacia(apostillasRows,'Planillas Apostillas'), 'Planillas Apostillas');
+
+    // Hoja Precios (lista vigente, la misma que usa el presupuesto)
+    const preciosRows = (preciosData||[]).map(p=>({
+      'Nombre': p.nombre||'',
+      'Precio Transferencia': p.transf||'',
+      'Precio Efectivo': p.efect||'',
+      'Tiempo Estimado': p.tiempo||'',
+      'Categoría': p.cat||'',
+    }));
+    XLSX.utils.book_append_sheet(wb, _hojaOVacia(preciosRows,'Precios'), 'Precios');
+
+    const hoy=new Date();
+    const fecha=hoy.getFullYear()+'-'+String(hoy.getMonth()+1).padStart(2,'0')+'-'+String(hoy.getDate()).padStart(2,'0');
+    XLSX.writeFile(wb, `Zittano_Todo_${fecha}.xlsx`);
+    toast('✅ Excel descargado con todas las hojas','ok');
+  } catch(e){
+    console.error('Error generando Excel completo:', e);
+    toast('❌ No se pudo generar el Excel, revisá la conexión','err');
+  } finally {
+    if(btn){ btn.disabled=false; btn.textContent=textoOriginal; btn.style.opacity='1'; }
   }
 }
 
@@ -5128,7 +5923,20 @@ async function guardarPrecios(){
   actualizarDropdownPrecios();
 }
 
+// Sugerencias para el campo "Tipo" en Ingresos y Pagos: nombres de la lista
+// de precios vigente + las palabras clave que disparan reglas automáticas
+// (Correo/Divorcio/CIE = A Pagar $0). Se actualiza cada vez que cambian los precios.
+function actualizarListaTipos(){
+  const dl=document.getElementById('ing-tipo-list');
+  if(!dl) return;
+  const especiales=['Consulta','Correo','Divorcio','CIE','Honorarios','AIRE','Codice Fiscale','SPID'];
+  const nombres=(preciosData||[]).map(p=>p.nombre).filter(Boolean);
+  const todos=[...new Set([...especiales, ...nombres])];
+  dl.innerHTML=todos.map(n=>`<option value="${escH(n)}"></option>`).join('');
+}
+
 function actualizarDropdownPrecios(){
+  actualizarListaTipos();
   // Actualizar el dropdown del presupuesto con los precios actuales
   const sel=document.getElementById('srv-pre');
   if(!sel||!preciosData.length) return;
@@ -5209,7 +6017,8 @@ function clearAll(skipConfirm = false){
   const et=document.getElementById('e-tipo');
   if(et){et.value='';et.selectedIndex=0;}
   
-  document.getElementById('chk-prev').style.display='none';
+  const chkPrev=document.getElementById('chk-prev');
+  if(chkPrev) chkPrev.style.display='none';
   
   srvs=[];
   etas=[];
@@ -5219,6 +6028,7 @@ function clearAll(skipConfirm = false){
   renderEtas();
   renderSrvs();
   render();
+  toggleBtnPlantilla();
   
   const d=new Date();
   document.getElementById('e-fec').value=d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0');
