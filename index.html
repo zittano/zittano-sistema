@@ -76,6 +76,41 @@ textarea{resize:vertical;}
 .view.on{display:block;}
 .vbody{max-width:1400px;margin:0 auto;padding:24px;}
 
+/* DOCUMENTACION */
+.docs-layout{display:grid;grid-template-columns:230px 1fr;gap:18px;align-items:start;}
+.docs-side{background:var(--wh);border:1px solid var(--bo);border-radius:12px;padding:12px;box-shadow:var(--sh);position:sticky;top:16px;}
+.docs-cat{display:flex;align-items:center;justify-content:space-between;gap:8px;padding:9px 11px;border-radius:8px;font-size:13px;font-weight:600;color:var(--grd);cursor:pointer;transition:all .12s;margin-bottom:2px;}
+.docs-cat:hover{background:var(--grl);}
+.docs-cat.on{background:var(--azl);color:var(--az);}
+.docs-cat .cnt{font-size:11px;font-weight:700;background:var(--grl);color:var(--gr);border-radius:10px;padding:1px 7px;}
+.docs-cat.on .cnt{background:var(--az);color:#fff;}
+.docs-main{min-width:0;}
+.docs-toolbar{display:flex;gap:10px;margin-bottom:14px;align-items:center;flex-wrap:wrap;}
+.docs-search{flex:1;min-width:200px;padding:9px 13px;border:1px solid var(--bo);border-radius:9px;font-size:13px;font-family:inherit;background:var(--wh);}
+.docs-search:focus{outline:none;border-color:var(--az);}
+.doc-card{background:var(--wh);border:1px solid var(--bo);border-radius:12px;box-shadow:var(--sh);margin-bottom:12px;overflow:hidden;}
+.doc-head{display:flex;align-items:center;gap:10px;padding:13px 16px;cursor:pointer;transition:background .12s;}
+.doc-head:hover{background:var(--grl);}
+.doc-title{font-size:14px;font-weight:700;color:var(--grd);flex:1;min-width:0;}
+.doc-meta{font-size:11px;color:var(--gr);white-space:nowrap;}
+.doc-author{display:inline-flex;align-items:center;gap:5px;font-size:11px;font-weight:600;}
+.doc-author .adot{width:7px;height:7px;border-radius:50%;}
+.doc-body{padding:0 16px 14px;border-top:1px solid var(--bo);display:none;}
+.doc-card.open .doc-body{display:block;}
+.doc-content-view{font-size:13px;line-height:1.65;color:var(--grd);white-space:pre-wrap;word-wrap:break-word;padding:12px 0;}
+.doc-actions{display:flex;gap:8px;padding-top:6px;}
+.doc-btn{padding:6px 13px;border:1px solid var(--bo);border-radius:7px;background:var(--wh);font-size:12px;font-weight:600;color:var(--grd);cursor:pointer;transition:all .12s;font-family:inherit;}
+.doc-btn:hover{background:var(--grl);}
+.doc-btn.pri{background:var(--az);border-color:var(--az);color:#fff;}
+.doc-btn.pri:hover{background:var(--az2);}
+.doc-btn.del{border-color:#fca5a5;color:#dc2626;}
+.doc-btn.del:hover{background:#fef2f2;}
+.doc-edit input,.doc-edit textarea,.doc-edit select{width:100%;padding:9px 12px;border:1px solid var(--bo);border-radius:8px;font-size:13px;font-family:inherit;margin-bottom:10px;background:var(--wh);box-sizing:border-box;}
+.doc-edit textarea{min-height:220px;line-height:1.6;resize:vertical;}
+.doc-edit input:focus,.doc-edit textarea:focus,.doc-edit select:focus{outline:none;border-color:var(--az);}
+.docs-empty{text-align:center;padding:50px 20px;color:var(--gr);font-size:13px;}
+@media(max-width:900px){.docs-layout{grid-template-columns:1fr;}.docs-side{position:static;display:flex;flex-wrap:wrap;gap:4px;}.docs-cat{margin-bottom:0;}}
+
 /* PRESUPUESTO */
 .pgrid{display:grid;grid-template-columns:400px 1fr;gap:20px;align-items:start;}
 .editor{display:flex;flex-direction:column;gap:12px;position:sticky;top:70px;max-height:calc(100vh - 86px);overflow-y:auto;padding-right:2px;}
@@ -328,6 +363,7 @@ textarea{resize:vertical;}
       <button class="htab" onclick="showTab('gastos',this)">💸 Gastos</button>
       <button class="htab" onclick="showTab('info',this)">📌 Info</button>
       <button class="htab" onclick="showTab('planillas',this)">📋 Planillas</button>
+      <button class="htab" onclick="showTab('docs',this)">📚 Documentación</button>
       
       <button class="htab" onclick="showTab('precios',this)">💲 Precios</button>
       <button class="htab" onclick="showTab('checklist',this)">✅ Mi Checklist</button>
@@ -1320,6 +1356,22 @@ renderConsulados();
 </div>
 </div>
 
+<!-- VIEW DOCUMENTACION -->
+<div class="view" id="view-docs">
+  <div class="vbody">
+    <div class="docs-layout">
+      <div class="docs-side" id="docs-side"></div>
+      <div class="docs-main">
+        <div class="docs-toolbar">
+          <input class="docs-search" id="docs-search" placeholder="🔍 Buscar en títulos y contenido..." oninput="renderDocs()">
+          <button class="doc-btn pri" onclick="nuevoDoc()">+ Nuevo documento</button>
+        </div>
+        <div id="docs-list"></div>
+      </div>
+    </div>
+  </div>
+</div>
+
 <!-- VIEW PLANILLAS -->
 <div class="view" id="view-planillas">
 <div class="vbody">
@@ -1992,6 +2044,177 @@ function showTab(name,btn){
   if(name==='finalizados')loadFinalizados();
   if(name==='checklist')loadChecklist();
   if(name==='info')loadInfo();
+  if(name==='docs')loadDocs();
+}
+
+// ══════════ DOCUMENTACIÓN ══════════
+let docsData=[];
+let docsCat='todos';
+let docsCargados=false;
+const DOCS_CATS=[
+  {id:'todos', label:'📚 Todos'},
+  {id:'reconstruccion', label:'Reconstrucción'},
+  {id:'hijo_directo', label:'Hijo Directo'},
+  {id:'aire', label:'AIRE / SPID'},
+  {id:'pasaporte', label:'Turno Pasaporte'},
+  {id:'menor', label:'Inscripción Menor'},
+  {id:'matrimonio', label:'Inscripción Matrimonio'},
+  {id:'divorcio', label:'Divorcio'},
+  {id:'general', label:'📝 Notas generales'}
+];
+function docsCatLabel(id){const c=DOCS_CATS.find(c=>c.id===id);return c?c.label.replace(/^[^\w]*\s/,'').trim()||c.label:id;}
+
+async function loadDocs(){
+  try{
+    const {data,error}=await SB.from('documentacion').select('*');
+    if(error){
+      console.warn('Error cargando documentación:',error.message);
+      if(!docsCargados) toast('⚠️ No se pudo cargar la documentación','err');
+    } else {
+      docsData=(data||[]).sort((a,b)=>(b.updated_at||'').localeCompare(a.updated_at||''));
+      docsCargados=true;
+    }
+  }catch(e){console.warn('Supabase no disponible:',e);}
+  renderDocsSide();
+  renderDocs();
+}
+
+function renderDocsSide(){
+  const side=document.getElementById('docs-side');
+  if(!side)return;
+  side.innerHTML=DOCS_CATS.map(c=>{
+    const cnt=c.id==='todos'?docsData.length:docsData.filter(d=>d.categoria===c.id).length;
+    return `<div class="docs-cat${docsCat===c.id?' on':''}" onclick="setDocsCat('${c.id}')"><span>${c.label}</span><span class="cnt">${cnt}</span></div>`;
+  }).join('');
+}
+function setDocsCat(id){docsCat=id;renderDocsSide();renderDocs();}
+
+function escDoc(s){return String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');}
+
+function fmtFechaDoc(iso){
+  if(!iso)return '';
+  const d=new Date(iso);
+  if(isNaN(d))return '';
+  return d.toLocaleDateString('es-AR',{day:'2-digit',month:'2-digit',year:'2-digit'})+' '+d.toLocaleTimeString('es-AR',{hour:'2-digit',minute:'2-digit'});
+}
+
+function renderDocs(){
+  const list=document.getElementById('docs-list');
+  if(!list)return;
+  const q=(document.getElementById('docs-search')?.value||'').toLowerCase().trim();
+  let docs=docsData;
+  if(docsCat!=='todos')docs=docs.filter(d=>d.categoria===docsCat);
+  if(q)docs=docs.filter(d=>(d.titulo||'').toLowerCase().includes(q)||(d.contenido||'').toLowerCase().includes(q));
+  if(!docs.length){
+    list.innerHTML=`<div class="docs-empty">${q?'No hay documentos que coincidan con la búsqueda.':'Todavía no hay documentos en esta categoría.<br><br>Creá el primero con "+ Nuevo documento" — guías paso a paso, tips, notas... todo lo que le sirva al equipo. ✍️'}</div>`;
+    return;
+  }
+  list.innerHTML=docs.map(d=>{
+    const color=GC[d.actualizado_por]||'#64748b';
+    return `<div class="doc-card" id="doc-${d.id}">
+      <div class="doc-head" onclick="toggleDoc('${d.id}')">
+        <div class="doc-title">${escDoc(d.titulo)||'(sin título)'}</div>
+        <span class="doc-author"><span class="adot" style="background:${color}"></span>${escDoc(d.actualizado_por||'—')}</span>
+        <span class="doc-meta">${docsCat==='todos'?escDoc(docsCatLabel(d.categoria))+' · ':''}${fmtFechaDoc(d.updated_at)}</span>
+      </div>
+      <div class="doc-body" id="doc-body-${d.id}"></div>
+    </div>`;
+  }).join('');
+}
+
+function toggleDoc(id){
+  const card=document.getElementById('doc-'+id);
+  if(!card)return;
+  if(card.classList.contains('open')){card.classList.remove('open');return;}
+  document.querySelectorAll('.doc-card.open').forEach(c=>c.classList.remove('open'));
+  card.classList.add('open');
+  const d=docsData.find(x=>x.id===id);
+  const body=document.getElementById('doc-body-'+id);
+  if(!d||!body)return;
+  body.innerHTML=`<div class="doc-content-view">${escDoc(d.contenido)||'<i style="color:var(--gr)">Sin contenido todavía.</i>'}</div>
+    <div class="doc-actions">
+      <button class="doc-btn pri" onclick="editarDoc('${id}')">✏️ Editar</button>
+      <button class="doc-btn del" onclick="borrarDoc('${id}')">🗑️ Eliminar</button>
+    </div>`;
+}
+
+function docFormHTML(d){
+  return `<div class="doc-edit" style="padding-top:12px">
+    <input id="doc-f-titulo" placeholder="Título del documento..." value="${escDoc(d.titulo||'')}">
+    <select id="doc-f-cat">${DOCS_CATS.filter(c=>c.id!=='todos').map(c=>`<option value="${c.id}"${d.categoria===c.id?' selected':''}>${c.label}</option>`).join('')}</select>
+    <textarea id="doc-f-contenido" placeholder="Escribí acá la guía, los pasos, tips, links... Todo el equipo lo va a poder leer y editar.">${escDoc(d.contenido||'')}</textarea>
+    <div class="doc-actions">
+      <button class="doc-btn pri" onclick="guardarDoc('${d.id||''}')">💾 Guardar</button>
+      <button class="doc-btn" onclick="cancelarEdicionDoc()">Cancelar</button>
+    </div>
+  </div>`;
+}
+
+function nuevoDoc(){
+  const list=document.getElementById('docs-list');
+  if(!list)return;
+  if(document.getElementById('doc-nuevo-form'))return;
+  const catDefault=docsCat!=='todos'?docsCat:'general';
+  const wrap=document.createElement('div');
+  wrap.className='doc-card open';
+  wrap.id='doc-nuevo-form';
+  wrap.innerHTML=`<div class="doc-head"><div class="doc-title">✨ Nuevo documento</div></div><div class="doc-body" style="display:block">${docFormHTML({categoria:catDefault})}</div>`;
+  list.prepend(wrap);
+  document.getElementById('doc-f-titulo').focus();
+}
+
+function editarDoc(id){
+  const d=docsData.find(x=>x.id===id);
+  const body=document.getElementById('doc-body-'+id);
+  if(!d||!body)return;
+  body.innerHTML=docFormHTML(d);
+  document.getElementById('doc-f-titulo').focus();
+}
+
+function cancelarEdicionDoc(){renderDocs();}
+
+async function guardarDoc(id){
+  const titulo=document.getElementById('doc-f-titulo').value.trim();
+  const categoria=document.getElementById('doc-f-cat').value;
+  const contenido=document.getElementById('doc-f-contenido').value;
+  if(!titulo){toast('Poné un título al documento','err');return;}
+  const now=new Date().toISOString();
+  if(!id){
+    const doc={id:'doc_'+Date.now(),categoria,titulo,contenido,actualizado_por:curG,creado_por:curG,created_at:now,updated_at:now};
+    try{
+      const {error}=await SB.from('documentacion').insert(doc);
+      if(error){toast('⚠️ Error guardando: '+error.message,'err');return;}
+    }catch(e){toast('⚠️ Sin conexión a Supabase','err');return;}
+    docsData.unshift(doc);
+    toast('✅ Documento creado','ok');
+  } else {
+    const d=docsData.find(x=>x.id===id);
+    if(!d)return;
+    const upd={categoria,titulo,contenido,actualizado_por:curG,updated_at:now};
+    try{
+      const {error}=await SB.from('documentacion').update(upd).eq('id',id);
+      if(error){toast('⚠️ Error guardando: '+error.message,'err');return;}
+    }catch(e){toast('⚠️ Sin conexión a Supabase','err');return;}
+    Object.assign(d,upd);
+    toast('✅ Documento actualizado','ok');
+  }
+  docsData.sort((a,b)=>(b.updated_at||'').localeCompare(a.updated_at||''));
+  renderDocsSide();
+  renderDocs();
+}
+
+async function borrarDoc(id){
+  const d=docsData.find(x=>x.id===id);
+  if(!d)return;
+  if(!confirm('¿Eliminar "'+(d.titulo||'este documento')+'"?\n\nEsto lo borra para todo el equipo.'))return;
+  try{
+    const {error}=await SB.from('documentacion').delete().eq('id',id);
+    if(error){toast('⚠️ Error eliminando: '+error.message,'err');return;}
+  }catch(e){toast('⚠️ Sin conexión a Supabase','err');return;}
+  docsData=docsData.filter(x=>x.id!==id);
+  renderDocsSide();
+  renderDocs();
+  toast('Documento eliminado','err');
 }
 
 // CHECKLIST
