@@ -27,6 +27,7 @@ textarea{resize:vertical;}
 
 /* LOGIN */
 #login-screen{position:fixed;inset:0;z-index:9999;background:linear-gradient(135deg,#0a1628,#001a66 50%,#0a2e0a);display:flex;align-items:center;justify-content:center;padding:20px;}
+#login-screen::before{content:"";position:absolute;top:0;left:0;right:0;bottom:0;background-image:url("data:image/svg+xml,%3Csvg%20viewBox%3D%270%200%20120%20120%27%20xmlns%3D%27http%3A//www.w3.org/2000/svg%27%3E%3Cg%20fill%3D%27none%27%20stroke%3D%27%23e8c47a%27%20stroke-width%3D%271%27%20opacity%3D%270.85%27%3E%3Cellipse%20cx%3D%2760%27%20cy%3D%2745%27%20rx%3D%277%27%20ry%3D%2715%27%20transform%3D%27rotate%280%2060%2060%29%27/%3E%3Cellipse%20cx%3D%2760%27%20cy%3D%2745%27%20rx%3D%277%27%20ry%3D%2715%27%20transform%3D%27rotate%2872%2060%2060%29%27/%3E%3Cellipse%20cx%3D%2760%27%20cy%3D%2745%27%20rx%3D%277%27%20ry%3D%2715%27%20transform%3D%27rotate%28144%2060%2060%29%27/%3E%3Cellipse%20cx%3D%2760%27%20cy%3D%2745%27%20rx%3D%277%27%20ry%3D%2715%27%20transform%3D%27rotate%28216%2060%2060%29%27/%3E%3Cellipse%20cx%3D%2760%27%20cy%3D%2745%27%20rx%3D%277%27%20ry%3D%2715%27%20transform%3D%27rotate%28288%2060%2060%29%27/%3E%3Ccircle%20cx%3D%2760%27%20cy%3D%2760%27%20r%3D%273.5%27/%3E%3Cpath%20d%3D%27M60%2C74%20C58%2C88%2062%2C96%2058%2C108%27%20stroke-width%3D%271.1%27/%3E%3Cpath%20d%3D%27M58%2C88%20C50%2C85%2044%2C89%2042%2C95%20C50%2C97%2056%2C94%2058%2C88%20Z%27/%3E%3Cpath%20d%3D%27M60%2C96%20C68%2C93%2074%2C97%2076%2C103%20C68%2C105%2062%2C102%2060%2C96%20Z%27/%3E%3C/g%3E%3C/svg%3E");background-size:170px 170px;background-repeat:repeat;opacity:.5;pointer-events:none;}
 .lw{display:flex;flex-direction:column;align-items:center;gap:32px;width:100%;max-width:420px;}
 .ll{display:flex;align-items:center;gap:14px;}
 .lb{font-family:"DM Serif Display",serif;font-size:36px;color:#fff;letter-spacing:3px;}
@@ -135,7 +136,12 @@ textarea{resize:vertical;}
 @media(max-width:900px){.docs-layout{grid-template-columns:1fr;}.docs-side{position:static;display:flex;flex-wrap:wrap;gap:4px;}.docs-cat{margin-bottom:0;}}
 
 /* PRESUPUESTO */
-.pgrid{display:grid;grid-template-columns:400px 1fr;gap:32px;align-items:start;}
+.pgrid{display:grid;grid-template-columns:400px 26px 1fr;gap:18px;align-items:start;}
+.ptrack{display:flex;flex-direction:column;align-items:center;position:sticky;top:80px;padding-top:10px;height:calc(100vh - 160px);}
+.ptrack-pct{font-family:"DM Serif Display",serif;font-size:12px;color:var(--gr);margin-bottom:10px;font-weight:400;}
+.ptrack-bar{width:4px;flex:1;background:var(--bo);border-radius:4px;overflow:hidden;position:relative;min-height:120px;}
+.ptrack-fill{position:absolute;top:0;left:0;right:0;height:0%;background:linear-gradient(180deg,var(--vd),var(--az),var(--ro));border-radius:4px;transition:height .45s cubic-bezier(.22,1,.36,1);}
+@media(max-width:960px){.ptrack{display:none;}}
 .editor{display:flex;flex-direction:column;gap:12px;position:sticky;top:70px;max-height:calc(100vh - 86px);overflow-y:auto;padding-right:2px;}
 .editor::-webkit-scrollbar{width:3px;}
 .ecard{background:var(--wh);border-radius:12px;box-shadow:0 2px 10px rgba(0,0,0,.05);border:1px solid var(--bo);}
@@ -313,13 +319,20 @@ textarea{resize:vertical;}
 /* TOAST */
 .welcome-overlay{position:fixed;inset:0;z-index:9998;background:rgba(10,20,40,.7);backdrop-filter:blur(6px);display:flex;align-items:center;justify-content:center;padding:20px;animation:fadeIn .4s ease;}
 @keyframes fadeIn{from{opacity:0}to{opacity:1}}
-.welcome-card{background:linear-gradient(145deg,#0f172a,#1e3a5f);border-radius:24px;padding:40px 36px;max-width:480px;width:100%;text-align:center;box-shadow:0 30px 80px rgba(0,0,0,.4);border:1px solid rgba(255,255,255,.08);position:relative;animation:slideUp .4s ease;}
+.welcome-card{background:linear-gradient(145deg,#0f172a,#1e3a5f);border-radius:24px;padding:40px 36px;max-width:480px;width:100%;text-align:center;box-shadow:0 30px 80px rgba(0,0,0,.4);border:1px solid rgba(255,255,255,.08);position:relative;animation:slideUp .4s ease;overflow:hidden;}
+.welcome-card::before{content:"";position:absolute;top:0;left:0;right:0;bottom:0;background-image:url("data:image/svg+xml,%3Csvg%20viewBox%3D%270%200%20120%20120%27%20xmlns%3D%27http%3A//www.w3.org/2000/svg%27%3E%3Cg%20fill%3D%27none%27%20stroke%3D%27%23e8c47a%27%20stroke-width%3D%271%27%20opacity%3D%270.85%27%3E%3Cellipse%20cx%3D%2760%27%20cy%3D%2745%27%20rx%3D%277%27%20ry%3D%2715%27%20transform%3D%27rotate%280%2060%2060%29%27/%3E%3Cellipse%20cx%3D%2760%27%20cy%3D%2745%27%20rx%3D%277%27%20ry%3D%2715%27%20transform%3D%27rotate%2872%2060%2060%29%27/%3E%3Cellipse%20cx%3D%2760%27%20cy%3D%2745%27%20rx%3D%277%27%20ry%3D%2715%27%20transform%3D%27rotate%28144%2060%2060%29%27/%3E%3Cellipse%20cx%3D%2760%27%20cy%3D%2745%27%20rx%3D%277%27%20ry%3D%2715%27%20transform%3D%27rotate%28216%2060%2060%29%27/%3E%3Cellipse%20cx%3D%2760%27%20cy%3D%2745%27%20rx%3D%277%27%20ry%3D%2715%27%20transform%3D%27rotate%28288%2060%2060%29%27/%3E%3Ccircle%20cx%3D%2760%27%20cy%3D%2760%27%20r%3D%273.5%27/%3E%3Cpath%20d%3D%27M60%2C74%20C58%2C88%2062%2C96%2058%2C108%27%20stroke-width%3D%271.1%27/%3E%3Cpath%20d%3D%27M58%2C88%20C50%2C85%2044%2C89%2042%2C95%20C50%2C97%2056%2C94%2058%2C88%20Z%27/%3E%3Cpath%20d%3D%27M60%2C96%20C68%2C93%2074%2C97%2076%2C103%20C68%2C105%2062%2C102%2060%2C96%20Z%27/%3E%3C/g%3E%3C/svg%3E");background-size:150px 150px;background-repeat:repeat;opacity:.22;pointer-events:none;border-radius:24px;}
+.welcome-card > *{position:relative;z-index:1;}
 @keyframes slideUp{from{transform:translateY(20px);opacity:0}to{transform:translateY(0);opacity:1}}
 .welcome-card .wc-day{font-size:11px;font-weight:700;color:#60a5fa;letter-spacing:2px;text-transform:uppercase;margin-bottom:16px;}
 .welcome-card .wc-saludo{font-family:"DM Serif Display",serif;font-size:25px;font-weight:400;color:#fff;margin-bottom:14px;}
 .welcome-card .wc-emoji{font-size:52px;margin-bottom:16px;display:block;}
 .welcome-card .wc-quote{font-size:18px;font-weight:600;color:#fff;line-height:1.6;margin-bottom:10px;font-style:italic;}
 .welcome-card .wc-author{font-size:12px;color:rgba(255,255,255,.4);margin-bottom:28px;}
+.wc-resumen-label{font-size:10px;font-weight:700;color:rgba(255,255,255,.4);letter-spacing:1.5px;margin-bottom:12px;}
+.wc-resumen-stats{display:flex;justify-content:center;gap:24px;margin-bottom:28px;flex-wrap:wrap;}
+.wc-rstat{display:flex;flex-direction:column;align-items:center;}
+.wc-rstat b{font-family:"DM Serif Display",serif;font-size:26px;font-weight:400;line-height:1;margin-bottom:4px;}
+.wc-rstat span{font-size:10.5px;color:rgba(255,255,255,.55);max-width:70px;line-height:1.3;}
 .welcome-card .wc-btn{padding:12px 32px;background:linear-gradient(135deg,#3b82f6,#2563eb);color:#fff;border:none;border-radius:12px;font-size:14px;font-weight:700;cursor:pointer;transition:all .15s;font-family:"DM Sans",sans-serif;}
 .welcome-card .wc-btn:hover{transform:translateY(-2px);box-shadow:0 8px 20px rgba(59,130,246,.4);}
 .welcome-card .wc-skip{display:block;margin-top:14px;font-size:11px;color:rgba(255,255,255,.25);cursor:pointer;transition:color .15s;}
@@ -603,6 +616,12 @@ textarea{resize:vertical;}
     </div>
 
   </div><!-- /editor -->
+
+  <!-- PROGRESO -->
+  <div class="ptrack">
+    <div class="ptrack-pct" id="ptrack-pct">0%</div>
+    <div class="ptrack-bar"><div class="ptrack-fill" id="ptrack-fill"></div></div>
+  </div>
 
   <!-- PREVIEW -->
   <div>
@@ -1771,6 +1790,58 @@ const MENSAJES_DIA = [
   {emoji:'🌞', quote:'Empezá cada día con una sonrisa y terminalo con gratitud.', autor:'— Anónimo'},
 ];
 
+/* ══════════════════════════════════════════════════════════════════
+   Resumen de la última jornada con actividad — solo hechos, sin
+   ninguna opinión ni frase de "felicitación". Busca el día más
+   reciente ANTES de hoy en el que esta persona cargó algo, y muestra
+   los números tal cual — que cada una saque su propia conclusión.
+   ══════════════════════════════════════════════════════════════════ */
+async function cargarResumenUltimoDia(colorPersona){
+  const wrap = document.getElementById('wc-resumen');
+  if(!wrap || !curG) return;
+
+  try{
+    let qC = SB.from(TB).select('fecha,fecha_concluido');
+    let qI = SB.from('ingresos').select('fecha');
+    if(curG !== 'Belén'){ qC = qC.eq('gestor',curG); qI = qI.eq('gestor',curG); }
+    const [{data:clientesData}, {data:ingresosData2}] = await Promise.all([qC, qI]);
+
+    const hoyKey = new Date().toISOString().slice(0,10);
+    const porDia = {}; // fecha -> {nuevos, concluidos, ingresos}
+    const suma = (k,campo) => { if(!k || k>=hoyKey) return; (porDia[k]=porDia[k]||{nuevos:0,concluidos:0,ingresos:0})[campo]++; };
+
+    (clientesData||[]).forEach(c=>{
+      suma(c.fecha,'nuevos');
+      suma(c.fecha_concluido,'concluidos');
+    });
+    (ingresosData2||[]).forEach(r=> suma(r.fecha,'ingresos'));
+
+    const diasConActividad = Object.keys(porDia).sort().reverse();
+    if(!diasConActividad.length) return; // nada previo — no mostramos nada, sin inventar
+
+    const ultimoDia = diasConActividad[0];
+    const d = porDia[ultimoDia];
+    const fechaObj = new Date(ultimoDia+'T00:00:00');
+    const hoyObj = new Date();
+    const ayerObj = new Date(); ayerObj.setDate(hoyObj.getDate()-1);
+    const esAyer = ultimoDia === ayerObj.toISOString().slice(0,10);
+    const DIAS=['domingo','lunes','martes','miércoles','jueves','viernes','sábado'];
+    const label = esAyer ? 'Ayer' : `El ${DIAS[fechaObj.getDay()]}`;
+
+    const stats = [];
+    if(d.nuevos>0) stats.push({n:d.nuevos, t:d.nuevos===1?'cliente nuevo':'clientes nuevos'});
+    if(d.concluidos>0) stats.push({n:d.concluidos, t:d.concluidos===1?'caso concluido':'casos concluidos'});
+    if(d.ingresos>0) stats.push({n:d.ingresos, t:d.ingresos===1?'ingreso cargado':'ingresos cargados'});
+    if(!stats.length) return;
+
+    wrap.innerHTML = `
+      <div class="wc-resumen-label">${label.toUpperCase()}</div>
+      <div class="wc-resumen-stats">
+        ${stats.map(s=>`<div class="wc-rstat"><b style="color:${colorPersona}">${s.n}</b><span>${s.t}</span></div>`).join('')}
+      </div>`;
+  }catch(e){ /* si falla, la tarjeta sigue andando igual sin este dato */ }
+}
+
 function showWelcome(){
   const hoy = new Date();
   const diaDelAnio = Math.floor((hoy - new Date(hoy.getFullYear(),0,0)) / 86400000);
@@ -1794,13 +1865,15 @@ function showWelcome(){
       <span class="wc-emoji">${msg.emoji}</span>
       <div class="wc-quote">"${msg.quote}"</div>
       <div class="wc-author">${msg.autor}</div>
+      <div id="wc-resumen"></div>
       <button class="wc-btn" onclick="closeWelcome()" style="background:linear-gradient(135deg,${colorPersona},${colorPersona}cc)">¡Empecemos! →</button>
       <span class="wc-skip" onclick="closeWelcome()">Cerrar</span>
     </div>`;
   document.body.appendChild(overlay);
+  cargarResumenUltimoDia(colorPersona);
 
   // Auto-cerrar a los 5 segundos
-  setTimeout(closeWelcome, 5500);
+  setTimeout(closeWelcome, 7000);
 }
 
 function closeWelcome(){
@@ -2564,7 +2637,25 @@ function renderSrvs(){
 }
 
 // RENDER PREVIEW
+// Progreso del presupuesto — 5 pasos naturales del formulario. Solo visual,
+// no guarda nada ni cambia ningún dato, se recalcula sola en cada render().
+function actualizarProgresoPresupuesto(){
+  const fill = document.getElementById('ptrack-fill');
+  if(!fill) return;
+  let pasos = 0;
+  if(g('e-nom') || g('e-ape')) pasos++;
+  if(g('e-asc')) pasos++;
+  if(g('e-tipo')) pasos++;
+  if(etas.length>0) pasos++;
+  if(srvs.length>0) pasos++;
+  const pct = Math.round((pasos/5)*100);
+  fill.style.height = pct+'%';
+  const pctEl = document.getElementById('ptrack-pct');
+  if(pctEl) pctEl.textContent = pct+'%';
+}
+
 function render(){
+  actualizarProgresoPresupuesto();
   document.getElementById('d-fec').textContent=fmtD(g('e-fec'));
   const nom=[g('e-nom'),g('e-ape')].filter(Boolean).join(' ');
   sd('d-nom',nom);sd('d-dni',g('e-dni'));sd('d-dom',g('e-dom'));sd('d-con',g('e-cons'));
