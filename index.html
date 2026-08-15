@@ -14,7 +14,7 @@
   --ro:#CE2B37;--rol:#fdecea;
   --am:#f59e0b;--aml:#fef9c3;
   --gr:#64748b;--grd:#1e293b;--grl:#f1f5f9;
-  --bg:#f8fafc;--wh:#fff;--bo:#e2e8f0;
+  --bg:#f9f6f1;--wh:#fff;--bo:#e2e8f0;
   --sh:0 1px 3px rgba(0,0,0,.06),0 4px 16px rgba(0,0,0,.06);
   --malena:#7c3aed;--sofia:#0891b2;--belen:#059669;--german:#d97706;
 }
@@ -53,14 +53,16 @@ textarea{resize:vertical;}
 
 /* HEADER */
 .hdr{background:var(--wh);border-bottom:1px solid var(--bo);position:sticky;top:0;z-index:100;box-shadow:0 1px 0 var(--bo);}
+.hdr::after{content:"";display:block;height:3px;background:linear-gradient(90deg,var(--vd),var(--wh) 33%,var(--wh) 66%,var(--ro));}
 .hdr-in{max-width:1400px;margin:0 auto;display:flex;align-items:center;justify-content:space-between;height:58px;padding:0 24px;gap:16px;}
 .hlogo{display:flex;align-items:center;gap:10px;flex-shrink:0;}
 .hbrand{font-family:"DM Serif Display",serif;font-size:20px;color:var(--grd);letter-spacing:1px;}
 .hsub{font-size:9px;font-weight:500;letter-spacing:2px;color:#bbb;text-transform:uppercase;}
 .htabs{display:flex;gap:2px;background:var(--grl);padding:3px;border-radius:9px;}
-.htab{padding:6px 18px;border-radius:7px;border:none;background:transparent;font-family:"DM Sans",sans-serif;font-size:13px;font-weight:500;color:var(--gr);cursor:pointer;transition:all .13s;white-space:nowrap;}
+.htab{padding:6px 18px;border-radius:7px;border:none;background:transparent;font-family:"DM Sans",sans-serif;font-size:13px;font-weight:500;color:var(--gr);cursor:pointer;transition:all .15s;white-space:nowrap;}
+.htab:hover{background:var(--azl);color:var(--az);}
 .htab:hover{color:var(--grd);}
-.htab.on{background:var(--wh);color:var(--grd);font-weight:600;box-shadow:0 1px 4px rgba(0,0,0,.08);}
+.htab.on{background:linear-gradient(135deg,var(--az),var(--az2));color:#fff;font-weight:700;box-shadow:0 3px 10px rgba(0,51,153,.28);}
 .hrgt{display:flex;align-items:center;gap:10px;}
 .gchip{display:flex;align-items:center;gap:8px;padding:5px 12px;border-radius:20px;font-size:12px;font-weight:600;background:var(--grl);color:var(--grd);}
 .gdot{width:8px;height:8px;border-radius:50%;}
@@ -72,8 +74,29 @@ textarea{resize:vertical;}
 .btnx:hover{border-color:#fca5a5;color:var(--ro);background:var(--rol);}
 
 /* VIEWS */
-.view{display:none;}
+.view{display:none;padding-left:78px;box-sizing:border-box;}
 .view.on{display:block;}
+
+/* Sidebar lateral — Gastos, SOPs, Precios, Seguimiento */
+.sidebar{position:fixed;left:0;top:0;bottom:0;width:78px;background:var(--wh);border-right:1px solid var(--bo);z-index:90;display:flex;flex-direction:column;align-items:center;padding-top:92px;gap:6px;overflow-y:auto;}
+.sb-btn{width:62px;padding:10px 4px;border:none;background:transparent;border-radius:12px;cursor:pointer;display:flex;flex-direction:column;align-items:center;gap:5px;font-size:9.5px;font-weight:600;color:var(--gr);transition:all .15s;}
+.sb-btn .sb-ico{font-size:18px;line-height:1;width:36px;height:36px;border-radius:11px;display:flex;align-items:center;justify-content:center;transition:all .18s;}
+.sb-btn:hover{color:var(--grd);}
+.sb-btn:hover .sb-ico{transform:translateY(-2px);}
+.sb-btn[data-c="ro"] .sb-ico{background:var(--rol);}
+.sb-btn[data-c="az"] .sb-ico{background:var(--azl);}
+.sb-btn[data-c="vd"] .sb-ico{background:var(--vdl);}
+.sb-btn[data-c="am"] .sb-ico{background:var(--aml);}
+.sb-btn.on{color:var(--grd);font-weight:800;}
+.sb-btn.on[data-c="ro"] .sb-ico{background:var(--ro);box-shadow:0 4px 10px rgba(206,43,55,.35);}
+.sb-btn.on[data-c="az"] .sb-ico{background:var(--az);box-shadow:0 4px 10px rgba(0,51,153,.35);}
+.sb-btn.on[data-c="vd"] .sb-ico{background:var(--vd);box-shadow:0 4px 10px rgba(0,146,70,.35);}
+.sb-btn.on[data-c="am"] .sb-ico{background:var(--am);box-shadow:0 4px 10px rgba(245,158,11,.35);}
+@media(max-width:820px){
+  .sidebar{width:58px;padding-top:80px;}
+  .sb-btn{width:48px;font-size:8.5px;}
+  .view{padding-left:60px;}
+}
 .vbody{max-width:1400px;margin:0 auto;padding:24px;}
 
 /* DOCUMENTACION */
@@ -112,10 +135,10 @@ textarea{resize:vertical;}
 @media(max-width:900px){.docs-layout{grid-template-columns:1fr;}.docs-side{position:static;display:flex;flex-wrap:wrap;gap:4px;}.docs-cat{margin-bottom:0;}}
 
 /* PRESUPUESTO */
-.pgrid{display:grid;grid-template-columns:400px 1fr;gap:20px;align-items:start;}
+.pgrid{display:grid;grid-template-columns:400px 1fr;gap:32px;align-items:start;}
 .editor{display:flex;flex-direction:column;gap:12px;position:sticky;top:70px;max-height:calc(100vh - 86px);overflow-y:auto;padding-right:2px;}
 .editor::-webkit-scrollbar{width:3px;}
-.ecard{background:var(--wh);border-radius:12px;box-shadow:var(--sh);border:1px solid var(--bo);}
+.ecard{background:var(--wh);border-radius:12px;box-shadow:0 2px 10px rgba(0,0,0,.05);border:1px solid var(--bo);}
 .ehead{padding:10px 16px;border-bottom:1px solid var(--grl);display:flex;align-items:center;gap:8px;}
 .eico{width:26px;height:26px;border-radius:6px;display:flex;align-items:center;justify-content:center;font-size:13px;flex-shrink:0;}
 .etit{font-size:13px;font-weight:600;color:var(--grd);}
@@ -151,11 +174,13 @@ textarea{resize:vertical;}
 .bprint:hover{transform:translateY(-1px);}
 .bnew{width:100%;padding:9px;background:transparent;border:1.5px solid var(--bo);border-radius:10px;font-size:13px;font-weight:500;color:#94a3b8;cursor:pointer;transition:all .13s;}
 .bnew:hover{border-color:#fca5a5;color:var(--ro);background:var(--rol);}
-.plbl{font-size:10px;font-weight:600;color:#94a3b8;letter-spacing:1.5px;text-transform:uppercase;display:flex;align-items:center;gap:8px;margin-bottom:12px;}
+.plbl{font-size:11px;font-weight:700;color:var(--az);letter-spacing:1.5px;text-transform:uppercase;display:flex;align-items:center;gap:8px;margin-bottom:12px;}
+.plbl::before{content:"";width:20px;height:2px;background:linear-gradient(90deg,var(--vd),var(--ro));border-radius:2px;}
 .plbl::after{content:"";flex:1;height:1px;background:var(--bo);}
 
 /* DOCUMENT */
-.doc{background:var(--wh);border-radius:12px;box-shadow:var(--sh);border:1px solid var(--bo);overflow:hidden;}
+.doc{background:var(--wh);border-radius:12px;box-shadow:0 8px 28px -8px rgba(0,51,153,.16),0 2px 8px rgba(0,0,0,.06);border:1px solid var(--bo);overflow:hidden;position:relative;}
+.doc::before{content:"";position:absolute;top:0;left:0;right:0;height:4px;background:linear-gradient(90deg,var(--vd),var(--az) 50%,var(--ro));}
 .dhdr{padding:24px 36px 18px;display:flex;flex-direction:column;align-items:center;gap:6px;border-bottom:2px solid var(--grd);}
 .dlr{display:flex;align-items:center;gap:11px;}
 .dbrand{font-family:"DM Serif Display",serif;font-size:22px;color:var(--grd);letter-spacing:4px;}
@@ -291,6 +316,7 @@ textarea{resize:vertical;}
 .welcome-card{background:linear-gradient(145deg,#0f172a,#1e3a5f);border-radius:24px;padding:40px 36px;max-width:480px;width:100%;text-align:center;box-shadow:0 30px 80px rgba(0,0,0,.4);border:1px solid rgba(255,255,255,.08);position:relative;animation:slideUp .4s ease;}
 @keyframes slideUp{from{transform:translateY(20px);opacity:0}to{transform:translateY(0);opacity:1}}
 .welcome-card .wc-day{font-size:11px;font-weight:700;color:#60a5fa;letter-spacing:2px;text-transform:uppercase;margin-bottom:16px;}
+.welcome-card .wc-saludo{font-family:"DM Serif Display",serif;font-size:25px;font-weight:400;color:#fff;margin-bottom:14px;}
 .welcome-card .wc-emoji{font-size:52px;margin-bottom:16px;display:block;}
 .welcome-card .wc-quote{font-size:18px;font-weight:600;color:#fff;line-height:1.6;margin-bottom:10px;font-style:italic;}
 .welcome-card .wc-author{font-size:12px;color:rgba(255,255,255,.4);margin-bottom:28px;}
@@ -301,9 +327,10 @@ textarea{resize:vertical;}
 .wc-bar{height:3px;background:rgba(255,255,255,.1);border-radius:2px;margin-bottom:28px;overflow:hidden;}
 .wc-bar-fill{height:100%;background:linear-gradient(90deg,#3b82f6,#60a5fa);border-radius:2px;animation:fillBar 5s linear forwards;}
 @keyframes fillBar{from{width:0%}to{width:100%}}
-.toast{position:fixed;bottom:20px;right:20px;padding:11px 18px;border-radius:11px;font-size:13px;font-weight:600;box-shadow:0 8px 28px rgba(0,0,0,.18);z-index:9999;opacity:0;transform:translateY(8px);transition:all .22s;pointer-events:none;color:#fff;background:var(--grd);}
-.toast.on{opacity:1;transform:translateY(0);}
-.toast.ok{background:#16a34a;}.toast.err{background:var(--ro);}
+.toast{position:fixed;bottom:24px;right:24px;padding:13px 22px 13px 18px;border-radius:14px;font-size:13.5px;font-weight:600;box-shadow:0 10px 32px rgba(0,0,0,.22);z-index:9999;opacity:0;transform:translateY(10px) scale(.94);transition:opacity .25s ease,transform .35s cubic-bezier(.34,1.56,.64,1);pointer-events:none;color:#fff;background:linear-gradient(135deg,var(--az),var(--az2));display:flex;align-items:center;gap:8px;max-width:380px;line-height:1.4;}
+.toast.on{opacity:1;transform:translateY(0) scale(1);}
+.toast.ok{background:linear-gradient(135deg,#16a34a,#15803d);box-shadow:0 10px 32px rgba(22,163,74,.28);}
+.toast.err{background:linear-gradient(135deg,var(--ro),#a8202b);box-shadow:0 10px 32px rgba(206,43,55,.28);}
 
 /* PRINT */
 @media print{
@@ -370,7 +397,7 @@ textarea{resize:vertical;}
       </div>
       <div class="lpw">
         <input type="password" class="lpi" id="pwd" placeholder="Contraseña..." autocomplete="off" onkeydown="if(event.key==='Enter')login()">
-        <button class="lgo" onclick="login()">Entrar →</button>
+        <button class="lgo" id="btn-login" onclick="login()">Entrar →</button>
       </div>
       <div class="lerr" id="lerr">Seleccioná un perfil e ingresá la contraseña correcta.</div>
     </div>
@@ -379,6 +406,12 @@ textarea{resize:vertical;}
 
 <!-- APP -->
 <div id="app">
+<div class="sidebar" id="sidebar">
+  <button class="sb-btn" data-c="ro" id="sb-gastos" onclick="showTab('gastos',this)"><span class="sb-ico">💸</span>Gastos</button>
+  <button class="sb-btn" data-c="az" id="sb-sops" onclick="showTab('sops',this)"><span class="sb-ico">📚</span>SOPs</button>
+  <button class="sb-btn" data-c="vd" id="sb-precios" onclick="showTab('precios',this)"><span class="sb-ico">💲</span>Precios</button>
+  <button class="sb-btn" data-c="am" id="sb-seguimiento" onclick="showTab('seguimiento',this)"><span class="sb-ico">📞</span>Seguim.</button>
+</div>
 <div class="hdr">
   <div class="hdr-in">
     <div class="hlogo">
@@ -389,14 +422,9 @@ textarea{resize:vertical;}
       <button class="htab on" onclick="showTab('presup',this)">📄 Nuevo Presupuesto</button>
       <button class="htab" onclick="showTab('base',this)">📂 Base de Clientes</button>
       <button class="htab" onclick="showTab('ingresos',this)">💰 Ingresos</button>
-      <button class="htab" onclick="showTab('gastos',this)">💸 Gastos</button>
       <button class="htab" onclick="showTab('info',this)">📌 Info</button>
       <button class="htab" onclick="showTab('planillas',this)">📋 Planillas</button>
-      <button class="htab" onclick="showTab('sops',this)">📚 SOPs</button>
-      
-      <button class="htab" onclick="showTab('precios',this)">💲 Precios</button>
       <button class="htab" onclick="showTab('checklist',this)">✅ Mi Checklist</button>
-      <button class="htab" onclick="showTab('seguimiento',this)">📞 Seguimiento</button>
     </div>
     <div class="hrgt">
       <div class="sychip"><div class="sydot sp" id="sydot"></div><span id="sytxt">Conectando</span></div>
@@ -651,7 +679,7 @@ textarea{resize:vertical;}
 <div class="view" id="view-base">
 <div class="vbody">
   <div class="dbtop" style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:12px">
-    <div class="dbtitle">Base de Clientes</div>
+    <div class="dbtitle" style="color:var(--az)">📂 Base de Clientes</div>
     <div style="display:flex;gap:6px">
       <button onclick="filtroRapido('')" id="fr-todos" style="padding:6px 14px;border-radius:20px;border:2px solid #1e3a5f;background:#1e3a5f;font-size:12px;font-weight:700;color:#fff;cursor:pointer">Todos</button>
       <button onclick="filtroRapido('potencial')" id="fr-pot" style="padding:6px 14px;border-radius:20px;border:2px solid #e2e8f0;background:transparent;font-size:12px;font-weight:700;color:#94a3b8;cursor:pointer">👀 Potenciales</button>
@@ -723,7 +751,7 @@ textarea{resize:vertical;}
 <div class="vbody">
 
   <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:16px;flex-wrap:wrap;gap:12px">
-    <div class="dbtitle">Ingresos</div>
+    <div class="dbtitle" style="color:var(--vd)">💰 Ingresos</div>
     <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap;justify-content:space-between">
       <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap">
         <!-- Filtro por gestor: solo visible para Belén (admin) -->
@@ -839,7 +867,7 @@ textarea{resize:vertical;}
 <div class="view" id="view-gastos">
 <div class="vbody">
   <div style="margin-bottom:20px">
-    <div class="dbtitle" style="margin-bottom:4px">💸 Gastos</div>
+    <div class="dbtitle" style="margin-bottom:4px;color:var(--ro)">💸 Gastos</div>
     <div style="font-size:13px;color:#94a3b8">Registro de gastos del negocio</div>
     <div class="flts" style="margin-top:14px">
       <div style="display:flex;gap:8px;flex-wrap:wrap;align-items:center">
@@ -920,7 +948,7 @@ textarea{resize:vertical;}
 
   <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:24px;flex-wrap:wrap;gap:12px">
     <div>
-      <div class="dbtitle">Info del Equipo</div>
+      <div class="dbtitle" style="color:var(--az)">📌 Info del Equipo</div>
       <div style="font-size:13px;color:#94a3b8;margin-top:4px">Referencia interna — todo editable, se guarda automáticamente</div>
     </div>
   </div>
@@ -1408,7 +1436,7 @@ renderConsulados();
 
   <div style="margin-bottom:20px;display:flex;align-items:flex-start;justify-content:space-between;flex-wrap:wrap;gap:12px">
     <div>
-      <div class="dbtitle">Planillas de Seguimiento</div>
+      <div class="dbtitle" style="color:var(--am)">📋 Planillas de Seguimiento</div>
       <div style="font-size:13px;color:#94a3b8;margin-top:4px">Registros de cámaras y apostillas — se guarda automáticamente</div>
     </div>
     <div style="display:flex;gap:8px;align-items:center">
@@ -1487,7 +1515,7 @@ renderConsulados();
 <!-- VIEW CHECKLIST -->
 <div class="view" id="view-checklist">
   <div style="margin-bottom:20px">
-    <div class="dbtitle">✅ Mi Checklist</div>
+    <div class="dbtitle" style="color:var(--vd)">✅ Mi Checklist</div>
     <div style="font-size:13px;color:#94a3b8;margin-top:4px">Tu cuaderno de tareas — anotá, tachá, repetí</div>
   </div>
 
@@ -1512,7 +1540,7 @@ renderConsulados();
 <div class="vbody">
   <div style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:12px;margin-bottom:20px">
     <div>
-      <div class="dbtitle">📞 Seguimiento</div>
+      <div class="dbtitle" style="color:var(--am)">📞 Seguimiento</div>
       <div style="font-size:13px;color:#94a3b8;margin-top:4px">A quién le escribo hoy — el sistema arma la lista, vos solo mandás el mensaje</div>
     </div>
     <button onclick="abrirModalNota()" style="padding:10px 18px;border:none;border-radius:20px;background:linear-gradient(135deg,#0891b2,#0369a1);color:#fff;font-size:13px;font-weight:700;cursor:pointer;white-space:nowrap">+ Anotar a alguien</button>
@@ -1541,7 +1569,7 @@ renderConsulados();
 <div class="vbody">
   <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:20px;flex-wrap:wrap;gap:12px">
     <div>
-      <div class="dbtitle">Lista de Precios</div>
+      <div class="dbtitle" style="color:var(--vd)">💲 Lista de Precios</div>
       <div id="precios-subtitle" style="font-size:13px;color:#94a3b8;margin-top:4px"></div>
     </div>
     <div id="precios-buttons" style="display:flex;gap:8px"></div>
@@ -1601,19 +1629,58 @@ let planillasData={camaras:[],apostillas:[]};
 // LOGIN
 let selGestor='';
 function selG(btn){document.querySelectorAll('.gb2').forEach(b=>b.classList.remove('sel'));btn.classList.add('sel');selGestor=btn.dataset.g;}
-function login(){
+// Mapeo de gestora -> mail real, usado para el login real de Supabase Auth.
+// El botón que tocan sigue siendo solo visual: la identidad real la confirma
+// el servidor (Supabase), no lo que aparece tildado en pantalla.
+const EMAIL_POR_GESTOR = {
+  'Malena': 'zittanogestoria@gmail.com',
+  'Sofía': 'somoszittano@gmail.com',
+  'Belén': 'mbloccisano@gmail.com',
+  'Germán': 'duttogerman@gmail.com',
+};
+
+async function login(){
   const pwd=document.getElementById('pwd').value.trim();
-  const passwords={'Malena':'malezittano','Sofía':'sofizittano','Belén':'zittanotkm','Germán':'zittanotkm'};
-  if(!selGestor||pwd!==passwords[selGestor]){document.getElementById('lerr').classList.add('on');return;}
+  if(!selGestor){document.getElementById('lerr').classList.add('on');return;}
+  const email = EMAIL_POR_GESTOR[selGestor];
+  const btn = document.getElementById('btn-login');
+  if(btn){btn.disabled=true;btn.textContent='Entrando...';}
+
+  const {data,error} = await SB.auth.signInWithPassword({email, password:pwd});
+
+  if(error || !data || !data.user){
+    document.getElementById('lerr').classList.add('on');
+    if(btn){btn.disabled=false;btn.textContent='Entrar';}
+    return;
+  }
+
+  // Confirmamos quién es de verdad consultando su perfil — no confiamos
+  // ciegamente en qué botón tocó, sino en quién logró autenticarse.
+  const {data:perfil,error:perfilError} = await SB.from('profiles').select('gestor,is_admin').eq('id',data.user.id).single();
+  if(perfilError || !perfil){
+    document.getElementById('lerr').classList.add('on');
+    await SB.auth.signOut();
+    if(btn){btn.disabled=false;btn.textContent='Entrar';}
+    return;
+  }
+
   document.getElementById('lerr').classList.remove('on');
   document.getElementById('login-screen').style.display='none';
   document.getElementById('app').style.display='block';
-  curG=selGestor;
+  curG=perfil.gestor;
   document.getElementById('gname').textContent=curG;
   document.getElementById('gdot').style.background=GC[curG]||'#64748b';
+  if(btn){btn.disabled=false;btn.textContent='Entrar';}
   initApp();
 }
-function logout(){document.getElementById('app').style.display='none';document.getElementById('login-screen').style.display='flex';document.getElementById('pwd').value='';selGestor='';document.querySelectorAll('.gb2').forEach(b=>b.classList.remove('sel'));}
+async function logout(){
+  await SB.auth.signOut();
+  document.getElementById('app').style.display='none';
+  document.getElementById('login-screen').style.display='flex';
+  document.getElementById('pwd').value='';
+  selGestor='';
+  document.querySelectorAll('.gb2').forEach(b=>b.classList.remove('sel'));
+}
 
 // INIT
 function initApp(){
@@ -1712,17 +1779,22 @@ function showWelcome(){
   const meses = ['enero','febrero','marzo','abril','mayo','junio','julio','agosto','septiembre','octubre','noviembre','diciembre'];
   const fechaStr = dias[hoy.getDay()] + ', ' + hoy.getDate() + ' de ' + meses[hoy.getMonth()];
 
+  const hora = hoy.getHours();
+  const saludo = hora<12 ? 'Buen día' : hora<20 ? 'Buenas tardes' : 'Buenas noches';
+  const colorPersona = (GC && GC[curG]) || '#3b82f6';
+
   const overlay = document.createElement('div');
   overlay.className = 'welcome-overlay';
   overlay.id = 'welcome-overlay';
   overlay.innerHTML = `
-    <div class="welcome-card">
+    <div class="welcome-card" style="border-color:${colorPersona}33">
       <div class="wc-day">✦ ${fechaStr} ✦</div>
-      <div class="wc-bar"><div class="wc-bar-fill"></div></div>
+      <div class="wc-bar"><div class="wc-bar-fill" style="background:linear-gradient(90deg,${colorPersona},${colorPersona}aa)"></div></div>
+      <div class="wc-saludo">${saludo}, <span style="color:${colorPersona}">${curG}</span> 👋</div>
       <span class="wc-emoji">${msg.emoji}</span>
       <div class="wc-quote">"${msg.quote}"</div>
       <div class="wc-author">${msg.autor}</div>
-      <button class="wc-btn" onclick="closeWelcome()">¡Empecemos! →</button>
+      <button class="wc-btn" onclick="closeWelcome()" style="background:linear-gradient(135deg,${colorPersona},${colorPersona}cc)">¡Empecemos! →</button>
       <span class="wc-skip" onclick="closeWelcome()">Cerrar</span>
     </div>`;
   document.body.appendChild(overlay);
@@ -2064,8 +2136,9 @@ function gbCl(g){const n=(g||'').toLowerCase().normalize('NFD').replace(/[̀-ͯ]
 function showTab(name,btn){
   document.querySelectorAll('.view').forEach(v=>v.classList.remove('on'));
   document.querySelectorAll('.htab').forEach(t=>t.classList.remove('on'));
+  document.querySelectorAll('.sb-btn').forEach(t=>t.classList.remove('on'));
   document.getElementById('view-'+name).classList.add('on');
-  btn.classList.add('on');
+  if(btn) btn.classList.add('on');
   if(name==='base')loadDb();
   if(name==='ingresos'){
     loadIngresos().then(()=>{
