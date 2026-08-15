@@ -319,6 +319,35 @@ textarea{resize:vertical;}
   .stats{grid-template-columns:1fr 1fr 1fr;}
   .igrid{grid-template-columns:1fr 1fr;}
 }
+
+/* 📞 Seguimiento */
+.seg-bloque{margin-bottom:24px;}
+.seg-bloque-head{display:flex;align-items:center;justify-content:space-between;border-left:4px solid #ccc;padding:4px 0 4px 14px;margin-bottom:12px;}
+.seg-bloque-tit{font-size:14px;font-weight:700;color:var(--grd);}
+.seg-bloque-desc{font-size:11.5px;color:#94a3b8;margin-top:2px;}
+.seg-bloque-cant{width:28px;height:28px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:13px;font-weight:800;flex-shrink:0;}
+.seg-cards{display:grid;grid-template-columns:repeat(auto-fill,minmax(230px,1fr));gap:12px;}
+.seg-card{background:var(--wh);border:1px solid var(--bo);border-radius:12px;padding:14px 16px;}
+.seg-card-nom{font-size:13.5px;font-weight:700;color:var(--grd);margin-bottom:4px;}
+.seg-card-meta{font-size:11px;color:#94a3b8;margin-bottom:10px;}
+.seg-card-btns{display:flex;align-items:center;gap:8px;}
+.seg-btn-wa{flex:1;text-align:center;padding:8px 10px;border-radius:8px;background:#dcfce7;color:#15803d;font-size:12px;font-weight:700;text-decoration:none;}
+.seg-btn-wa:hover{background:#bbf7d0;}
+.seg-btn-ok{width:32px;height:32px;border-radius:8px;border:1.5px solid var(--bo);background:var(--wh);color:#94a3b8;font-weight:800;cursor:pointer;flex-shrink:0;}
+.seg-btn-ok:hover{border-color:#22c55e;color:#22c55e;background:#f0fdf4;}
+.seg-sin-tel{flex:1;font-size:11px;color:#cbd5e1;font-style:italic;}
+.seg-modal-bg{display:none;position:fixed;inset:0;background:rgba(15,23,42,.5);z-index:200;align-items:center;justify-content:center;padding:20px;}
+.seg-modal-bg.on{display:flex;}
+.seg-modal{background:var(--wh);border-radius:16px;padding:24px;max-width:400px;width:100%;}
+.seg-modal h3{font-family:"DM Serif Display",serif;font-size:19px;margin-bottom:14px;color:var(--grd);}
+.seg-modal label{display:block;font-size:11px;font-weight:700;color:#94a3b8;text-transform:uppercase;letter-spacing:.4px;margin-bottom:6px;margin-top:12px;}
+.seg-modal input,.seg-modal textarea{width:100%;padding:10px 12px;border:1.5px solid var(--bo);border-radius:9px;font-family:inherit;font-size:13.5px;outline:none;box-sizing:border-box;}
+.seg-modal input:focus,.seg-modal textarea:focus{border-color:#0891b2;}
+.seg-modal textarea{min-height:80px;resize:vertical;}
+.seg-modal-actions{display:flex;gap:8px;margin-top:18px;}
+.seg-modal-actions button{flex:1;padding:11px;border-radius:9px;border:none;font-weight:700;font-size:13.5px;cursor:pointer;}
+.seg-modal-cancel{background:var(--grl);color:var(--gr);}
+.seg-modal-send{background:linear-gradient(135deg,#0891b2,#0369a1);color:#fff;}
 </style>
 </head>
 <body>
@@ -367,6 +396,7 @@ textarea{resize:vertical;}
       
       <button class="htab" onclick="showTab('precios',this)">💲 Precios</button>
       <button class="htab" onclick="showTab('checklist',this)">✅ Mi Checklist</button>
+      <button class="htab" onclick="showTab('seguimiento',this)">📞 Seguimiento</button>
     </div>
     <div class="hrgt">
       <div class="sychip"><div class="sydot sp" id="sydot"></div><span id="sytxt">Conectando</span></div>
@@ -1477,6 +1507,35 @@ renderConsulados();
   <div id="chk-wrap" style="display:grid;grid-template-columns:repeat(auto-fill,minmax(220px,1fr));gap:16px"></div>
 </div>
 
+<!-- VIEW SEGUIMIENTO -->
+<div class="view" id="view-seguimiento">
+<div class="vbody">
+  <div style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:12px;margin-bottom:20px">
+    <div>
+      <div class="dbtitle">📞 Seguimiento</div>
+      <div style="font-size:13px;color:#94a3b8;margin-top:4px">A quién le escribo hoy — el sistema arma la lista, vos solo mandás el mensaje</div>
+    </div>
+    <button onclick="abrirModalNota()" style="padding:10px 18px;border:none;border-radius:20px;background:linear-gradient(135deg,#0891b2,#0369a1);color:#fff;font-size:13px;font-weight:700;cursor:pointer;white-space:nowrap">+ Anotar a alguien</button>
+  </div>
+  <div id="seg-wrap"><div class="empty"><i>⏳</i><h3>Cargando...</h3></div></div>
+</div>
+</div>
+
+<div class="seg-modal-bg" id="nota-modal-bg">
+  <div class="seg-modal">
+    <h3>📝 Anotar a quién contactar</h3>
+    <label>¿A quién?</label>
+    <input id="nota-cliente" list="seg-cliente-list" placeholder="Escribí el nombre...">
+    <datalist id="seg-cliente-list"></datalist>
+    <label>¿Por qué hay que contactarlo?</label>
+    <textarea id="nota-motivo" placeholder="Ej: quedó en mandarme una foto del acta y nunca la mandó"></textarea>
+    <div class="seg-modal-actions">
+      <button class="seg-modal-cancel" onclick="cerrarModalNota()">Cancelar</button>
+      <button class="seg-modal-send" onclick="guardarNotaSeguimiento()">Guardar</button>
+    </div>
+  </div>
+</div>
+
 <!-- VIEW PRECIOS -->
 <div class="view" id="view-precios">
 <div class="vbody">
@@ -2043,6 +2102,7 @@ function showTab(name,btn){
   }
   if(name==='finalizados')loadFinalizados();
   if(name==='checklist')loadChecklist();
+  if(name==='seguimiento')loadSeguimiento();
   if(name==='info')loadInfo();
   if(name==='sops')loadSops();
 }
@@ -2515,6 +2575,269 @@ async function saveClient(){
 }
 
 // DB
+/* ══════════════════════════════════════════════════════════════════
+   📞 SEGUIMIENTO — "a quién le escribo hoy". No motiva con frases,
+   facilita: arma la lista de a quién conviene contactar y por qué,
+   con el mensaje de WhatsApp ya escrito, listo para mandar.
+
+   4 reglas, en orden de prioridad:
+   1. Potencial sin contactar (tag "Potencial...")
+   2. Caso activo sin novedades hace 30+ días
+   3. Ciudadanía concluida hace 12+ meses -> ofrecer pasaporte
+   4. AIRE terminado pero CIE todavía no -> ofrecer CIE
+   ══════════════════════════════════════════════════════════════════ */
+function _diasDesde(fechaStr){
+  if(!fechaStr) return 99999;
+  const f = new Date(fechaStr+'T00:00:00');
+  if(isNaN(f)) return 99999;
+  const hoy = new Date();
+  return Math.floor((hoy-f)/86400000);
+}
+function _fechaContactoDe(c){
+  return c.ultimo_contacto || c.ultima_actividad || c.fecha || null;
+}
+function _chkHecho(checklist, label){
+  return Array.isArray(checklist) && checklist.some(it=>it && it.label===label && it.done);
+}
+function _primerNombre(nombreCompleto){
+  return (nombreCompleto||'').trim().split(' ')[0] || 'che';
+}
+function _telLimpio(cel){
+  let d = (cel||'').replace(/\D/g,'');
+  if(!d) return '';
+  if(!d.startsWith('54')) d = '549'+d.replace(/^0/,'').replace(/^15/,'');
+  return d;
+}
+
+const SEG_REGLAS = [
+  {
+    id:'potencial',
+    titulo:'🟡 Potenciales sin contactar',
+    desc:'Todavía no arrancaron el trámite',
+    color:'#f59e0b',
+    filtro:c=>Array.isArray(c.tags)&&c.tags.some(t=>t.startsWith('Potencial'))&&_diasDesde(_fechaContactoDe(c))>=3,
+    dias:c=>_diasDesde(_fechaContactoDe(c)),
+    mensaje:c=>`Hola ${_primerNombre(c.nombre)}! Somos de Zittano 🇮🇹 Vimos que te interesaba consultar por tu ciudadanía italiana — ¿seguís con ganas de arrancar? Contanos en qué podemos ayudarte.`,
+  },
+  {
+    id:'estancado',
+    titulo:'🟠 Casos sin novedades hace rato',
+    desc:'Más de 30 días sin contacto',
+    color:'#f97316',
+    filtro:c=>(c.estado==='En proceso'||c.estado==='Con turno'||c.estado==='Consulta')&&_diasDesde(_fechaContactoDe(c))>=30,
+    dias:c=>_diasDesde(_fechaContactoDe(c)),
+    mensaje:c=>`Hola ${_primerNombre(c.nombre)}! Te escribimos desde Zittano para contarte en qué está tu expediente — queríamos que tengas una novedad. ¿Tenés unos minutos para que te actualicemos?`,
+  },
+  {
+    id:'pasaporte',
+    titulo:'🟢 Ciudadanía hace un año — pasaporte',
+    desc:'Ya podrían tramitar su pasaporte italiano',
+    color:'#22c55e',
+    filtro:c=>c.estado==='Concluido' && _diasDesde(c.fecha_concluido)>=365 && !_chkHecho(c.checklist,'Pasaporte renovado/emitido'),
+    dias:c=>_diasDesde(c.fecha_concluido),
+    mensaje:c=>`Hola ${_primerNombre(c.nombre)}! Ya pasó un año desde que obtuviste tu ciudadanía italiana 🎉 Este es un buen momento para sacar tu pasaporte — ¿querés que te contemos cómo seguimos?`,
+  },
+  {
+    id:'cie',
+    titulo:'🔵 AIRE listo — falta el CIE',
+    desc:'Terminaron el AIRE, todavía no tienen CIE',
+    color:'#0891b2',
+    filtro:c=>_chkHecho(c.checklist,'AIRE inscripto/aprobado') && !_chkHecho(c.checklist,'CIE tramitado'),
+    dias:c=>_diasDesde(_fechaContactoDe(c)),
+    mensaje:c=>`Hola ${_primerNombre(c.nombre)}! Ya terminamos de tramitar tu AIRE ✅ El siguiente paso natural es sacar tu CIE (tu identidad digital italiana) — ¿querés que arranquemos con eso?`,
+  },
+];
+
+let segClientes=[];
+
+async function loadSeguimiento(){
+  const wrap=document.getElementById('seg-wrap');
+  if(wrap) wrap.innerHTML='<div class="empty"><i>⏳</i><h3>Cargando...</h3></div>';
+  let query=SB.from(TB).select('id,nombre,celular,estado,tags,fecha,ultimo_contacto,ultima_actividad,fecha_concluido,checklist,gestor');
+  if(curG!=='Belén') query=query.eq('gestor',curG);
+  const{data,error}=await query;
+  if(error){
+    if(wrap) wrap.innerHTML='<div class="empty"><i>⚠️</i><h3>No se pudo cargar</h3></div>';
+    return;
+  }
+  segClientes = data||[];
+  await loadNotasSeguimiento();
+  renderSeguimiento();
+}
+
+function renderSeguimiento(){
+  const wrap=document.getElementById('seg-wrap');
+  if(!wrap) return;
+
+  const bloques = SEG_REGLAS.map(regla=>{
+    const items = segClientes.filter(regla.filtro).sort((a,b)=>regla.dias(b)-regla.dias(a));
+    return {regla, items};
+  });
+
+  const misNotas = notasSeguimiento.filter(n=>_normGestorSeg(n.gestor)===_normGestorSeg(curG) || curG==='Belén');
+  const totalItems = bloques.reduce((s,b)=>s+b.items.length,0) + misNotas.length;
+
+  if(totalItems===0){
+    wrap.innerHTML = `<div class="empty"><i>✨</i><h3>Todo al día</h3><p>No hay nadie pendiente de contactar por ahora.</p></div>`;
+    return;
+  }
+
+  let html='';
+
+  if(misNotas.length){
+    html += `
+      <div class="seg-bloque">
+        <div class="seg-bloque-head" style="border-left-color:#7c3aed">
+          <div>
+            <div class="seg-bloque-tit">📝 Anotado por vos</div>
+            <div class="seg-bloque-desc">Tus propios recordatorios</div>
+          </div>
+          <div class="seg-bloque-cant" style="background:#7c3aed18;color:#7c3aed">${misNotas.length}</div>
+        </div>
+        <div class="seg-cards">
+          ${misNotas.map(n=>{
+            const tel=_telLimpio(n.cliente_celular);
+            const msg=encodeURIComponent(`Hola ${_primerNombre(n.cliente_nombre)}! Te escribo desde Zittano.`);
+            return `<div class="seg-card">
+              <div class="seg-card-nom">${escH(n.cliente_nombre||'Sin nombre')}</div>
+              <div class="seg-card-meta" style="color:var(--grd);font-style:italic">"${escH(n.motivo)}"</div>
+              <div class="seg-card-btns">
+                ${tel?`<a class="seg-btn-wa" href="https://wa.me/${tel}?text=${msg}" target="_blank" rel="noopener">💬 Escribir</a>`:'<span class="seg-sin-tel">Sin celular vinculado</span>'}
+                <button class="seg-btn-ok" onclick="completarNota('${n.id}')" title="Ya lo contacté, sacalo de la lista">✓</button>
+              </div>
+            </div>`;
+          }).join('')}
+        </div>
+      </div>`;
+  }
+
+  html += bloques.filter(b=>b.items.length).map(({regla,items})=>`
+    <div class="seg-bloque">
+      <div class="seg-bloque-head" style="border-left-color:${regla.color}">
+        <div>
+          <div class="seg-bloque-tit">${regla.titulo}</div>
+          <div class="seg-bloque-desc">${regla.desc}</div>
+        </div>
+        <div class="seg-bloque-cant" style="background:${regla.color}18;color:${regla.color}">${items.length}</div>
+      </div>
+      <div class="seg-cards">
+        ${items.map(c=>{
+          const dias=regla.dias(c);
+          const diasTxt = dias>=99999?'sin datos':dias===0?'hoy':dias+' día'+(dias===1?'':'s');
+          const tel=_telLimpio(c.celular);
+          const msg=encodeURIComponent(regla.mensaje(c));
+          return `<div class="seg-card">
+            <div class="seg-card-nom">${escH(c.nombre||'Sin nombre')}</div>
+            <div class="seg-card-meta">⏱ ${diasTxt}</div>
+            <div class="seg-card-btns">
+              ${tel?`<a class="seg-btn-wa" href="https://wa.me/${tel}?text=${msg}" target="_blank" rel="noopener">💬 Escribir</a>`:'<span class="seg-sin-tel">Sin celular cargado</span>'}
+              <button class="seg-btn-ok" onclick="marcarContactado('${c.id}')" title="Ya lo contacté, sacalo de la lista">✓</button>
+            </div>
+          </div>`;
+        }).join('')}
+      </div>
+    </div>
+  `).join('');
+
+  wrap.innerHTML = html;
+}
+
+async function marcarContactado(id){
+  const hoy=new Date().toISOString().slice(0,10);
+  segClientes = segClientes.filter(c=>c.id!==id); // optimista: lo sacamos ya de la vista
+  renderSeguimiento();
+  try{
+    await SB.from(TB).update({ultimo_contacto:hoy}).eq('id',id);
+    toast('Marcado como contactado','ok');
+  }catch(e){
+    toast('⚠️ No se pudo guardar, revisá la conexión','err');
+  }
+}
+
+/* ── Recordatorios manuales de Seguimiento: cada gestora anota a quién
+   tiene que contactar y por qué, además de lo que sugiere el sistema solo.
+   Funciona con Supabase si existe la tabla 'notas_seguimiento'; si no,
+   usa localStorage como respaldo. ── */
+let notasSeguimiento = [];
+function _normGestorSeg(g){
+  return (g||'').toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g,'');
+}
+
+async function loadNotasSeguimiento(){
+  let locales=[];
+  try{ locales = JSON.parse(localStorage.getItem('zittano_notas_seg')||'[]'); }catch(e){}
+
+  let remotas=[];
+  try{
+    const {data,error} = await SB.from('notas_seguimiento').select('*');
+    if(!error && data) remotas = data;
+  }catch(e){ /* la tabla puede no existir todavía */ }
+
+  const combinado={};
+  remotas.forEach(n=>combinado[n.id]=n);
+  locales.forEach(n=>combinado[n.id]=n);
+  notasSeguimiento = Object.values(combinado);
+}
+
+function abrirModalNota(){
+  const dl=document.getElementById('seg-cliente-list');
+  if(dl) dl.innerHTML = segClientes.map(c=>`<option value="${escH(c.nombre||'')}"></option>`).join('');
+  const inpC=document.getElementById('nota-cliente'); if(inpC) inpC.value='';
+  const inpM=document.getElementById('nota-motivo'); if(inpM) inpM.value='';
+  document.getElementById('nota-modal-bg').classList.add('on');
+}
+function cerrarModalNota(){
+  document.getElementById('nota-modal-bg').classList.remove('on');
+}
+
+async function guardarNotaSeguimiento(){
+  const nombre=(document.getElementById('nota-cliente').value||'').trim();
+  const motivo=(document.getElementById('nota-motivo').value||'').trim();
+  if(!nombre){ toast('Falta el nombre','err'); return; }
+  if(!motivo){ toast('Contanos por qué hay que contactarlo','err'); return; }
+
+  // Si el nombre matchea a un cliente real ya cargado, vinculamos su celular
+  const clienteMatch = segClientes.find(c=>(c.nombre||'').toLowerCase().trim()===nombre.toLowerCase());
+
+  const nueva={
+    id:'nota-'+Date.now(),
+    gestor:curG,
+    cliente_id: clienteMatch?clienteMatch.id:null,
+    cliente_nombre: nombre,
+    cliente_celular: clienteMatch?clienteMatch.celular:'',
+    motivo: motivo,
+    fecha: new Date().toISOString(),
+  };
+
+  notasSeguimiento.unshift(nueva);
+  renderSeguimiento();
+  cerrarModalNota();
+  toast('Recordatorio guardado 📝','ok');
+
+  try{
+    const locales = JSON.parse(localStorage.getItem('zittano_notas_seg')||'[]');
+    locales.unshift(nueva);
+    localStorage.setItem('zittano_notas_seg', JSON.stringify(locales));
+  }catch(e){}
+
+  try{
+    await SB.from('notas_seguimiento').insert(nueva);
+  }catch(e){ /* la tabla puede no existir todavía; ya quedó guardado local */ }
+}
+
+async function completarNota(id){
+  notasSeguimiento = notasSeguimiento.filter(n=>n.id!==id);
+  renderSeguimiento();
+  try{
+    const locales = JSON.parse(localStorage.getItem('zittano_notas_seg')||'[]').filter(n=>n.id!==id);
+    localStorage.setItem('zittano_notas_seg', JSON.stringify(locales));
+  }catch(e){}
+  try{
+    await SB.from('notas_seguimiento').delete().eq('id',id);
+  }catch(e){ /* si falla, igual ya se sacó de la vista y de localStorage */ }
+  toast('¡Listo!','ok');
+}
+
 async function loadDb(){
   document.getElementById('db-wrap').innerHTML='<div class="empty"><i>⏳</i><h3>Cargando clientes...</h3></div>';
   setSY('sp','Cargando...');
@@ -2864,7 +3187,11 @@ function toggleTag(tag, from){
 }
 
 function setEst(e){
+  const pasaAConcluido = e==='Concluido' && modC.estado!=='Concluido';
   modC.estado=e;
+  if(pasaAConcluido && !modC.fecha_concluido){
+    modC.fecha_concluido = new Date().toISOString().slice(0,10);
+  }
   const map={Consulta:'ec','En proceso':'ep2','Con turno':'et',Concluido:'en',Cerrado:'ez'};
   document.querySelectorAll('.eopt').forEach(el=>{
     el.className='eopt'+(el.textContent.trim()===e?' '+(map[e]||''):'');
@@ -2892,7 +3219,7 @@ async function saveM(){
   const ultimoContactoRaw=(document.getElementById('m-ultimo-contacto')||{value:''}).value||modC.ultimo_contacto||'';
   const ultimoContacto=ultimoContactoRaw||null;
   const hoy=new Date().toISOString().slice(0,10);
-  const{error}=await SB.from(TB).update({estado:modC.estado,gestor:modC.gestor,checklist:modC.checklist,notas_internas:notas,tags:modC.tags||[],documentacion:modC.documentacion||{},tipo_tramite:modC.tipo_tramite||'',aire_datos:modC.aire_datos||{},doc_secciones:modC.doc_secciones||{},pagos_manual:pagos,ultima_actividad:hoy,fecha_turno:fechaTurno,ultimo_contacto:ultimoContacto}).eq('id',modC.id);
+  const{error}=await SB.from(TB).update({estado:modC.estado,gestor:modC.gestor,checklist:modC.checklist,notas_internas:notas,tags:modC.tags||[],documentacion:modC.documentacion||{},tipo_tramite:modC.tipo_tramite||'',aire_datos:modC.aire_datos||{},doc_secciones:modC.doc_secciones||{},pagos_manual:pagos,ultima_actividad:hoy,fecha_turno:fechaTurno,ultimo_contacto:ultimoContacto,fecha_concluido:modC.fecha_concluido||null}).eq('id',modC.id);
   if(error){toast('Error al guardar','err');return;}
   modC.ultima_actividad=hoy; modC.fecha_turno=fechaTurno; modC.ultimo_contacto=ultimoContacto;
   const idx=allC.findIndex(c=>c.id===modC.id);
