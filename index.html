@@ -187,11 +187,11 @@ textarea{resize:vertical;}
 /* DOCUMENT */
 .doc{background:var(--wh);border-radius:12px;box-shadow:0 8px 28px -8px rgba(0,51,153,.16),0 2px 8px rgba(0,0,0,.06);border:1px solid var(--bo);overflow:hidden;position:relative;}
 .doc::before{content:"";position:absolute;top:0;left:0;right:0;height:4px;background:linear-gradient(90deg,var(--vd),var(--az) 50%,var(--ro));}
-.dhdr{padding:24px 36px 18px;display:flex;flex-direction:column;align-items:center;gap:6px;border-bottom:2px solid var(--grd);}
-.dlr{display:flex;align-items:center;gap:11px;}
-.dbrand{font-family:"DM Serif Display",serif;font-size:22px;color:var(--grd);letter-spacing:4px;}
-.dsub{font-size:8px;font-weight:500;letter-spacing:2.5px;color:#aaa;text-transform:uppercase;margin-top:2px;}
-.dfecha{font-size:13px;font-weight:600;color:var(--grd);margin-top:4px;}
+.dhdr{padding:30px 36px 20px;display:flex;flex-direction:column;align-items:center;gap:8px;border-bottom:2px solid var(--grd);}
+.dlr{display:flex;align-items:center;gap:16px;}
+.dbrand{font-family:"DM Serif Display",serif;font-size:31px;color:var(--grd);letter-spacing:9px;line-height:1.1;text-indent:9px;}
+.dsub{font-size:8.5px;font-weight:600;letter-spacing:4.5px;color:#7a8394;text-transform:uppercase;margin-top:7px;padding-top:7px;border-top:1px solid #d8dce3;text-indent:4.5px;}
+.dfecha{font-size:12.5px;font-weight:500;color:#5a6474;margin-top:10px;letter-spacing:.5px;}
 .dcli{padding:12px 36px;}
 .dtbl{width:100%;border-collapse:collapse;margin-bottom:7px;}
 .dtbl th{background:#f0f0f0;border:1px solid #ccc;padding:6px 9px;font-size:10px;font-weight:700;text-align:left;letter-spacing:.4px;text-transform:uppercase;}
@@ -349,8 +349,12 @@ textarea{resize:vertical;}
 @media print{
   #d-obj-t, [data-no-print="true"] { display:none !important; }
   #login-screen,#app .hdr,.editor,.plbl,.bsave,.bprint,.bnew,.pbv,.toast,.mbg{display:none!important;}
+  .sidebar,.ptrack,.welcome-overlay{display:none!important;}
+  .view{padding-left:0!important;}
+  .vbody{padding:0!important;max-width:none!important;}
   .pgrid{display:block;padding:0;}
   .doc{border-radius:0;box-shadow:none;border:none;}
+  .doc::before{display:none!important;}
 }
 @media(max-width:960px){
   .pgrid{grid-template-columns:1fr;}
@@ -862,6 +866,7 @@ textarea{resize:vertical;}
           <th style="padding:7px 5px;text-align:center;font-size:9px;font-weight:600;color:#94a3b8;letter-spacing:.4px;text-transform:uppercase;border-bottom:1px solid var(--bo);white-space:nowrap" title="Marcá si el pago corresponde a una consulta">Cons.</th>
           <th style="padding:7px 5px;text-align:center;font-size:9px;font-weight:600;color:#94a3b8;letter-spacing:.4px;text-transform:uppercase;border-bottom:1px solid var(--bo);white-space:nowrap" title="Marcá si el cliente es del interior del país">Int.</th>
           <th style="padding:7px 6px;text-align:left;font-size:9px;font-weight:600;color:#94a3b8;letter-spacing:.4px;text-transform:uppercase;border-bottom:1px solid var(--bo);white-space:nowrap;background:#f0f9f4">A Pagar</th>
+          <th style="padding:7px 6px;text-align:left;font-size:9px;font-weight:600;color:#7c3aed;letter-spacing:.4px;text-transform:uppercase;border-bottom:1px solid var(--bo);white-space:nowrap;background:#f5f3ff" title="Lo que le corresponde en mano a la gestora por esta fila">Sueldo</th>
           <th style="padding:7px 6px;text-align:left;font-size:9px;font-weight:600;color:#94a3b8;letter-spacing:.4px;text-transform:uppercase;border-bottom:1px solid var(--bo)">Quién cobró</th>
           <th style="padding:7px 6px;text-align:left;font-size:9px;font-weight:600;color:#94a3b8;letter-spacing:.4px;text-transform:uppercase;border-bottom:1px solid var(--bo)">Comentario</th>
           <th style="padding:7px 5px;border-bottom:1px solid var(--bo);width:28px"></th>
@@ -870,7 +875,7 @@ textarea{resize:vertical;}
       <tbody id="ing-body"></tbody>
       <tfoot>
         <tr>
-          <td colspan="12" style="padding:8px 10px">
+          <td colspan="13" style="padding:8px 10px">
             <button onclick="addIngresoRow()" style="width:100%;padding:9px;border:1.5px dashed var(--bo);border-radius:8px;background:transparent;font-size:13px;font-weight:600;color:#94a3b8;cursor:pointer;transition:all .13s" onmouseover="this.style.borderColor='var(--vd)';this.style.color='var(--vd)'" onmouseout="this.style.borderColor='var(--bo)';this.style.color='#94a3b8'">+ Agregar ingreso</button>
           </td>
         </tr>
@@ -3586,6 +3591,7 @@ function updPago(i,field,value){
    INGRESOS — TABLA INLINE
 ════════════════════════════════════════ */
 let ingresosData=[], ingresosFiltrados=[], ingPendingSave={};
+let mapaSueldoPorFila = {}; // id de fila -> sueldo, recalculado en cada render de la tabla
 let ingMesInicializado = false; // arranca mostrando solo el mes actual, no el histórico completo
 let gastosData=[], gastosFiltrados=[], gasPendingSave={};
 
@@ -3651,7 +3657,57 @@ function actualizarMeses(){
 // Track collapsed months
 let collapsedMonths={};
 
+// Cuánto falta para saltar al próximo escalón — el dato más importante
+// del esquema, porque al cruzarlo el % nuevo se aplica RETROACTIVO a todo
+// el mes. Devuelve null si esta persona no tiene esquema de sueldo.
+function calcularProgresoSueldo(){
+  const gestorFiltro = curG!=='Belén' ? curG : ((document.getElementById('ing-gestor')||{value:''}).value);
+  if(!esGestoraConSueldo(gestorFiltro)) return null;
+
+  // Mes a mostrar: el que esté filtrado, o el mes actual por defecto
+  const mesSel = (document.getElementById('ing-mes')||{value:''}).value;
+  const hoy = new Date();
+  const mesKey = mesSel || (hoy.getFullYear()+'-'+String(hoy.getMonth()+1).padStart(2,'0'));
+
+  const filas = ingresosData.filter(r=>
+    _normGestorIng(r.gestor)===_normGestorIng(gestorFiltro) && (r.fecha||'').startsWith(mesKey)
+  );
+
+  let pool=0, sueldoPasaporte=0;
+  filas.forEach(r=>{
+    const base = calcularAPagarExcel(r); // ya da 0 para CIE/Divorcio/Correo
+    if(esPasaporte(r.tipo)) sueldoPasaporte += Math.round(base*0.4);
+    else pool += base;
+  });
+
+  const tasa = tasaSueldoPorTotal(pool);
+  const sueldo = Math.round(pool*tasa) + sueldoPasaporte;
+
+  // Próximo umbral de la escala
+  let proximoUmbral;
+  if(pool < 10000000) proximoUmbral = 10000000;
+  else if(pool <= 15000000) proximoUmbral = 15000001;
+  else {
+    const bloques = Math.ceil((pool - 15000000) / 5000000);
+    proximoUmbral = 15000000 + bloques*5000000 + 1;
+  }
+  const falta = Math.max(0, proximoUmbral - pool);
+  const proximaTasa = tasaSueldoPorTotal(proximoUmbral);
+
+  // Cuánto MÁS cobraría si cruza el escalón (el número que motiva de verdad,
+  // porque el % nuevo se aplica sobre todo lo facturado del mes)
+  const sueldoSiCruza = Math.round(proximoUmbral*proximaTasa) + sueldoPasaporte;
+  const gananciaExtra = sueldoSiCruza - sueldo;
+
+  // % de avance dentro del tramo actual, para la barrita
+  const pisoTramo = pool < 10000000 ? 0 : (pool <= 15000000 ? 10000000 : proximoUmbral - 5000001);
+  const pctTramo = Math.min(100, Math.max(0, Math.round(((pool - pisoTramo)/(proximoUmbral - pisoTramo))*100)));
+
+  return {pool, tasa, sueldo, falta, proximaTasa, gananciaExtra, pctTramo, mesKey};
+}
+
 function renderIngresos(){
+  mapaSueldoPorFila = calcularMapaSueldoPorFila();
   // Global totals
   let totE=0,totT=0,totP=0;
   ingresosFiltrados.forEach(r=>{
@@ -3660,12 +3716,17 @@ function renderIngresos(){
     totP+=CING.num(r.a_pagar);
   });
   const res=document.getElementById('ing-resumen');
-  if(res) res.innerHTML=`
+  const ps = calcularProgresoSueldo();
+  if(res){
+    res.style.gridTemplateColumns = ps ? 'repeat(5,1fr)' : 'repeat(4,1fr)';
+    res.innerHTML=`
     <div class="stat"><div class="stv">${ingresosFiltrados.length}</div><div class="stl">Registros</div></div>
     <div class="stat vd"><div class="stv" style="font-size:15px">$${Math.round(totE).toLocaleString('es-AR')}</div><div class="stl">Efectivo</div></div>
     <div class="stat am"><div class="stv" style="font-size:15px">$${Math.round(totT).toLocaleString('es-AR')}</div><div class="stl">Transferencias</div></div>
     <div class="stat pu" style="border-top-color:#1ea34a;border-width:4px"><div class="stv" style="font-size:18px;color:#1ea34a;font-weight:800">$${Math.round(totP).toLocaleString('es-AR')}</div><div class="stl">A pagar</div></div>
+    ${htmlTarjetaSueldo(ps)}
   `;
+  }
 
   const tbody=document.getElementById('ing-body');
   if(!tbody) return;
@@ -3749,7 +3810,7 @@ function renderIngresos(){
         html+=rows.map(r=>renderIngRow(r)).join('');
       } else {
         html+=`<tr style="background:#fafcff">
-          <td colspan="12" style="padding:20px 14px;color:#94a3b8;font-size:13px;text-align:center;font-style:italic">
+          <td colspan="13" style="padding:20px 14px;color:#94a3b8;font-size:13px;text-align:center;font-style:italic">
             Sin ingresos registrados en ${mesLabel}
           </td>
         </tr>`;
@@ -3757,7 +3818,7 @@ function renderIngresos(){
     }
 
     // Spacer entre meses
-    html+=`<tr><td colspan="12" style="padding:6px;background:var(--bg)"></td></tr>`;
+    html+=`<tr><td colspan="13" style="padding:6px;background:var(--bg)"></td></tr>`;
   });
 
   tbody.innerHTML=html;
@@ -3823,6 +3884,11 @@ function renderIngRow(r){
       <input type="checkbox" ${r.es_interior?'checked':''} onchange="updIng('${r.id}','es_interior',this.checked)" style="width:20px;height:20px;cursor:pointer" title="Marcar si es del interior">
     </td>
     <td style="${cellStyle};background:#f0fdf4"><input type="number" value="${r.a_pagar||''}" placeholder="auto" id="apagar-${r.id}" style="${inp};background:#f0fdf4;font-weight:700;color:var(--vd);min-width:100px"></td>
+    <td style="${cellStyle};background:#f5f3ff;text-align:right">
+      ${typeof mapaSueldoPorFila!=='undefined' && mapaSueldoPorFila && mapaSueldoPorFila[r.id]!==undefined
+        ? `<span id="sueldo-${r.id}" style="font-weight:700;color:#7c3aed;padding:5px 6px;display:inline-block">$${Math.round(mapaSueldoPorFila[r.id]).toLocaleString('es-AR')}</span>`
+        : `<span style="color:#cbd5e1;padding:5px 6px;display:inline-block">—</span>`}
+    </td>
     <td style="${cellStyle}">
       <select onchange="updIng('${r.id}','quien_cobro',this.value)" style="${inp};min-width:140px;cursor:pointer">
         <option value="">— Quién cobró —</option>
@@ -3861,6 +3927,7 @@ function updIngFecha(id,part,value){
   if(part==='mes') parts[1]=String(value).padStart(2,'0');
   if(part==='dia') parts[2]=String(value).padStart(2,'0');
   r.fecha=parts.join('-');
+  refrescarColumnaSueldo();
   
   // Marcar visualmente que hay cambios sin guardar
   const row=document.getElementById('row-'+id);
@@ -3897,6 +3964,9 @@ function updIng(id,field,value){
       const el = document.getElementById('apagar-' + id);
       if(el) el.value = pagar || '';
     }
+    if(field === 'tipo' || field === 'gestor'){
+      refrescarColumnaSueldo();
+    }
     
     // Marcar visualmente que hay cambios sin guardar
     const row=document.getElementById('row-'+id);
@@ -3927,6 +3997,98 @@ function esSoloBelen(tipo){
    5. Si tiene TRANSFERENCIA sin checkboxes → A PAGAR = TRANSFERENCIA / 1.4
    6. Si no hay TRANSFERENCIA → A PAGAR = EFECTIVO
    ══════════════════════════════════════════════════════════════════ */
+
+/* ══════════════════════════════════════════════════════════════════
+   SUELDO — columna nueva en Ingresos, al lado de A Pagar. Solo para
+   Malena y Sofía. Es lo que les corresponde en mano, calculado aparte
+   de A Pagar (que sigue siendo siempre el número en cash, sin tocar).
+
+   20% base sobre lo facturado del mes, más comisión escalonada:
+     10M–15M  → 22%
+     >15M–20M → 23%
+     >20M–25M → 24%   ...y así, +1% cada 5 millones más, sin techo.
+
+   Por fila:
+     · CIE, Divorcio, Correo → $0 (ya dan 0 en la fórmula base de A Pagar)
+     · Pasaporte → 40% plano de lo que daría la fórmula completa, APARTE
+       del pozo escalonado (esas las hacen y cobran ellas directamente,
+       no cuentan para definir el % del resto)
+     · Todo lo demás → entra al pozo, y se le aplica el % del mes
+   ══════════════════════════════════════════════════════════════════ */
+function _normGestorIng(g){
+  return (g||'').toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g,'');
+}
+function esGestoraConSueldo(gestor){
+  const n=_normGestorIng(gestor);
+  return n==='malena' || n==='sofia';
+}
+function esPasaporte(tipo){
+  return /\bpasaporte\b/.test((tipo||'').toLowerCase());
+}
+// Tasa según el total facturado (SIN pasaporte): 20% base, 22% en
+// 10-15M, y +1% cada 5 millones más allá de los 15M, sin límite.
+function tasaSueldoPorTotal(total){
+  if(total < 10000000) return 0.20;
+  if(total <= 15000000) return 0.22;
+  const bloquesExtra = Math.ceil((total - 15000000) / 5000000);
+  return 0.22 + bloquesExtra*0.01;
+}
+// Arma el mapa {id de fila -> sueldo} agrupando TODO el historial de
+// cada gestora con sueldo, mes por mes, para que la tasa escalonada
+// sea siempre correcta sin importar qué filtro esté activo en pantalla.
+function calcularMapaSueldoPorFila(){
+  const mapa = {};
+  if(!Array.isArray(ingresosData)) return mapa;
+
+  const porGestorMes = {};
+  ingresosData.forEach(r=>{
+    if(!esGestoraConSueldo(r.gestor)) return;
+    const mk = (r.fecha||'').slice(0,7);
+    if(!mk) return;
+    const key = _normGestorIng(r.gestor)+'|'+mk;
+    (porGestorMes[key]=porGestorMes[key]||[]).push(r);
+  });
+
+  Object.values(porGestorMes).forEach(filas=>{
+    let totalPool = 0;
+    filas.forEach(r=>{
+      if(!esPasaporte(r.tipo)) totalPool += calcularAPagarExcel(r);
+    });
+    const tasa = tasaSueldoPorTotal(totalPool);
+    filas.forEach(r=>{
+      const base = calcularAPagarExcel(r); // ya da 0 para CIE/Divorcio/Correo
+      mapa[r.id] = esPasaporte(r.tipo) ? Math.round(base*0.4) : Math.round(base*tasa);
+    });
+  });
+
+  return mapa;
+}
+// Refresca solo los números de la columna Sueldo ya en pantalla, sin
+// re-renderizar toda la tabla (así no se pierde el foco si alguien
+// sigue tipeando en otra fila).
+// HTML de la tarjeta de sueldo — separado para poder refrescarla sola
+function htmlTarjetaSueldo(ps){
+  if(!ps) return '';
+  return `
+    <div class="stat" id="stat-sueldo" style="border-top-color:#7c3aed;border-width:4px">
+      <div class="stv" style="font-size:18px;color:#7c3aed;font-weight:800">$${Math.round(ps.sueldo).toLocaleString('es-AR')} <span style="font-size:16px">😊</span></div>
+      <div class="stl">Tu sueldo del mes · ${Math.round(ps.tasa*100)}%</div>
+    </div>`;
+}
+
+function refrescarColumnaSueldo(){
+  mapaSueldoPorFila = calcularMapaSueldoPorFila();
+  Object.keys(mapaSueldoPorFila).forEach(id=>{
+    const el = document.getElementById('sueldo-'+id);
+    if(el) el.textContent = '$'+Math.round(mapaSueldoPorFila[id]).toLocaleString('es-AR');
+  });
+  // Refrescar también la tarjeta de arriba, sin tocar la tabla
+  const cardVieja = document.getElementById('stat-sueldo');
+  if(cardVieja){
+    const ps = calcularProgresoSueldo();
+    if(ps) cardVieja.outerHTML = htmlTarjetaSueldo(ps);
+  }
+}
 
 function calcularAPagarExcel(r) {
   const tipo = (r.tipo || '').toLowerCase();
@@ -3974,6 +4136,7 @@ function updIngNum(id,field,value){
   r.a_pagar=pagar||null;
   const el=document.getElementById('apagar-'+id);
   if(el) el.value=pagar||'';
+  refrescarColumnaSueldo();
   
   // Marcar visualmente que hay cambios sin guardar
   const row=document.getElementById('row-'+id);
