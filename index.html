@@ -88,11 +88,13 @@ textarea{resize:vertical;}
 .sb-btn[data-c="az"] .sb-ico{background:var(--azl);}
 .sb-btn[data-c="vd"] .sb-ico{background:var(--vdl);}
 .sb-btn[data-c="am"] .sb-ico{background:var(--aml);}
+.sb-btn[data-c="gr"] .sb-ico{background:var(--grl);}
 .sb-btn.on{color:var(--grd);font-weight:800;}
 .sb-btn.on[data-c="ro"] .sb-ico{background:var(--ro);box-shadow:0 4px 10px rgba(206,43,55,.35);}
 .sb-btn.on[data-c="az"] .sb-ico{background:var(--az);box-shadow:0 4px 10px rgba(0,51,153,.35);}
 .sb-btn.on[data-c="vd"] .sb-ico{background:var(--vd);box-shadow:0 4px 10px rgba(0,146,70,.35);}
 .sb-btn.on[data-c="am"] .sb-ico{background:var(--am);box-shadow:0 4px 10px rgba(245,158,11,.35);}
+.sb-btn.on[data-c="gr"] .sb-ico{background:var(--gr);box-shadow:0 4px 10px rgba(100,116,139,.35);}
 @media(max-width:820px){
   .sidebar{width:58px;padding-top:80px;}
   .sb-btn{width:48px;font-size:8.5px;}
@@ -428,6 +430,7 @@ textarea{resize:vertical;}
   <button class="sb-btn" data-c="az" id="sb-sops" onclick="showTab('sops',this)"><span class="sb-ico">📚</span>SOPs</button>
   <button class="sb-btn" data-c="vd" id="sb-precios" onclick="showTab('precios',this)"><span class="sb-ico">💲</span>Precios</button>
   <button class="sb-btn" data-c="am" id="sb-seguimiento" onclick="showTab('seguimiento',this)"><span class="sb-ico">📞</span>Seguim.</button>
+  <button class="sb-btn" data-c="gr" id="sb-papelera" onclick="showTab('papelera',this)"><span class="sb-ico">🗑️</span>Papelera</button>
 </div>
 <div class="hdr">
   <div class="hdr-in">
@@ -1559,6 +1562,17 @@ renderConsulados();
   <div id="chk-wrap" style="display:grid;grid-template-columns:repeat(auto-fill,minmax(220px,1fr));gap:16px"></div>
 </div>
 
+<!-- VIEW PAPELERA -->
+<div class="view" id="view-papelera">
+<div class="vbody">
+  <div style="margin-bottom:20px">
+    <div class="dbtitle" style="color:var(--gr)">🗑️ Papelera</div>
+    <div style="font-size:13px;color:#94a3b8;margin-top:4px">Todo lo que se borra queda acá — nada se pierde de verdad</div>
+  </div>
+  <div id="pap-wrap"><div class="empty"><i>⏳</i><h3>Cargando...</h3></div></div>
+</div>
+</div>
+
 <!-- VIEW SEGUIMIENTO -->
 <div class="view" id="view-seguimiento">
 <div class="vbody">
@@ -2195,7 +2209,9 @@ async function updPlanilla(tipo, id, field, value){
 }
 
 async function delPlanilla(tipo, id){
-  if(!confirm('¿Eliminar este registro?')) return;
+  if(!confirm('¿Eliminar este registro?\n\nVa a quedar guardado en la Papelera por si lo necesitás recuperar.')) return;
+  const regOriginal = (planillasData[tipo]||[]).find(x=>x.id===id);
+  if(regOriginal) await guardarEnPapelera('planillas', {...regOriginal});
   const {error} = await SB.from('planillas').delete().eq('id',id);
   if(error){
     toast('⚠️ No se pudo eliminar, revisá la conexión','err');
@@ -2254,6 +2270,7 @@ function showTab(name,btn){
   if(name==='finalizados')loadFinalizados();
   if(name==='checklist')loadChecklist();
   if(name==='seguimiento')loadSeguimiento();
+  if(name==='papelera')loadPapelera();
   if(name==='info')loadInfo();
   if(name==='sops')loadSops();
 }
@@ -3007,6 +3024,115 @@ async function completarNota(id){
   toast('¡Listo!','ok');
 }
 
+/* ══════════════════════════════════════════════════════════════════
+   🗑️ PAPELERA — red de seguridad ante borrados.
+   Antes de borrar CUALQUIER cosa, se guarda una copia completa del
+   registro. Si alguien borra algo por error, se puede recuperar tal
+   cual estaba. Guarda en Supabase (tabla 'papelera') y además deja
+   una copia en el navegador, por si justo falla la conexión.
+   ══════════════════════════════════════════════════════════════════ */
+async function guardarEnPapelera(tabla, registro){
+  if(!registro) return;
+  const entrada = {
+    id: 'pap-'+Date.now()+'-'+Math.random().toString(36).slice(2,8),
+    tabla: tabla,
+    registro: registro,
+    eliminado_por: curG || '?',
+    eliminado_en: new Date().toISOString(),
+  };
+
+  // Copia local primero — es lo más rápido y no depende de la red
+  try{
+    const local = JSON.parse(localStorage.getItem('zittano_papelera')||'[]');
+    local.unshift(entrada);
+    localStorage.setItem('zittano_papelera', JSON.stringify(local.slice(0,200)));
+  }catch(e){ console.warn('No se pudo guardar copia local en papelera', e); }
+
+  // Copia en la nube, para que sobreviva aunque se cambie de computadora
+  try{
+    await SB.from('papelera').insert(entrada);
+  }catch(e){ console.warn('No se pudo guardar en papelera de Supabase', e); }
+}
+
+async function cargarPapelera(){
+  let local=[], remoto=[];
+  try{ local = JSON.parse(localStorage.getItem('zittano_papelera')||'[]'); }catch(e){}
+  try{
+    const {data,error} = await SB.from('papelera').select('*').order('eliminado_en',{ascending:false}).limit(200);
+    if(!error && data) remoto = data;
+  }catch(e){}
+  const combinado={};
+  remoto.forEach(p=>combinado[p.id]=p);
+  local.forEach(p=>combinado[p.id]=p);
+  return Object.values(combinado).sort((a,b)=>(b.eliminado_en||'').localeCompare(a.eliminado_en||''));
+}
+
+async function restaurarDePapelera(idPapelera){
+  const items = await cargarPapelera();
+  const item = items.find(p=>p.id===idPapelera);
+  if(!item){ toast('No se encontró ese registro','err'); return; }
+  if(!confirm('¿Restaurar este registro a '+item.tabla+'?')) return;
+
+  try{
+    const {error} = await SB.from(item.tabla).upsert(item.registro, {onConflict:'id'});
+    if(error){ toast('⚠️ No se pudo restaurar: '+error.message,'err'); return; }
+  }catch(e){ toast('⚠️ No se pudo restaurar, revisá la conexión','err'); return; }
+
+  // Sacarlo de la papelera, ya está restaurado
+  try{
+    const local = JSON.parse(localStorage.getItem('zittano_papelera')||'[]').filter(p=>p.id!==idPapelera);
+    localStorage.setItem('zittano_papelera', JSON.stringify(local));
+  }catch(e){}
+  try{ await SB.from('papelera').delete().eq('id',idPapelera); }catch(e){}
+
+  toast('✅ Registro restaurado','ok');
+  renderPapelera();
+  // Refrescar la vista que corresponda
+  if(item.tabla==='ingresos') loadIngresos();
+  else if(item.tabla==='gastos') loadGastos();
+  else if(item.tabla==='clientes') loadDb();
+  else if(item.tabla==='planillas') loadPlanillas();
+}
+
+async function loadPapelera(){
+  const wrap=document.getElementById('pap-wrap');
+  if(wrap) wrap.innerHTML='<div class="empty"><i>⏳</i><h3>Cargando...</h3></div>';
+  window._papelera = await cargarPapelera();
+  renderPapelera();
+}
+
+function renderPapelera(){
+  const wrap=document.getElementById('pap-wrap');
+  if(!wrap) return;
+  const items = window._papelera || [];
+  const visibles = curG==='Belén' ? items : items.filter(p=>p.eliminado_por===curG);
+
+  if(!visibles.length){
+    wrap.innerHTML='<div class="empty"><i>✨</i><h3>Papelera vacía</h3><p>No se eliminó nada todavía.</p></div>';
+    return;
+  }
+
+  const ETIQ={ingresos:'💰 Ingreso', gastos:'💸 Gasto', clientes:'📂 Cliente', planillas:'📋 Planilla', notas_seguimiento:'📞 Nota'};
+  wrap.innerHTML = `
+    <div style="font-size:12px;color:var(--gr);margin-bottom:14px">Todo lo que se borra queda acá guardado. Si algo se eliminó por error, se puede volver a poner tal cual estaba.</div>
+    <div style="display:flex;flex-direction:column;gap:9px">
+    ${visibles.map(p=>{
+      const r=p.registro||{};
+      const desc = r.cliente || r.nombre || r.tipo_doc || r.numero || r.expediente || 'Sin descripción';
+      const monto = r.efectivo||r.monto||r.transferencia;
+      const f = new Date(p.eliminado_en);
+      const fechaTxt = isNaN(f)?'':f.toLocaleDateString('es-AR',{day:'numeric',month:'short'})+' '+f.toLocaleTimeString('es-AR',{hour:'2-digit',minute:'2-digit'});
+      return `<div style="background:var(--wh);border:1px solid var(--bo);border-radius:11px;padding:12px 15px;display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap">
+        <div style="min-width:0">
+          <div style="font-size:13px;font-weight:700;color:var(--grd)">${escH(desc)}${monto?` <span style="color:var(--gr);font-weight:500">· $${Number(monto).toLocaleString('es-AR')}</span>`:''}</div>
+          <div style="font-size:10.5px;color:#94a3b8;margin-top:2px">${ETIQ[p.tabla]||p.tabla} · borrado por ${escH(p.eliminado_por)} · ${fechaTxt}</div>
+        </div>
+        <button onclick="restaurarDePapelera('${p.id}')" style="padding:7px 15px;border:1.5px solid var(--vd);border-radius:8px;background:var(--vdl);color:var(--vd);font-size:12px;font-weight:700;cursor:pointer;white-space:nowrap">↩ Restaurar</button>
+      </div>`;
+    }).join('')}
+    </div>`;
+}
+
 async function loadDb(){
   document.getElementById('db-wrap').innerHTML='<div class="empty"><i>⏳</i><h3>Cargando clientes...</h3></div>';
   setSY('sp','Cargando...');
@@ -3135,7 +3261,12 @@ function renderTbl(list){
 
 // DELETE
 async function delC(id){
-  if(!confirm('¿Eliminar este cliente?'))return;
+  if(!confirm('¿Eliminar este cliente?\n\nVa a quedar guardado en la Papelera por si lo necesitás recuperar.'))return;
+  // Traemos el registro COMPLETO de la base antes de borrarlo, para poder restaurarlo tal cual
+  try{
+    const {data:completo} = await SB.from(TB).select('*').eq('id',id).single();
+    await guardarEnPapelera('clientes', completo || allC.find(c=>c.id===id));
+  }catch(e){ await guardarEnPapelera('clientes', allC.find(c=>c.id===id)); }
   const{error}=await SB.from(TB).delete().eq('id',id);
   if(error){toast('Error','err');return;}
   allC=allC.filter(c=>c.id!==id);updStats();filterDb();closeM();toast('Cliente eliminado','err');
@@ -3980,17 +4111,20 @@ function updIng(id,field,value){
 
 // Si el tipo es "consulta", el A Pagar = monto exacto sin factor transferencia
 function esConsulta(tipo){ return (tipo||'').toLowerCase().includes('consulta'); }
-// Trámites que van directo a Belén — A Pagar = 0 para empleados
+// Trámites que van directo a Belén — A Pagar = 0 para empleados.
+// La CIE salió de esta lista: ahora la sacan y cobran ellas, así que
+// suma normal al pozo y toma el % escalonado del mes como cualquier trámite.
 function esSoloBelen(tipo){
   const t=(tipo||'').toLowerCase();
-  return t.includes('divorcio')||t.includes('correo')||/\bcie\b/.test(t);
+  return t.includes('divorcio')||t.includes('correo');
 }
 
 /* ══════════════════════════════════════════════════════════════════
    FÓRMULA EXCEL - CÁLCULO AUTOMÁTICO DE "A PAGAR"
    ══════════════════════════════════════════════════════════════════
    LÓGICA:
-   1. Si TIPO contiene "correo", "divorcio" o "CIE" (palabra completa) → A PAGAR = 0
+   1. Si TIPO contiene "correo" o "divorcio" → A PAGAR = 0
+      (la CIE ya NO entra acá: la sacan y cobran las gestoras)
    2. Si tiene CONSULTA ☑️ Y ES DEL INTERIOR ☑️ → A PAGAR = TRANSFERENCIA
    3. Si solo ES DEL INTERIOR ☑️ → A PAGAR = TRANSFERENCIA / 1.4
    4. Si solo CONSULTA ☑️ → A PAGAR = TRANSFERENCIA
@@ -4009,7 +4143,8 @@ function esSoloBelen(tipo){
      >20M–25M → 24%   ...y así, +1% cada 5 millones más, sin techo.
 
    Por fila:
-     · CIE, Divorcio, Correo → $0 (ya dan 0 en la fórmula base de A Pagar)
+     · Divorcio y Correo → $0 (ya dan 0 en la fórmula base de A Pagar)
+     · CIE → suma normal al pozo y toma el % escalonado del mes
      · Pasaporte → 40% plano de lo que daría la fórmula completa, APARTE
        del pozo escalonado (esas las hacen y cobran ellas directamente,
        no cuentan para definir el % del resto)
@@ -4098,7 +4233,7 @@ function calcularAPagarExcel(r) {
   const esInterior = r.es_interior || false;
   
   // 1. Si TIPO contiene "correo", "divorcio" o "CIE" (palabra completa) → A PAGAR = 0
-  if (tipo.includes('correo') || tipo.includes('divorcio') || /\bcie\b/.test(tipo)) {
+  if (tipo.includes('correo') || tipo.includes('divorcio')) {
     return 0;
   }
   
@@ -4280,7 +4415,11 @@ async function syncIngresoPagoEnFicha(ingreso){
 }
 
 async function delIngRow(id){
-  if(!confirm('¿Eliminar este ingreso?')) return;
+  if(!confirm('¿Eliminar este ingreso?\n\nVa a quedar guardado en la Papelera por si lo necesitás recuperar.')) return;
+
+  // Copia de seguridad ANTES de tocar nada
+  const registroOriginal = ingresosData.find(x=>x.id===id);
+  if(registroOriginal) await guardarEnPapelera('ingresos', {...registroOriginal});
   
   // PASO 1: Eliminar de localStorage
   try {
@@ -5755,11 +5894,18 @@ async function loadIngresos(){
 
 // Función para limpiar localStorage (útil cuando borraste todos los datos)
 function limpiarIngresosLocal(){
-  if(confirm('⚠️ Esto eliminará TODOS los ingresos guardados localmente en este navegador.\n\n¿Estás seguro?')){
-    localStorage.removeItem('zittano_ingresos');
-    toast('🗑️ Datos locales eliminados. Recargá la página.','ok');
-    console.log('🗑️ localStorage limpiado');
+  // Chequeo de seguridad: ¿hay filas que todavía NO llegaron a la nube?
+  // Si las hay, borrar el respaldo local las perdería para siempre.
+  const sinGuardar = Object.keys(ingPendingSave||{}).length;
+  if(sinGuardar>0){
+    alert('⛔ No se puede limpiar todavía.\n\nHay '+sinGuardar+' fila(s) con cambios sin guardar (marcadas en naranja). Guardalas primero con el ✓, si no se pierden.');
+    return;
   }
+  if(!confirm('⚠️ Esto borra la copia local de los ingresos en ESTE navegador.\n\nLos datos guardados en la nube NO se tocan y se vuelven a cargar solos.\n\n¿Continuar?')) return;
+  if(!confirm('Confirmá una vez más: ¿borrar la copia local?')) return;
+  localStorage.removeItem('zittano_ingresos');
+  toast('🗑️ Copia local eliminada. Recargá la página.','ok');
+  console.log('🗑️ localStorage limpiado');
 }
 
 // Descargar ingresos en Excel
@@ -6072,7 +6218,9 @@ async function saveGasRow(id){
 }
 
 async function delGasRow(id){
-  if(!confirm('¿Eliminar este gasto?')) return;
+  if(!confirm('¿Eliminar este gasto?\n\nVa a quedar guardado en la Papelera por si lo necesitás recuperar.')) return;
+  const regOriginal = (gastosData||[]).find(x=>x.id===id);
+  if(regOriginal) await guardarEnPapelera('gastos', {...regOriginal});
   try {
     const localData = localStorage.getItem('zittano_gastos');
     const localGastos = localData ? JSON.parse(localData) : [];
