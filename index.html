@@ -4,7 +4,7 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Zittano — Sistema de Gestión</title>
-<link href="https://fonts.googleapis.com/css2?family=DM+Sans:ital,opsz,wght@0,9..40,300..700;1,9..40,300..700&family=DM+Serif+Display&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@400;500;600;700;800;900&family=DM+Sans:ital,opsz,wght@0,9..40,300..700;1,9..40,300..700&family=DM+Serif+Display&display=swap" rel="stylesheet">
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
 <style>
@@ -30,7 +30,7 @@ textarea{resize:vertical;}
 #login-screen::before{content:"";position:absolute;top:0;left:0;right:0;bottom:0;background-image:url("data:image/svg+xml,%3Csvg%20viewBox%3D%270%200%20120%20120%27%20xmlns%3D%27http%3A//www.w3.org/2000/svg%27%3E%3Cg%20fill%3D%27none%27%20stroke%3D%27%23e8c47a%27%20stroke-width%3D%271%27%20opacity%3D%270.85%27%3E%3Cellipse%20cx%3D%2760%27%20cy%3D%2745%27%20rx%3D%277%27%20ry%3D%2715%27%20transform%3D%27rotate%280%2060%2060%29%27/%3E%3Cellipse%20cx%3D%2760%27%20cy%3D%2745%27%20rx%3D%277%27%20ry%3D%2715%27%20transform%3D%27rotate%2872%2060%2060%29%27/%3E%3Cellipse%20cx%3D%2760%27%20cy%3D%2745%27%20rx%3D%277%27%20ry%3D%2715%27%20transform%3D%27rotate%28144%2060%2060%29%27/%3E%3Cellipse%20cx%3D%2760%27%20cy%3D%2745%27%20rx%3D%277%27%20ry%3D%2715%27%20transform%3D%27rotate%28216%2060%2060%29%27/%3E%3Cellipse%20cx%3D%2760%27%20cy%3D%2745%27%20rx%3D%277%27%20ry%3D%2715%27%20transform%3D%27rotate%28288%2060%2060%29%27/%3E%3Ccircle%20cx%3D%2760%27%20cy%3D%2760%27%20r%3D%273.5%27/%3E%3Cpath%20d%3D%27M60%2C74%20C58%2C88%2062%2C96%2058%2C108%27%20stroke-width%3D%271.1%27/%3E%3Cpath%20d%3D%27M58%2C88%20C50%2C85%2044%2C89%2042%2C95%20C50%2C97%2056%2C94%2058%2C88%20Z%27/%3E%3Cpath%20d%3D%27M60%2C96%20C68%2C93%2074%2C97%2076%2C103%20C68%2C105%2062%2C102%2060%2C96%20Z%27/%3E%3C/g%3E%3C/svg%3E");background-size:170px 170px;background-repeat:repeat;opacity:.5;pointer-events:none;}
 .lw{display:flex;flex-direction:column;align-items:center;gap:32px;width:100%;max-width:420px;}
 .ll{display:flex;align-items:center;gap:14px;}
-.lb{font-family:"DM Serif Display",serif;font-size:36px;color:#fff;letter-spacing:3px;}
+.lb{font-family:"Cinzel",serif;font-size:35px;font-weight:700;color:#fff;letter-spacing:5px;text-transform:uppercase;}
 .ls{font-size:10px;font-weight:500;letter-spacing:3px;color:rgba(255,255,255,.4);text-transform:uppercase;margin-top:3px;}
 .lc{background:rgba(255,255,255,.04);border:1px solid rgba(255,255,255,.1);backdrop-filter:blur(20px);border-radius:20px;padding:36px;width:100%;}
 .lc h2{font-size:16px;font-weight:600;color:#fff;margin-bottom:5px;}
@@ -749,6 +749,7 @@ textarea{resize:vertical;}
         <option>En proceso - CIE</option>
         <option>En proceso - SPID</option>
         <option>Carpeta para retirar</option>
+        <option>Documentación pendiente</option>
         <option>Pago pendiente</option>
         <option>Hablar con superior</option>
       </optgroup>
@@ -850,6 +851,20 @@ textarea{resize:vertical;}
   @keyframes motivFall{to{transform:translateY(220px) rotate(360deg);opacity:0;}}
   @media(max-width:640px){.motiv-stats-row{gap:14px}}
   </style>
+  <style>
+  .ted-card{background:linear-gradient(135deg,#1e1b4b,#312e81 60%,#4c1d95);border-radius:16px;padding:22px 26px;margin-bottom:16px;color:#fff;position:relative;overflow:hidden;box-shadow:0 8px 28px -10px rgba(49,46,129,.5);}
+  .ted-tema{font-size:10px;font-weight:800;letter-spacing:2px;color:#c4b5fd;text-transform:uppercase;margin-bottom:9px;}
+  .ted-titulo{font-family:"DM Serif Display",serif;font-size:21px;line-height:1.25;margin-bottom:10px;}
+  .ted-texto{font-size:13px;line-height:1.65;color:rgba(255,255,255,.82);max-width:640px;white-space:pre-line;}
+  .ted-charla{display:flex;align-items:center;gap:13px;margin-top:17px;padding-top:15px;border-top:1px solid rgba(255,255,255,.15);flex-wrap:wrap;}
+  .ted-play{display:inline-flex;align-items:center;gap:8px;padding:9px 17px;border-radius:24px;background:#ef4444;color:#fff;font-size:12.5px;font-weight:700;text-decoration:none;transition:transform .14s;white-space:nowrap;}
+  .ted-play:hover{transform:scale(1.04);background:#dc2626;}
+  .ted-ref{font-size:11.5px;color:rgba(255,255,255,.6);line-height:1.4;}
+  .ted-ref b{color:rgba(255,255,255,.9);font-weight:600;}
+  .ted-x{position:absolute;top:14px;right:16px;background:none;border:none;color:rgba(255,255,255,.35);font-size:17px;cursor:pointer;padding:4px 7px;line-height:1;}
+  .ted-x:hover{color:rgba(255,255,255,.8);}
+  </style>
+  <div id="ted-wrap"></div>
   <div id="motiv-wrap"></div>
 
   <!-- Cards resumen -->
@@ -869,7 +884,6 @@ textarea{resize:vertical;}
           <th style="padding:7px 5px;text-align:center;font-size:9px;font-weight:600;color:#94a3b8;letter-spacing:.4px;text-transform:uppercase;border-bottom:1px solid var(--bo);white-space:nowrap" title="Marcá si el pago corresponde a una consulta">Cons.</th>
           <th style="padding:7px 5px;text-align:center;font-size:9px;font-weight:600;color:#94a3b8;letter-spacing:.4px;text-transform:uppercase;border-bottom:1px solid var(--bo);white-space:nowrap" title="Marcá si el cliente es del interior del país">Int.</th>
           <th style="padding:7px 6px;text-align:left;font-size:9px;font-weight:600;color:#94a3b8;letter-spacing:.4px;text-transform:uppercase;border-bottom:1px solid var(--bo);white-space:nowrap;background:#f0f9f4">A Pagar</th>
-          <th style="padding:7px 6px;text-align:left;font-size:9px;font-weight:600;color:#7c3aed;letter-spacing:.4px;text-transform:uppercase;border-bottom:1px solid var(--bo);white-space:nowrap;background:#f5f3ff" title="Lo que le corresponde en mano a la gestora por esta fila">Sueldo</th>
           <th style="padding:7px 6px;text-align:left;font-size:9px;font-weight:600;color:#94a3b8;letter-spacing:.4px;text-transform:uppercase;border-bottom:1px solid var(--bo)">Quién cobró</th>
           <th style="padding:7px 6px;text-align:left;font-size:9px;font-weight:600;color:#94a3b8;letter-spacing:.4px;text-transform:uppercase;border-bottom:1px solid var(--bo)">Comentario</th>
           <th style="padding:7px 5px;border-bottom:1px solid var(--bo);width:28px"></th>
@@ -878,7 +892,7 @@ textarea{resize:vertical;}
       <tbody id="ing-body"></tbody>
       <tfoot>
         <tr>
-          <td colspan="13" style="padding:8px 10px">
+          <td colspan="12" style="padding:8px 10px">
             <button onclick="addIngresoRow()" style="width:100%;padding:9px;border:1.5px dashed var(--bo);border-radius:8px;background:transparent;font-size:13px;font-weight:600;color:#94a3b8;cursor:pointer;transition:all .13s" onmouseover="this.style.borderColor='var(--vd)';this.style.color='var(--vd)'" onmouseout="this.style.borderColor='var(--bo)';this.style.color='#94a3b8'">+ Agregar ingreso</button>
           </td>
         </tr>
@@ -1250,6 +1264,73 @@ function togCons(nombre){
 
 renderConsulados();
 </script>
+
+  <!-- APOSTILLAS -->
+  <style>
+  .apo-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(340px,1fr));gap:18px;margin-bottom:32px;}
+  .apo-card{background:var(--wh);border:1px solid var(--bo);border-radius:14px;overflow:hidden;box-shadow:0 2px 10px rgba(0,0,0,.05);}
+  .apo-head{padding:14px 18px;border-bottom:1px solid var(--bo);}
+  .apo-tit{font-size:14px;font-weight:700;color:var(--grd);}
+  .apo-sub{font-size:11px;color:#94a3b8;margin-top:2px;}
+  .apo-tbl{width:100%;border-collapse:collapse;}
+  .apo-tbl th{padding:8px 14px;text-align:left;font-size:9.5px;font-weight:700;color:#94a3b8;letter-spacing:.5px;text-transform:uppercase;background:var(--grl);}
+  .apo-tbl td{padding:9px 14px;font-size:12.5px;border-bottom:1px solid var(--grl);color:var(--grd);}
+  .apo-tbl tr:last-child td{border-bottom:none;}
+  .apo-si{color:#16a34a;font-weight:700;}
+  .apo-no{color:var(--ro);font-weight:700;}
+  .apo-nota{font-size:11px;color:var(--gr);padding:11px 18px;background:var(--aml);border-top:1px solid #fde68a;line-height:1.5;}
+  </style>
+  <div style="margin-bottom:10px">
+    <div style="font-size:11px;font-weight:700;color:#94a3b8;letter-spacing:1px;text-transform:uppercase">📑 Apostillas — Partidas digitales por consulado</div>
+    <div style="font-size:11.5px;color:#94a3b8;margin-top:4px">Qué partidas digitales acepta cada consulado y cuáles necesitan apostilla</div>
+  </div>
+  <div class="apo-grid">
+
+    <div class="apo-card">
+      <div class="apo-head">
+        <div class="apo-tit">🇮🇹 Rosario</div>
+        <div class="apo-sub">Partidas digitales que acepta SIN apostilla</div>
+      </div>
+      <table class="apo-tbl">
+        <thead><tr><th>Provincia</th><th>Digital</th><th>Apostilla</th></tr></thead>
+        <tbody>
+          <tr><td>Buenos Aires</td><td class="apo-si">✓ Sí</td><td class="apo-no">✕ No</td></tr>
+          <tr><td>Santa Fe</td><td class="apo-si">✓ Sí</td><td class="apo-no">✕ No</td></tr>
+          <tr><td>Corrientes</td><td class="apo-si">✓ Sí</td><td class="apo-no">✕ No</td></tr>
+          <tr><td>Chaco <span style="color:#94a3b8;font-size:11px">(con QR)</span></td><td class="apo-si">✓ Sí</td><td class="apo-no">✕ No</td></tr>
+          <tr><td>Chaco <span style="color:#94a3b8;font-size:11px">(sin QR)</span></td><td class="apo-si">✓ Sí</td><td class="apo-si">✓ Sí</td></tr>
+          <tr><td>Formosa</td><td class="apo-si">✓ Sí</td><td class="apo-si">✓ Sí</td></tr>
+          <tr><td>Misiones</td><td class="apo-si">✓ Sí</td><td class="apo-si">✓ Sí</td></tr>
+          <tr><td>Entre Ríos</td><td class="apo-si">✓ Sí</td><td class="apo-si">✓ Sí</td></tr>
+        </tbody>
+      </table>
+      <div class="apo-nota">⚠️ Ojo con Chaco: si la partida trae QR no necesita apostilla, pero si viene sin QR sí hay que apostillarla.</div>
+    </div>
+
+    <div class="apo-card">
+      <div class="apo-head">
+        <div class="apo-tit">🇮🇹 Bahía Blanca</div>
+        <div class="apo-sub">Partidas digitales — ¿necesitan apostilla?</div>
+      </div>
+      <table class="apo-tbl">
+        <thead><tr><th>Provincia</th><th>Digital</th><th>Apostilla</th></tr></thead>
+        <tbody>
+          <tr><td>CABA</td><td class="apo-si">✓ Sí</td><td class="apo-no">✕ No</td></tr>
+          <tr><td>Buenos Aires</td><td class="apo-si">✓ Sí</td><td class="apo-no">✕ No</td></tr>
+          <tr><td>Santa Fe</td><td class="apo-si">✓ Sí</td><td class="apo-no">✕ No</td></tr>
+          <tr><td>Corrientes</td><td class="apo-si">✓ Sí</td><td class="apo-no">✕ No</td></tr>
+          <tr><td>Mendoza</td><td class="apo-si">✓ Sí</td><td class="apo-si">✓ Sí</td></tr>
+          <tr><td>La Pampa</td><td class="apo-si">✓ Sí</td><td class="apo-si">✓ Sí</td></tr>
+          <tr><td>Río Negro</td><td class="apo-si">✓ Sí</td><td class="apo-si">✓ Sí</td></tr>
+          <tr><td>Neuquén</td><td class="apo-si">✓ Sí</td><td class="apo-si">✓ Sí</td></tr>
+          <tr><td>Chubut</td><td class="apo-si">✓ Sí</td><td class="apo-si">✓ Sí</td></tr>
+          <tr><td>Santa Cruz</td><td class="apo-si">✓ Sí</td><td class="apo-si">✓ Sí</td></tr>
+          <tr><td>Tierra del Fuego</td><td class="apo-si">✓ Sí</td><td class="apo-si">✓ Sí</td></tr>
+        </tbody>
+      </table>
+    </div>
+
+  </div>
 
   <!-- PROVINCIAS -->
   <div>
@@ -2251,7 +2332,23 @@ function showTab(name,btn){
       }
     });
   }
-  if(name==='gastos')loadGastos();
+  if(name==='gastos'){
+    loadGastos().then(()=>{
+      if(!gasMesInicializado){
+        gasMesInicializado = true;
+        const selMes = document.getElementById('gas-mes');
+        if(selMes){
+          const hoy = new Date();
+          const mesActual = hoy.getFullYear()+'-'+String(hoy.getMonth()+1).padStart(2,'0');
+          const existe = Array.from(selMes.options).some(o=>o.value===mesActual);
+          if(existe){
+            selMes.value = mesActual;
+            filterGastos();
+          }
+        }
+      }
+    });
+  }
   if(name==='precios'){
     loadPrecios();
     // Force render after view is visible
@@ -3416,6 +3513,7 @@ function tagColor(tag){
   if(tag==='Pago pendiente') return '#ef4444';
   if(tag==='Hablar con superior') return '#f59e0b';
   if(tag==='Carpeta para retirar') return '#8b5cf6';
+  if(tag==='Documentación pendiente') return '#f59e0b';
   if(tag==='Finalizado') return '#22c55e';
   if(tag==='Cerrado') return '#94a3b8';
   if(['Potencial cliente','Potencial SPID','Potencial pasaporte'].includes(tag)) return '#a855f7';
@@ -3426,7 +3524,7 @@ function renderTags(c){
   const TAGS_GRUPOS = [
     { label:'Potenciales', opts:['Potencial cliente','Potencial SPID','Potencial pasaporte'] },
     { label:'En proceso', opts:['Consulta inicial','En proceso - Acta Italiana','En proceso - CNE','En proceso - Actas Nacionales','En proceso - Traducciones','En proceso - AIRE de cero','En proceso - AIRE','En proceso - Anagrafe - Hijo Menor','En proceso - Anagrafe - Matrimonio','En proceso - Anagrafe - Domicilio','En proceso - Divorcio','En proceso - Pasaportes','En proceso - Carga DNI','En proceso - Códice Fiscale','En proceso - CIE','En proceso - SPID'] },
-    { label:'Alertas', opts:['Carpeta para retirar','Pago pendiente','Hablar con superior'] },
+    { label:'Alertas', opts:['Carpeta para retirar','Documentación pendiente','Pago pendiente','Hablar con superior'] },
     { label:'Finalizados', opts:['Finalizado','Cerrado'] },
   ];
   const tags = Array.isArray(c.tags) ? c.tags : [];
@@ -3722,9 +3820,9 @@ function updPago(i,field,value){
    INGRESOS — TABLA INLINE
 ════════════════════════════════════════ */
 let ingresosData=[], ingresosFiltrados=[], ingPendingSave={};
-let mapaSueldoPorFila = {}; // id de fila -> sueldo, recalculado en cada render de la tabla
 let ingMesInicializado = false; // arranca mostrando solo el mes actual, no el histórico completo
 let gastosData=[], gastosFiltrados=[], gasPendingSave={};
+let gasMesInicializado = false; // arranca mostrando solo el mes actual, no el histórico completo
 
 const CING = {
   is: (s)=> !isNaN(parseFloat(s)) && parseFloat(s)>0,
@@ -3806,7 +3904,12 @@ function calcularProgresoSueldo(){
 
   let pool=0, sueldoPasaporte=0;
   filas.forEach(r=>{
-    const base = calcularAPagarExcel(r); // ya da 0 para CIE/Divorcio/Correo
+    // Usamos el A Pagar REAL de la fila (el que se ve y se guarda), no una
+    // recalculación de la fórmula. Así el total de la tarjeta coincide
+    // exactamente con lo que da sumar la columna A Pagar a mano.
+    const base = (r.a_pagar!==null && r.a_pagar!==undefined && r.a_pagar!=='')
+      ? (parseFloat(r.a_pagar)||0)
+      : calcularAPagarExcel(r);
     if(esPasaporte(r.tipo)) sueldoPasaporte += Math.round(base*0.4);
     else pool += base;
   });
@@ -3838,7 +3941,6 @@ function calcularProgresoSueldo(){
 }
 
 function renderIngresos(){
-  mapaSueldoPorFila = calcularMapaSueldoPorFila();
   // Global totals
   let totE=0,totT=0,totP=0;
   ingresosFiltrados.forEach(r=>{
@@ -3941,7 +4043,7 @@ function renderIngresos(){
         html+=rows.map(r=>renderIngRow(r)).join('');
       } else {
         html+=`<tr style="background:#fafcff">
-          <td colspan="13" style="padding:20px 14px;color:#94a3b8;font-size:13px;text-align:center;font-style:italic">
+          <td colspan="12" style="padding:20px 14px;color:#94a3b8;font-size:13px;text-align:center;font-style:italic">
             Sin ingresos registrados en ${mesLabel}
           </td>
         </tr>`;
@@ -3949,7 +4051,7 @@ function renderIngresos(){
     }
 
     // Spacer entre meses
-    html+=`<tr><td colspan="13" style="padding:6px;background:var(--bg)"></td></tr>`;
+    html+=`<tr><td colspan="12" style="padding:6px;background:var(--bg)"></td></tr>`;
   });
 
   tbody.innerHTML=html;
@@ -4015,11 +4117,6 @@ function renderIngRow(r){
       <input type="checkbox" ${r.es_interior?'checked':''} onchange="updIng('${r.id}','es_interior',this.checked)" style="width:20px;height:20px;cursor:pointer" title="Marcar si es del interior">
     </td>
     <td style="${cellStyle};background:#f0fdf4"><input type="number" value="${r.a_pagar||''}" placeholder="auto" id="apagar-${r.id}" style="${inp};background:#f0fdf4;font-weight:700;color:var(--vd);min-width:100px"></td>
-    <td style="${cellStyle};background:#f5f3ff;text-align:right">
-      ${typeof mapaSueldoPorFila!=='undefined' && mapaSueldoPorFila && mapaSueldoPorFila[r.id]!==undefined
-        ? `<span id="sueldo-${r.id}" style="font-weight:700;color:#7c3aed;padding:5px 6px;display:inline-block">$${Math.round(mapaSueldoPorFila[r.id]).toLocaleString('es-AR')}</span>`
-        : `<span style="color:#cbd5e1;padding:5px 6px;display:inline-block">—</span>`}
-    </td>
     <td style="${cellStyle}">
       <select onchange="updIng('${r.id}','quien_cobro',this.value)" style="${inp};min-width:140px;cursor:pointer">
         <option value="">— Quién cobró —</option>
@@ -4211,13 +4308,9 @@ function htmlTarjetaSueldo(ps){
     </div>`;
 }
 
+// Refresca la tarjeta "Tu sueldo del mes" sin re-renderizar la tabla,
+// para no perder el foco si alguien está tipeando en otra fila.
 function refrescarColumnaSueldo(){
-  mapaSueldoPorFila = calcularMapaSueldoPorFila();
-  Object.keys(mapaSueldoPorFila).forEach(id=>{
-    const el = document.getElementById('sueldo-'+id);
-    if(el) el.textContent = '$'+Math.round(mapaSueldoPorFila[id]).toLocaleString('es-AR');
-  });
-  // Refrescar también la tarjeta de arriba, sin tocar la tabla
   const cardVieja = document.getElementById('stat-sueldo');
   if(cardVieja){
     const ps = calcularProgresoSueldo();
@@ -5709,6 +5802,101 @@ function toggleMotivacion(){
   renderMotivacion();
 }
 
+/* ══════════════════════════════════════════════════════════════════
+   💡 FRASE DE LA SEMANA — una por semana, arranca cada lunes.
+   Cada una va con una charla TED real (links verificados) para que
+   quien quiera profundizar pueda verla. Rota sola por número de
+   semana, así nadie tiene que cargar nada a mano.
+   ══════════════════════════════════════════════════════════════════ */
+const FRASES_SEMANA = [
+  {
+    tema:'Progreso',
+    titulo:'No se trata de ser mejor que nadie. Se trata de ser mejor que ayer.',
+    texto:'Esta semana preguntate: ¿qué puedo hacer un poquito mejor que la semana pasada?\nUna llamada mejor hecha, un seguimiento más, una respuesta más rápida, un presupuesto mejor explicado.\nLos pequeños avances repetidos terminan siendo grandes resultados. 💪',
+    charla:{autor:'Angela Duckworth', titulo:'Grit: el poder de la pasión y la perseverancia', url:'https://www.youtube.com/watch?v=H14bBuluwB8'}
+  },
+  {
+    tema:'Acción',
+    titulo:'La motivación casi siempre aparece después de empezar, no antes.',
+    texto:'No esperemos a tener ganas para hacer las cosas. Esta semana pensemos menos y hagamos más.\nUn cliente que necesita seguimiento, se sigue. Un presupuesto pendiente, se manda. Una oportunidad, se toma.\nMovimiento genera movimiento. 🚀',
+    charla:{autor:'Matt Cutts', titulo:'Probá algo nuevo durante 30 días', url:'https://www.youtube.com/watch?v=UNP03fDSj1U'}
+  },
+  {
+    tema:'Propósito',
+    titulo:'Detrás de cada número hay una persona. Detrás de cada cliente, un sueño familiar.',
+    texto:'Cuando hacemos bien nuestro trabajo no estamos vendiendo un servicio: estamos ayudando a alguien a conseguir algo que probablemente esperó años. 🇮🇹\nTrabajemos con propósito, porque cuando el trabajo tiene sentido, el esfuerzo pesa menos. ❤️',
+    charla:{autor:'Simon Sinek', titulo:'Cómo los grandes líderes inspiran la acción', url:'https://www.youtube.com/watch?v=u4ZoJKF_VuA'}
+  },
+  {
+    tema:'Mentalidad',
+    titulo:'No es "no puedo". Es "todavía no".',
+    texto:'Lo que hoy nos cuesta, la semana que viene nos va a salir un poco mejor. Y en un mes, natural.\nNinguna de nosotras nació sabiendo esto: lo aprendimos haciendo.\nEsta semana, cuando algo se complique, agreguémosle un "todavía". 🌱',
+    charla:{autor:'Carol Dweck', titulo:'El poder de creer que podés mejorar', url:'https://www.youtube.com/watch?v=_X0mgOOSpLU'}
+  },
+  {
+    tema:'Responsabilidad',
+    titulo:'No controlamos el resultado. Sí controlamos cuántas oportunidades generamos.',
+    texto:'Esta semana no miremos lo que no pasó. Miremos qué podemos hacer nosotras para que pase.\nMás seguimiento. Más iniciativa. Más preguntas. Más propuestas.\nQue la facturación sea consecuencia de la acción. 🔥',
+    charla:{autor:'Dan Pink', titulo:'El rompecabezas de la motivación', url:'https://www.youtube.com/watch?v=rrkrvAUbU9Y'}
+  },
+  {
+    tema:'Confianza',
+    titulo:'La forma en que nos paramos frente a un cliente también comunica.',
+    texto:'La seguridad no siempre se siente antes: muchas veces se construye actuando.\nEsta semana, entremos a cada consulta sabiendo que conocemos este trámite mejor que nadie. Porque es verdad.\nSomos las expertas. 👑',
+    charla:{autor:'Amy Cuddy', titulo:'Tu lenguaje corporal puede definir quién sos', url:'https://www.youtube.com/watch?v=Ks-_Mh1QhMc'}
+  },
+  {
+    tema:'Actitud',
+    titulo:'No trabajamos para estar bien. Estamos bien, y por eso trabajamos mejor.',
+    texto:'Está comprobado: el cerebro rinde más cuando está en positivo, no al revés.\nEsta semana cuidemos el clima del equipo tanto como los números. Una semana liviana rinde más que una semana pesada.\nY se disfruta muchísimo más. ☀️',
+    charla:{autor:'Shawn Achor', titulo:'El secreto feliz para trabajar mejor', url:'https://www.youtube.com/watch?v=fLJsdqxnZb0'}
+  },
+];
+
+// Identificador de la semana (lunes) — mismo criterio que el pulso
+function _semanaKeyTed(){
+  const d = new Date();
+  const dow = d.getDay();
+  const diff = dow===0 ? -6 : 1-dow;
+  const lunes = new Date(d);
+  lunes.setDate(d.getDate()+diff);
+  return lunes.getFullYear()+'-'+String(lunes.getMonth()+1).padStart(2,'0')+'-'+String(lunes.getDate()).padStart(2,'0');
+}
+
+function cerrarFraseSemana(){
+  try{ localStorage.setItem('zittano_ted_'+_semanaKeyTed(),'1'); }catch(e){}
+  const w=document.getElementById('ted-wrap');
+  if(w) w.innerHTML='';
+}
+
+function renderFraseSemana(){
+  const wrap=document.getElementById('ted-wrap');
+  if(!wrap) return;
+
+  const semana=_semanaKeyTed();
+  try{
+    if(localStorage.getItem('zittano_ted_'+semana)){ wrap.innerHTML=''; return; }
+  }catch(e){}
+
+  // Rota por semana del año: cada lunes cambia sola
+  const hoy=new Date();
+  const inicioAnio=new Date(hoy.getFullYear(),0,1);
+  const semanaDelAnio=Math.floor((hoy-inicioAnio)/(7*86400000));
+  const f=FRASES_SEMANA[semanaDelAnio % FRASES_SEMANA.length];
+
+  wrap.innerHTML=`
+    <div class="ted-card">
+      <button class="ted-x" onclick="cerrarFraseSemana()" title="Ocultar por esta semana">✕</button>
+      <div class="ted-tema">✦ Esta semana · ${f.tema}</div>
+      <div class="ted-titulo">${f.titulo}</div>
+      <div class="ted-texto">${f.texto}</div>
+      <div class="ted-charla">
+        <a class="ted-play" href="${f.charla.url}" target="_blank" rel="noopener">▶ Ver la charla TED</a>
+        <div class="ted-ref"><b>${f.charla.autor}</b> · "${f.charla.titulo}"</div>
+      </div>
+    </div>`;
+}
+
 function renderMotivacion(){
   const wrap = document.getElementById('motiv-wrap');
   if(!wrap) return;
@@ -5836,6 +6024,7 @@ function lanzarConfettiMotiv(){
 async function loadIngresos(){
   console.log('🔄 Cargando ingresos...');
   actualizarListaTipos();
+  renderFraseSemana();
   
   // PASO 1: Cargar desde localStorage (persistencia garantizada)
   let localIngresos = [];
