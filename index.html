@@ -3384,6 +3384,21 @@ async function openM(id){
   renderMBody();
   document.getElementById('mbg').classList.add('on');
 }
+/* ── Portal de seguimiento (seguimiento.zittano.com.ar) ── */
+const PORTAL_URL='https://seguimiento.zittano.com.ar/';
+function linkPortal(){ return modC&&modC.portal_codigo ? PORTAL_URL+'?c='+encodeURIComponent(modC.portal_codigo) : ''; }
+async function copiarTextoPortal(txt, ok){
+  if(!txt){ toast('Este cliente todavía no tiene código de seguimiento','err'); return; }
+  try{ await navigator.clipboard.writeText(txt); toast(ok); }
+  catch(e){ window.prompt('Copiá el texto:', txt); }
+}
+function copiarLinkPortal(){ copiarTextoPortal(linkPortal(), 'Link copiado ✓'); }
+function copiarMsjPortal(){
+  const nom=((modC&&modC.nombre)||'').trim().split(' ')[0];
+  const link=linkPortal();
+  copiarTextoPortal(link && `¡Hola${nom?' '+nom:''}! 🇮🇹 Desde ahora podés seguir tu trámite en tiempo real, cuando quieras, desde este link:\n${link}\n\nAhí vas a ver en qué etapa estamos y cómo va cada documento. Guardalo, ¡es solo tuyo! 💚`, 'Mensaje copiado ✓');
+}
+
 function renderMBody(){
   const c=modC;
   // Pre-initialize doc sections if tipo exists but sections are empty
@@ -3419,6 +3434,18 @@ function renderMBody(){
         <span style="font-size:11px;color:rgba(255,255,255,.4)">🏛️ ${consShort}</span>
       </div>
     </div>
+
+    <!-- LINK DE SEGUIMIENTO PARA EL CLIENTE -->
+    ${c.portal_codigo?`<div style="background:#f0fdf4;border:1.5px solid #a7f3d0;border-radius:10px;padding:10px 14px;display:flex;align-items:center;justify-content:space-between;gap:10px;flex-wrap:wrap">
+      <div>
+        <div style="font-size:9px;font-weight:700;color:#059669;letter-spacing:.8px;text-transform:uppercase;margin-bottom:3px">🔗 Seguimiento del cliente</div>
+        <div style="font-size:13px;font-weight:700;color:#065f46;letter-spacing:.5px">${c.portal_codigo}</div>
+      </div>
+      <div style="display:flex;gap:6px;flex-wrap:wrap">
+        <button type="button" onclick="copiarLinkPortal()" style="padding:7px 12px;border:none;border-radius:8px;background:#059669;color:#fff;font-size:12px;font-weight:700;cursor:pointer">Copiar link</button>
+        <button type="button" onclick="copiarMsjPortal()" style="padding:7px 12px;border:1.5px solid #a7f3d0;border-radius:8px;background:#fff;color:#065f46;font-size:12px;font-weight:700;cursor:pointer">Copiar mensaje WhatsApp</button>
+      </div>
+    </div>`:''}
 
     <!-- INFO RÁPIDA -->
     <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:10px">
