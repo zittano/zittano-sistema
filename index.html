@@ -441,6 +441,7 @@ textarea{resize:vertical;}
     <div class="htabs">
       <button class="htab on" onclick="showTab('presup',this)">📄 Nuevo Presupuesto</button>
       <button class="htab" onclick="showTab('base',this)">📂 Base de Clientes</button>
+      <button class="htab" onclick="showTab('leads',this)">🎯 Leads</button>
       <button class="htab" onclick="showTab('ingresos',this)">💰 Ingresos</button>
       <button class="htab" onclick="showTab('info',this)">📌 Info</button>
       <button class="htab" onclick="showTab('planillas',this)">📋 Planillas</button>
@@ -1654,6 +1655,40 @@ renderConsulados();
 </div>
 </div>
 
+<!-- VIEW LEADS -->
+<div class="view" id="view-leads">
+<div class="vbody">
+  <div style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:12px;margin-bottom:18px">
+    <div>
+      <div class="dbtitle" style="color:var(--az)">🎯 Leads</div>
+      <div style="font-size:13px;color:#94a3b8;margin-top:4px" id="lead-sub">Los clientes que te derivaron. Tocá "Escribirle" y se abre tu WhatsApp.</div>
+    </div>
+    <div style="display:flex;gap:8px;flex-wrap:wrap;align-items:center">
+      <select id="lead-mes" onchange="renderLeads()" style="padding:8px 12px;border:1px solid var(--bo);border-radius:9px;font-size:13px;background:#fff"></select>
+      <select id="lead-gest" onchange="renderLeads()" style="display:none;padding:8px 12px;border:1px solid var(--bo);border-radius:9px;font-size:13px;background:#fff">
+        <option value="">Sofi y Male</option><option value="Sofía">Solo Sofi</option><option value="Malena">Solo Male</option>
+      </select>
+      <button onclick="loadLeads()" style="padding:8px 14px;border:1px solid var(--bo);border-radius:9px;background:#fff;font-size:13px;font-weight:600;color:var(--gr);cursor:pointer">↻ Actualizar</button>
+    </div>
+  </div>
+  <div id="lead-tablero"></div>
+  <div id="lead-wrap"><div class="empty"><i>⏳</i><h3>Cargando...</h3></div></div>
+</div>
+</div>
+
+<div class="seg-modal-bg" id="lead-motivo-bg">
+  <div class="seg-modal">
+    <h3>❌ No avanzó</h3>
+    <label>¿Por qué?</label>
+    <div id="lead-motivos" style="display:flex;flex-wrap:wrap;gap:6px;margin-bottom:8px"></div>
+    <textarea id="lead-motivo-txt" placeholder="Otro motivo o detalle (opcional)"></textarea>
+    <div class="seg-modal-actions">
+      <button class="seg-modal-cancel" onclick="cerrarMotivoLead()">Cancelar</button>
+      <button class="seg-modal-send" onclick="guardarNoAvanzo()">Guardar</button>
+    </div>
+  </div>
+</div>
+
 <!-- VIEW SEGUIMIENTO -->
 <div class="view" id="view-seguimiento">
 <div class="vbody">
@@ -2315,6 +2350,7 @@ function showTab(name,btn){
   document.getElementById('view-'+name).classList.add('on');
   if(btn) btn.classList.add('on');
   if(name==='base')loadDb();
+  if(name==='leads')loadLeads();
   if(name==='ingresos'){
     loadIngresos().then(()=>{
       if(!ingMesInicializado){
@@ -7274,6 +7310,241 @@ function clearAll(skipConfirm = false){
   const d=new Date();
   document.getElementById('e-fec').value=d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0');
 }
+
+// ════════════════════════════════════════════════════════════════
+// LEADS — derivaciones de Yesi a Sofi / Male (tabla "leads")
+// ════════════════════════════════════════════════════════════════
+let allLeads = [], leadMesInit = false, leadMotivoId = null, leadMotivoSel = '';
+const LEAD_APODO = {'Sofía':'Sofi','Malena':'Male'};
+const LEAD_EST = {
+  nuevo:     {t:'Nuevo',      bg:'#e8efff', c:'#003399'},
+  contactado:{t:'Contactado', bg:'#fff4d6', c:'#8a5a00'},
+  consulta:  {t:'Consulta',   bg:'#e0f5fa', c:'#0e6f86'},
+  avanzo:    {t:'Avanzó',     bg:'#e6f7ee', c:'#009246'},
+  no_avanzo: {t:'No avanzó',  bg:'#f1f5f9', c:'#64748b'},
+};
+const LEAD_ORDEN = ['nuevo','contactado','consulta','avanzo','no_avanzo'];
+const LEAD_MOTIVOS = ['No respondió','Le pareció caro','No califica','Lo hace por su cuenta','Más adelante','Se fue con otro'];
+const leadUlt10 = t => String(t||'').replace(/\D/g,'').slice(-10);
+const leadHoras = f => (Date.now() - new Date(f).getTime()) / 36e5;
+
+// Frenado: nuevo sin contactar hace +48 hs, o contactado sin consulta hace +7 días
+function leadFrenado(l){
+  if(l.estado==='nuevo') return leadHoras(l.created_at) > 48;
+  if(l.estado==='contactado') return leadHoras(l.contactado_at||l.created_at) > 24*7;
+  return false;
+}
+
+async function loadLeads(){
+  const wrap = document.getElementById('lead-wrap');
+  wrap.innerHTML = '<div class="empty"><i>⏳</i><h3>Cargando leads...</h3></div>';
+  if(curG==='Belén'){ const g=document.getElementById('lead-gest'); if(g) g.style.display='block'; }
+  const {data, error} = await SB.from('leads').select('*').order('created_at',{ascending:false}).limit(3000);
+  if(error){
+    wrap.innerHTML = `<div class="empty"><i>⚠️</i><h3>No se pudo cargar</h3><p>${escH(error.message)}</p></div>`;
+    return;
+  }
+  allLeads = data || [];
+  await sincronizarLeads();
+  armarMesesLeads();
+  renderLeads();
+}
+
+// Vincula cada lead con su ficha (por celular) y sube el estado según los ingresos:
+// ingreso de consulta → "Consulta" · cualquier otro ingreso → "Avanzó"
+async function sincronizarLeads(){
+  const abiertos = allLeads.filter(l => l.estado!=='avanzo');
+  if(!abiertos.length) return;
+
+  // 1) Buscar ficha por celular a los que todavía no tienen
+  const sinFicha = abiertos.filter(l => !l.cliente_id);
+  if(sinFicha.length){
+    let q = SB.from(TB).select('id,celular,gestor');
+    if(curG!=='Belén') q = q.eq('gestor', curG);
+    const {data:cli} = await q.limit(5000);
+    const porTel = {};
+    (cli||[]).forEach(c => { const k=leadUlt10(c.celular); if(k.length===10) porTel[k]=c.id; });
+    for(const l of sinFicha){
+      const id = porTel[leadUlt10(l.telefono)];
+      if(id){ l.cliente_id = id; l._cambio = true; }
+    }
+  }
+
+  // 2) Mirar los ingresos de esas fichas
+  const ids = [...new Set(abiertos.filter(l=>l.cliente_id).map(l=>l.cliente_id))];
+  if(ids.length){
+    const ing = [];
+    for(let i=0;i<ids.length;i+=150){
+      const {data} = await SB.from('ingresos').select('cliente_id,tipo,fecha').in('cliente_id', ids.slice(i,i+150));
+      if(data) ing.push(...data);
+    }
+    for(const l of abiertos.filter(l=>l.cliente_id)){
+      const desde = new Date(new Date(l.created_at).getTime() - 7*864e5).toISOString().slice(0,10);
+      const suyos = ing.filter(r => r.cliente_id===l.cliente_id && (!r.fecha || r.fecha>=desde));
+      let nuevo = null;
+      if(suyos.some(r => !esConsulta(r.tipo) && !/revis/i.test(r.tipo||''))) nuevo = 'avanzo';
+      else if(suyos.length && ['nuevo','contactado'].includes(l.estado)) nuevo = 'consulta';
+      if(nuevo && nuevo!==l.estado){ l.estado = nuevo; l._cambio = true; }
+    }
+  }
+
+  // 3) Guardar los cambios
+  const cambios = allLeads.filter(l => l._cambio);
+  for(const l of cambios){
+    await SB.from('leads').update({cliente_id:l.cliente_id, estado:l.estado, actualizado_at:new Date().toISOString()}).eq('id', l.id);
+    delete l._cambio;
+  }
+}
+
+function armarMesesLeads(){
+  const sel = document.getElementById('lead-mes'); if(!sel) return;
+  const prev = sel.value;
+  const meses = [...new Set(allLeads.map(l => l.created_at.slice(0,7)))].sort().reverse();
+  const hoy = new Date(); const actual = hoy.getFullYear()+'-'+String(hoy.getMonth()+1).padStart(2,'0');
+  if(!meses.includes(actual)) meses.unshift(actual);
+  const nom = m => new Date(m+'-15').toLocaleDateString('es-AR',{month:'long',year:'numeric'});
+  sel.innerHTML = '<option value="">Todos los meses</option>' + meses.map(m=>`<option value="${m}">${nom(m)}</option>`).join('');
+  sel.value = leadMesInit ? prev : actual;
+  leadMesInit = true;
+}
+
+function leadsFiltrados(){
+  const mes = (document.getElementById('lead-mes')||{}).value || '';
+  const g = curG==='Belén' ? ((document.getElementById('lead-gest')||{}).value || '') : '';
+  return allLeads.filter(l => (!mes || l.created_at.startsWith(mes)) && (!g || l.asignada_a===g));
+}
+
+function renderLeads(){
+  const lista = leadsFiltrados();
+  renderTableroLeads(lista);
+  const wrap = document.getElementById('lead-wrap');
+  if(!lista.length){
+    wrap.innerHTML = '<div class="empty"><i>🎯</i><h3>No hay leads en este período</h3><p>Cuando Yesi derive a alguien desde el celu, aparece acá al instante.</p></div>';
+    return;
+  }
+  const grupos = [
+    {t:'Para escribir hoy', f:l=>l.estado==='nuevo'},
+    {t:'En curso',          f:l=>['contactado','consulta'].includes(l.estado)},
+    {t:'Cerrados',          f:l=>['avanzo','no_avanzo'].includes(l.estado)},
+  ];
+  wrap.innerHTML = grupos.map(gr => {
+    const items = lista.filter(gr.f).sort((a,b)=>(leadFrenado(b)-leadFrenado(a)) || (a.created_at<b.created_at?1:-1));
+    if(!items.length) return '';
+    return `<div style="font-size:13px;font-weight:700;color:var(--gr);text-transform:uppercase;letter-spacing:.5px;margin:18px 0 9px">${gr.t} · ${items.length}</div>
+      <div style="display:flex;flex-direction:column;gap:8px">${items.map(filaLead).join('')}</div>`;
+  }).join('');
+}
+
+function filaLead(l){
+  const e = LEAD_EST[l.estado] || LEAD_EST.nuevo;
+  const frenado = leadFrenado(l);
+  const f = new Date(l.created_at).toLocaleDateString('es-AR',{day:'numeric',month:'short'});
+  const quien = curG==='Belén' ? `<span class="gb3 ${gbCl(l.asignada_a)}" style="font-size:10px;padding:2px 7px;margin-left:6px">${LEAD_APODO[l.asignada_a]||escH(l.asignada_a)}</span>` : '';
+  const abierto = !['avanzo','no_avanzo'].includes(l.estado);
+  const btn = (txt, fn, bg, col) => `<button onclick="${fn}" style="padding:7px 12px;border:none;border-radius:8px;background:${bg};color:${col};font-size:12px;font-weight:700;cursor:pointer;white-space:nowrap">${txt}</button>`;
+  return `<div style="background:var(--wh);border:1px solid ${frenado?'#fca5a5':'var(--bo)'};border-radius:11px;padding:12px 15px;display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap">
+    <div style="min-width:0;flex:1 1 260px">
+      <div style="font-size:14px;font-weight:700;color:var(--grd)">${frenado?'🔴 ':''}${escH(l.nombre)}${quien}</div>
+      <div style="font-size:12px;color:var(--gr);margin-top:2px">${escH(l.tramite)} · ${escH(l.canal||'')} · ${f} · derivó ${escH(l.derivado_por)}${l.motivo?' · '+escH(l.motivo):''}</div>
+      ${l.nota?`<div style="font-size:12.5px;color:var(--grd);margin-top:5px;background:var(--grl);border-radius:7px;padding:6px 9px">${escH(l.nota)}</div>`:''}
+    </div>
+    <div style="display:flex;gap:6px;align-items:center;flex-wrap:wrap">
+      <span style="font-size:11px;font-weight:700;padding:4px 10px;border-radius:20px;background:${e.bg};color:${e.c}">${e.t}</span>
+      ${btn('💬 Escribirle', `escribirLead('${l.id}')`, '#e6f7ee', '#009246')}
+      ${l.cliente_id ? btn('📂 Ficha', `openM('${l.cliente_id}')`, 'var(--azl)', 'var(--az)')
+                     : (abierto ? btn('📂 Crear ficha', `crearFichaLead('${l.id}')`, 'var(--azl)', 'var(--az)') : '')}
+      ${abierto ? btn('❌', `abrirMotivoLead('${l.id}')`, '#fee2e2', '#b91c1c') : ''}
+    </div>
+  </div>`;
+}
+
+function renderTableroLeads(lista){
+  const box = document.getElementById('lead-tablero'); if(!box) return;
+  const n = (f) => lista.filter(f).length;
+  const tot = lista.length;
+  const contact = n(l => l.estado!=='nuevo');
+  const cons = n(l => ['consulta','avanzo'].includes(l.estado));
+  const av = n(l => l.estado==='avanzo');
+  const fren = n(leadFrenado);
+  const pct = (a,b) => b ? Math.round(a/b*100)+'%' : '—';
+  const card = (lab, val, sub, col) => `<div style="background:var(--wh);border:1px solid var(--bo);border-radius:12px;padding:14px 16px;flex:1 1 140px">
+      <div style="font-size:11.5px;color:var(--gr);font-weight:600">${lab}</div>
+      <div style="font-family:'DM Serif Display',serif;font-size:28px;color:${col||'var(--grd)'};line-height:1.2">${val}</div>
+      <div style="font-size:11px;color:#94a3b8">${sub||'&nbsp;'}</div></div>`;
+  let html = `<div style="display:flex;gap:10px;flex-wrap:wrap;margin-bottom:6px">
+    ${card('Derivados', tot)}
+    ${card('Contactados', contact, pct(contact,tot)+' de los derivados')}
+    ${card('Con consulta', cons, pct(cons,tot)+' de los derivados')}
+    ${card('Avanzaron', av, pct(av,tot)+' de los derivados', '#009246')}
+    ${card('Frenados', fren, 'sin movimiento', fren?'#CE2B37':'')}
+  </div>`;
+  if(curG==='Belén' && tot){
+    const fila = g => { const s=lista.filter(l=>l.asignada_a===g); const a=s.filter(l=>l.estado==='avanzo').length;
+      return `<tr><td style="padding:8px 10px;font-weight:700"><span class="gb3 ${gbCl(g)}">${LEAD_APODO[g]||g}</span></td>
+        <td style="padding:8px 10px;text-align:right">${s.length}</td>
+        <td style="padding:8px 10px;text-align:right">${s.filter(l=>['consulta','avanzo'].includes(l.estado)).length}</td>
+        <td style="padding:8px 10px;text-align:right">${a}</td>
+        <td style="padding:8px 10px;text-align:right;font-weight:700">${pct(a,s.length)}</td>
+        <td style="padding:8px 10px;text-align:right;color:${s.filter(leadFrenado).length?'#CE2B37':'inherit'}">${s.filter(leadFrenado).length}</td></tr>`; };
+    const th = t => `<th style="padding:8px 10px;text-align:right;font-size:11px;color:var(--gr);font-weight:600">${t}</th>`;
+    html += `<div style="background:var(--wh);border:1px solid var(--bo);border-radius:12px;margin:10px 0 4px;overflow-x:auto">
+      <table style="width:100%;border-collapse:collapse;font-size:13px">
+      <thead><tr style="border-bottom:1px solid var(--bo)"><th style="padding:8px 10px;text-align:left;font-size:11px;color:var(--gr);font-weight:600">Profesional</th>${th('Derivados')}${th('Consulta')}${th('Avanzaron')}${th('Tasa')}${th('Frenados')}</tr></thead>
+      <tbody>${fila('Sofía')}${fila('Malena')}</tbody></table></div>`;
+  }
+  box.innerHTML = html;
+}
+
+// Abre el WhatsApp propio de la profesional con un primer mensaje armado
+async function escribirLead(id){
+  const l = allLeads.find(x => x.id===id); if(!l) return;
+  const nombre = (l.nombre||'').trim().split(/\s+/)[0];
+  const yo = LEAD_APODO[curG] || curG;
+  const tema = l.tramite==='AIRE' ? 'tu inscripción en el AIRE' : l.tramite==='RECO' ? 'tu ciudadanía italiana' : 'tu consulta';
+  const msg = `Hola ${nombre}! ¿Cómo estás? Soy ${yo}, de Zittano 😊\n\nMe pasaron tu contacto por ${tema}. Voy a ser quien te acompañe en el trámite.\n\n¿Tenés un ratito para que lo veamos juntos?`;
+  window.open('https://wa.me/'+String(l.telefono).replace(/\D/g,'')+'?text='+encodeURIComponent(msg), '_blank');
+  if(l.estado==='nuevo'){
+    const ahora = new Date().toISOString();
+    const {error} = await SB.from('leads').update({estado:'contactado', contactado_at:ahora, actualizado_at:ahora}).eq('id', id);
+    if(!error){ l.estado='contactado'; l.contactado_at=ahora; renderLeads(); }
+  }
+}
+
+// Crea la ficha del cliente con los datos del lead y la deja vinculada
+async function crearFichaLead(id){
+  const l = allLeads.find(x => x.id===id); if(!l) return;
+  const hoy = new Date().toISOString().slice(0,10);
+  const ficha = {nombre:l.nombre, celular:l.telefono, gestor:l.asignada_a, fecha:hoy, estado:'Consulta',
+                 tipo_tramite:l.tramite, tags:['Potencial cliente']};
+  const {data, error} = await SB.from(TB).insert(ficha).select('id').single();
+  if(error){ toast('No se pudo crear la ficha: '+error.message,'err'); return; }
+  await SB.from('leads').update({cliente_id:data.id, actualizado_at:new Date().toISOString()}).eq('id', id);
+  l.cliente_id = data.id;
+  toast('📂 Ficha creada y vinculada','ok');
+  renderLeads();
+}
+
+function abrirMotivoLead(id){
+  leadMotivoId = id; leadMotivoSel = '';
+  document.getElementById('lead-motivo-txt').value = '';
+  pintarMotivosLead();
+  document.getElementById('lead-motivo-bg').classList.add('on');
+}
+function pintarMotivosLead(){
+  document.getElementById('lead-motivos').innerHTML = LEAD_MOTIVOS.map(m =>
+    `<button onclick="leadMotivoSel='${m}';pintarMotivosLead()" style="padding:6px 11px;border-radius:20px;font-size:12px;font-weight:600;cursor:pointer;border:1.5px solid ${leadMotivoSel===m?'var(--az)':'var(--bo)'};background:${leadMotivoSel===m?'var(--azl)':'#fff'};color:${leadMotivoSel===m?'var(--az)':'var(--gr)'}">${m}</button>`).join('');
+}
+function cerrarMotivoLead(){ document.getElementById('lead-motivo-bg').classList.remove('on'); }
+async function guardarNoAvanzo(){
+  const l = allLeads.find(x => x.id===leadMotivoId); if(!l) return;
+  const extra = document.getElementById('lead-motivo-txt').value.trim();
+  const motivo = [leadMotivoSel, extra].filter(Boolean).join(' — ') || 'Sin motivo';
+  const {error} = await SB.from('leads').update({estado:'no_avanzo', motivo, actualizado_at:new Date().toISOString()}).eq('id', l.id);
+  if(error){ toast('Error: '+error.message,'err'); return; }
+  l.estado='no_avanzo'; l.motivo=motivo;
+  cerrarMotivoLead(); toast('Guardado'); renderLeads();
+}
+
 </script>
 </body>
 </html>

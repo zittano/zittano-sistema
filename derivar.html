@@ -1,0 +1,241 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<meta name="theme-color" content="#003399">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="Derivar">
+<title>Zittano · Derivar</title>
+<link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@600;700&family=DM+Sans:opsz,wght@9..40,400..700&display=swap" rel="stylesheet">
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<style>
+:root{--az:#003399;--az2:#0044cc;--azl:#e8efff;--vd:#009246;--vdl:#e6f7ee;--ro:#CE2B37;--rol:#fdecea;
+  --gr:#64748b;--grd:#1e293b;--grl:#f1f5f9;--bg:#f9f6f1;--wh:#fff;--bo:#e2e8f0;--sofia:#0891b2;--malena:#7c3aed;}
+*{margin:0;padding:0;box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+body{font-family:"DM Sans",sans-serif;background:var(--bg);color:var(--grd);min-height:100vh;-webkit-font-smoothing:antialiased}
+input,textarea,button{font-family:inherit;font-size:16px}
+.top{background:var(--az);color:#fff;padding:calc(14px + env(safe-area-inset-top)) 18px 14px;display:flex;align-items:center;justify-content:space-between}
+.brand{font-family:"Cinzel",serif;font-weight:700;letter-spacing:3px;font-size:18px}
+.who{font-size:12px;opacity:.8}
+.flag{height:3px;background:linear-gradient(90deg,var(--vd) 33%,#fff 33% 66%,var(--ro) 66%)}
+.wrap{max-width:480px;margin:0 auto;padding:18px 16px 40px}
+.card{background:var(--wh);border:1px solid var(--bo);border-radius:16px;padding:18px}
+h1{font-size:20px;font-weight:700;margin-bottom:4px}
+.sub{font-size:13px;color:var(--gr);margin-bottom:16px}
+label{display:block;font-size:12px;font-weight:700;color:var(--gr);text-transform:uppercase;letter-spacing:.5px;margin:14px 0 6px}
+input[type=text],input[type=tel],input[type=email],input[type=password],textarea{width:100%;padding:13px 14px;border:1.5px solid var(--bo);border-radius:12px;background:#fff;color:var(--grd);outline:none}
+input:focus,textarea:focus{border-color:var(--az)}
+textarea{min-height:70px;resize:vertical}
+.paste{display:flex;gap:8px}.paste input{flex:1}
+.pbtn{padding:0 14px;border:1.5px solid var(--bo);border-radius:12px;background:var(--grl);font-weight:700;color:var(--gr);white-space:nowrap}
+.chips{display:grid;gap:8px}.c2{grid-template-columns:1fr 1fr}.c3{grid-template-columns:1fr 1fr 1fr}
+.chip{padding:13px 8px;border:1.5px solid var(--bo);border-radius:12px;background:#fff;font-weight:700;font-size:15px;color:var(--gr);text-align:center}
+.chip.on{border-color:var(--az);background:var(--azl);color:var(--az)}
+.chip.sof.on{border-color:var(--sofia);background:#e0f5fa;color:var(--sofia)}
+.chip.mal.on{border-color:var(--malena);background:#f1eafe;color:var(--malena)}
+.go{width:100%;margin-top:20px;padding:16px;border:none;border-radius:14px;background:var(--vd);color:#fff;font-weight:700;font-size:17px;display:flex;align-items:center;justify-content:center;gap:8px}
+.go:disabled{opacity:.6}
+.err{color:var(--ro);font-size:13px;margin-top:8px;display:none}.err.on{display:block}
+.warn{background:#fff7e6;border:1px solid #f5c26b;color:#8a5a00;border-radius:12px;padding:10px 12px;font-size:13px;margin-top:10px;display:none}.warn.on{display:block}
+.hint{font-size:12px;color:var(--gr);margin-top:6px}
+.list{margin-top:22px}
+.list h2{font-size:15px;font-weight:700;margin-bottom:10px}
+.row{display:flex;justify-content:space-between;align-items:center;gap:10px;background:#fff;border:1px solid var(--bo);border-radius:12px;padding:11px 13px;margin-bottom:8px}
+.row b{font-size:14px;display:block}.row small{font-size:12px;color:var(--gr)}
+.pill{font-size:11px;font-weight:700;padding:4px 9px;border-radius:20px;white-space:nowrap}
+.p-nuevo{background:var(--azl);color:var(--az)}.p-contactado{background:#fff4d6;color:#8a5a00}
+.p-consulta{background:#e0f5fa;color:#0e6f86}.p-avanzo{background:var(--vdl);color:var(--vd)}.p-no_avanzo{background:var(--grl);color:var(--gr)}
+.toast{position:fixed;left:50%;bottom:calc(20px + env(safe-area-inset-bottom));transform:translateX(-50%) translateY(120px);background:var(--grd);color:#fff;padding:12px 18px;border-radius:12px;font-size:14px;font-weight:600;transition:transform .25s;max-width:90%;text-align:center;z-index:9}
+.toast.on{transform:translateX(-50%) translateY(0)}
+.link{background:none;border:none;color:var(--gr);font-size:13px;text-decoration:underline;margin-top:14px}
+#app{display:none}
+</style>
+</head>
+<body>
+
+<div class="top"><div><div class="brand">ZITTANO</div><div class="who" id="who">Derivar clientes</div></div><button class="link" style="color:#fff;margin:0" id="btn-out" hidden onclick="salir()">Salir</button></div>
+<div class="flag"></div>
+
+<!-- CÓDIGO -->
+<div class="wrap" id="login">
+  <div class="card">
+    <h1>Hola 👋</h1>
+    <div class="sub">Poné el código que te pasó Belu. Lo hacés una sola vez y el celu lo recuerda.</div>
+    <label>Código</label>
+    <input type="password" id="l-cod" autocomplete="off" placeholder="código" onkeydown="if(event.key==='Enter')entrar()">
+    <button class="go" id="btn-in" onclick="entrar()">Entrar</button>
+    <div class="err" id="l-err">Ese código no es correcto.</div>
+  </div>
+</div>
+
+<!-- APP -->
+<div class="wrap" id="app">
+  <div class="card">
+    <h1>Derivar cliente</h1>
+    <div class="sub">Se guarda en el Sistema y te abre WhatsApp para avisar al grupo.</div>
+
+    <label>WhatsApp del cliente</label>
+    <div class="paste">
+      <input type="tel" id="f-tel" inputmode="tel" placeholder="11 5555-1234">
+      <button class="pbtn" onclick="pegar()">Pegar</button>
+    </div>
+    <div class="warn" id="dup"></div>
+
+    <label>Nombre</label>
+    <input type="text" id="f-nom" placeholder="Nombre y apellido" autocapitalize="words">
+
+    <label>Trámite</label>
+    <div class="chips c3" data-k="tramite">
+      <button class="chip on" data-v="RECO">RECO</button>
+      <button class="chip" data-v="AIRE">AIRE</button>
+      <button class="chip" data-v="Otro">Otro</button>
+    </div>
+
+    <label>¿Para quién?</label>
+    <div class="chips c2" data-k="para">
+      <button class="chip sof" data-v="Sofía">Sofi</button>
+      <button class="chip mal" data-v="Malena">Male</button>
+    </div>
+
+    <label>¿Por dónde llegó?</label>
+    <div class="chips c3" data-k="canal">
+      <button class="chip on" data-v="WhatsApp">WhatsApp</button>
+      <button class="chip" data-v="Instagram">Instagram</button>
+      <button class="chip" data-v="Pauta">Pauta</button>
+    </div>
+
+    <label>Nota para la profesional</label>
+    <textarea id="f-nota" placeholder="Ej: nieta de italiano, ya tiene el acta del bisabuelo"></textarea>
+
+    <button class="go" id="btn-go" onclick="derivar()">💬 Guardar y avisar</button>
+    <div class="err" id="f-err"></div>
+  </div>
+
+  <div class="list">
+    <h2>Mis últimas derivaciones</h2>
+    <div id="mis"><div class="hint">Cargando…</div></div>
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+const SB = supabase.createClient('https://gcbmsbkkzodmszrqtdfb.supabase.co','eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImdjYm1zYmtrem9kbXN6cnF0ZGZiIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzQwMDEzMzgsImV4cCI6MjA4OTU3NzMzOH0.D_FE2RLpc6kLgSyw2Ai_pw_efJpdfUHwMuk31MAI75o');
+const APODO = {'Sofía':'Sofi','Malena':'Male'};
+const ESTADO = {nuevo:'Nuevo',contactado:'Contactado',consulta:'Consulta',avanzo:'Avanzó',no_avanzo:'No avanzó'};
+let sel = {tramite:'RECO', para:'', canal:'WhatsApp'};
+
+const $ = id => document.getElementById(id);
+const esc = s => String(s||'').replace(/[&<>"]/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+function toast(m){ const t=$('toast'); t.textContent=m; t.classList.add('on'); clearTimeout(t._t); t._t=setTimeout(()=>t.classList.remove('on'),2800); }
+
+// Teléfono argentino → +549XXXXXXXXXX (si es de otro país lo deja como está)
+function normTel(raw){
+  const orig = String(raw||'').replace(/\D/g,'');
+  if(!orig) return '';
+  let d = orig.replace(/^00/,'');
+  const internacional = /^54/.test(d) || String(raw).trim().startsWith('+');
+  if(internacional && !/^54/.test(d)) return '+'+d;          // número de otro país
+  d = d.replace(/^54/,'').replace(/^9/,'').replace(/^0/,'');
+  if(d.length===12){                                         // característica + 15 + número
+    for(const k of [2,3,4]) if(d.slice(k,k+2)==='15'){ d = d.slice(0,k)+d.slice(k+2); break; }
+  }
+  return d.length===10 ? '+549'+d : '+'+orig;
+}
+const ult10 = t => String(t||'').replace(/\D/g,'').slice(-10);
+function lindoTel(t){
+  const d = String(t).replace(/\D/g,'');
+  if(d.startsWith('54911') && d.length===13) return '+54 9 11 '+d.slice(5,9)+'-'+d.slice(9);
+  if(d.startsWith('549') && d.length===13) return '+54 9 '+d.slice(3,6)+' '+d.slice(6);
+  return '+'+d;
+}
+
+// Chips
+document.querySelectorAll('.chips').forEach(g => g.addEventListener('click', e => {
+  const b = e.target.closest('.chip'); if(!b) return;
+  g.querySelectorAll('.chip').forEach(x => x.classList.remove('on'));
+  b.classList.add('on'); sel[g.dataset.k] = b.dataset.v;
+}));
+
+async function pegar(){
+  try{ const t = await navigator.clipboard.readText(); $('f-tel').value = t.trim(); }
+  catch{ $('f-tel').focus(); toast('Mantené apretado y elegí "Pegar"'); }
+}
+
+// CÓDIGO (se guarda en el celu)
+const KEY = 'zittano_codigo_derivar';
+let codigo = '';
+function leerCodigo(){ try{ return localStorage.getItem(KEY)||''; }catch{ return ''; } }
+function guardarCodigo(c){ try{ c ? localStorage.setItem(KEY,c) : localStorage.removeItem(KEY); }catch{} }
+
+async function probar(c){
+  const {error} = await SB.rpc('mis_derivaciones', {p_codigo:c});
+  if(!error) codigo = c;
+  return !error;
+}
+async function entrar(){
+  const c = $('l-cod').value.trim(); if(!c) return;
+  const btn=$('btn-in'); btn.disabled=true; btn.textContent='Entrando…';
+  const ok = await probar(c);
+  btn.disabled=false; btn.textContent='Entrar';
+  if(!ok){ $('l-err').classList.add('on'); return; }
+  guardarCodigo(c); mostrarApp();
+}
+function salir(){ guardarCodigo(''); location.reload(); }
+function mostrarApp(){
+  $('who').textContent = 'Hola, Yesi';
+  $('login').style.display='none'; $('app').style.display='block'; $('btn-out').hidden=false;
+  cargarMias();
+}
+async function arrancar(){
+  const c = leerCodigo();
+  if(c && await probar(c)) mostrarApp();
+  else { guardarCodigo(''); $('login').style.display='block'; }
+}
+
+let _msgPendiente = '';
+async function derivar(){
+  const err=$('f-err'); err.classList.remove('on'); $('dup').classList.remove('on');
+  const tel = normTel($('f-tel').value), nom = $('f-nom').value.trim(), nota=$('f-nota').value.trim();
+  const falta = !tel || ult10(tel).length<10 ? 'Falta el WhatsApp del cliente.' : !nom ? 'Falta el nombre.' : !sel.para ? 'Elegí para quién es: Sofi o Male.' : '';
+  if(falta){ err.textContent=falta; err.classList.add('on'); return; }
+
+  const btn=$('btn-go'); btn.disabled=true; btn.textContent='Guardando…';
+  const {data, error} = await SB.rpc('derivar_lead', {p_codigo:codigo, p_nombre:nom, p_telefono:tel,
+    p_tramite:sel.tramite, p_canal:sel.canal, p_nota:nota, p_para:sel.para});
+  btn.disabled=false; btn.textContent='💬 Guardar y avisar';
+  if(error){ err.textContent='No se pudo guardar: '+error.message; err.classList.add('on'); return; }
+
+  const linkCli = 'https://wa.me/'+tel.replace(/\D/g,'');
+  _msgPendiente = `🆕 Lead para ${APODO[sel.para]}\n👤 ${nom}\n📱 ${lindoTel(tel)}\n📋 ${sel.tramite} · llegó por ${sel.canal}`+
+    (nota?`\n📝 ${nota}`:'')+`\n\nEscribile: ${linkCli}\n✅ Ya está en el Sistema, en Leads`;
+  $('f-tel').value=''; $('f-nom').value=''; $('f-nota').value='';
+  document.querySelectorAll('[data-k=para] .chip').forEach(x=>x.classList.remove('on')); sel.para='';
+  cargarMias();
+
+  const antes = data && data.antes;
+  if(antes){
+    const f = new Date(antes.fecha).toLocaleDateString('es-AR',{day:'numeric',month:'short'});
+    $('dup').innerHTML = `⚠️ Guardado. Ojo: este número ya se había derivado el ${f} a ${APODO[antes.para]||esc(antes.para)} (${ESTADO[antes.estado]||antes.estado}).`+
+      `<button class="go" style="margin-top:10px;padding:12px;font-size:15px" onclick="abrirGrupo()">💬 Avisar al grupo igual</button>`;
+    $('dup').classList.add('on'); $('dup').scrollIntoView({behavior:'smooth',block:'center'});
+  } else { toast('✅ Guardado'); abrirGrupo(); }
+}
+function abrirGrupo(){ $('dup').classList.remove('on'); location.href = 'https://wa.me/?text='+encodeURIComponent(_msgPendiente); }
+
+async function cargarMias(){
+  const {data,error} = await SB.rpc('mis_derivaciones', {p_codigo:codigo});
+  const box=$('mis');
+  if(error){ box.innerHTML='<div class="hint">No se pudo cargar.</div>'; return; }
+  if(!data.length){ box.innerHTML='<div class="hint">Todavía no derivaste a nadie desde acá.</div>'; return; }
+  box.innerHTML = data.map(l => {
+    const f=new Date(l.created_at).toLocaleDateString('es-AR',{day:'numeric',month:'short'});
+    return `<div class="row"><div><b>${esc(l.nombre)}</b><small>${esc(l.tramite)} · ${APODO[l.asignada_a]||esc(l.asignada_a)} · ${f}</small></div><span class="pill p-${l.estado}">${ESTADO[l.estado]||l.estado}</span></div>`;
+  }).join('');
+}
+
+arrancar();
+</script>
+</body>
+</html>
