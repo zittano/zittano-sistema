@@ -92,7 +92,12 @@ textarea{min-height:70px;resize:vertical}
       <button class="chip" data-v="Otro">Otro</button>
     </div>
 
-    <div class="hint" style="margin-top:14px">👥 El Sistema lo reparte solo entre Sofi y Male.</div>
+    <label>¿Para quién?</label>
+    <div class="chips c2" data-k="para">
+      <button class="chip sof" data-v="Sofía">Sofi</button>
+      <button class="chip mal" data-v="Malena">Male</button>
+    </div>
+    <div class="hint" id="reparto"></div>
 
     <label>¿Por dónde llegó?</label>
     <div class="chips c3" data-k="canal">
@@ -120,7 +125,7 @@ textarea{min-height:70px;resize:vertical}
 const SB = supabase.createClient('https://gcbmsbkkzodmszrqtdfb.supabase.co','eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImdjYm1zYmtrem9kbXN6cnF0ZGZiIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzQwMDEzMzgsImV4cCI6MjA4OTU3NzMzOH0.D_FE2RLpc6kLgSyw2Ai_pw_efJpdfUHwMuk31MAI75o');
 const APODO = {'Sofía':'Sofi','Malena':'Male'};
 const ESTADO = {nuevo:'Nuevo',contactado:'Contactado',consulta:'Consulta',avanzo:'Avanzó',no_avanzo:'No avanzó'};
-let sel = {tramite:'RECO', canal:'WhatsApp'};
+let sel = {tramite:'RECO', para:'', canal:'WhatsApp'};
 
 const $ = id => document.getElementById(id);
 const esc = s => String(s||'').replace(/[&<>"]/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
@@ -194,12 +199,12 @@ let _msgPendiente = '';
 async function derivar(){
   const err=$('f-err'); err.classList.remove('on'); $('dup').classList.remove('on');
   const tel = normTel($('f-tel').value), nom = $('f-nom').value.trim(), nota=$('f-nota').value.trim();
-  const falta = !tel || ult10(tel).length<10 ? 'Falta el WhatsApp del cliente.' : !nom ? 'Falta el nombre.' : '';
+  const falta = !tel || ult10(tel).length<10 ? 'Falta el WhatsApp del cliente.' : !nom ? 'Falta el nombre.' : !sel.para ? 'Elegí para quién es: Sofi o Male.' : '';
   if(falta){ err.textContent=falta; err.classList.add('on'); return; }
 
   const btn=$('btn-go'); btn.disabled=true; btn.textContent='Guardando…';
   const {data, error} = await SB.rpc('derivar_lead', {p_codigo:codigo, p_nombre:nom, p_telefono:tel,
-    p_tramite:sel.tramite, p_canal:sel.canal, p_nota:nota});
+    p_tramite:sel.tramite, p_canal:sel.canal, p_nota:nota, p_para:sel.para});
   btn.disabled=false; btn.textContent='💬 Guardar y avisar';
   if(error){ err.textContent='No se pudo guardar: '+error.message; err.classList.add('on'); return; }
 
@@ -208,6 +213,7 @@ async function derivar(){
   _msgPendiente = `🆕 Lead para ${APODO[para]||para}\n👤 ${nom}\n📱 ${lindoTel(tel)}\n📋 ${sel.tramite} · llegó por ${sel.canal}`+
     (nota?`\n📝 ${nota}`:'')+`\n\nEscribile: ${linkCli}\n✅ Ya está en el Sistema, en Leads`;
   $('f-tel').value=''; $('f-nom').value=''; $('f-nota').value='';
+  document.querySelectorAll('[data-k=para] .chip').forEach(x=>x.classList.remove('on')); sel.para='';
   cargarMias();
 
   const antes = data && data.antes;
@@ -216,11 +222,19 @@ async function derivar(){
     $('dup').innerHTML = `⚠️ Guardado para <b>${APODO[para]||esc(para)}</b>. Ojo: este número ya se había derivado el ${f} a ${APODO[antes.para]||esc(antes.para)} (${ESTADO[antes.estado]||antes.estado}).`+
       `<button class="go" style="margin-top:10px;padding:12px;font-size:15px" onclick="abrirGrupo()">💬 Avisar al grupo de ${APODO[para]||esc(para)}</button>`;
     $('dup').classList.add('on'); $('dup').scrollIntoView({behavior:'smooth',block:'center'});
-  } else { toast('✅ Va para '+(APODO[para]||para)+' · elegí su grupo'); setTimeout(abrirGrupo, 1200); }
+  } else { toast('✅ Guardado'); abrirGrupo(); }
 }
 function abrirGrupo(){ $('dup').classList.remove('on'); location.href = 'https://wa.me/?text='+encodeURIComponent(_msgPendiente); }
 
+async function cargarReparto(){
+  const {data} = await SB.rpc('reparto_mes', {p_codigo:codigo});
+  if(!data) return;
+  const tot = data.male + data.sofi, pm = tot ? Math.round(data.male/tot*100) : 0;
+  $('reparto').innerHTML = `Este mes: Male ${data.male} (${tot?pm:0}%) · Sofi ${data.sofi} (${tot?100-pm:0}%). `+
+    `Para mantener el ${data.objetivo_male}/${100-data.objetivo_male}, el próximo le tocaría a <b>${APODO[data.sugerida]}</b>. Igual elegís vos.`;
+}
 async function cargarMias(){
+  cargarReparto();
   const {data,error} = await SB.rpc('mis_derivaciones', {p_codigo:codigo});
   const box=$('mis');
   if(error){ box.innerHTML='<div class="hint">No se pudo cargar.</div>'; return; }
