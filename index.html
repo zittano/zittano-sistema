@@ -6,6 +6,7 @@
 <title>Zittano — Sistema de Gestión</title>
 <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@400;500;600;700;800;900&family=DM+Sans:ital,opsz,wght@0,9..40,300..700;1,9..40,300..700&family=DM+Serif+Display&display=swap" rel="stylesheet">
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/qrcode-generator/1.4.4/qrcode.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
 <style>
 :root{
@@ -1833,6 +1834,48 @@ renderConsulados();
   </div>
 </div>
 
+<style>
+#lead-ct .seg-modal{max-width:460px;max-height:92vh;overflow-y:auto;padding:20px 22px}
+.ct-paso{display:flex;align-items:center;gap:8px;font-size:12px;font-weight:800;color:var(--az);text-transform:uppercase;letter-spacing:.4px;margin:14px 0 8px}
+.ct-paso b{display:inline-flex;align-items:center;justify-content:center;width:20px;height:20px;border-radius:50%;background:var(--az);color:#fff;font-size:11px}
+.ct-chips{display:flex;flex-wrap:wrap;gap:6px}
+.ct-chip{padding:7px 11px;border:1.5px solid var(--bo);border-radius:20px;background:#fff;font-size:12.5px;font-weight:600;color:var(--grd);cursor:pointer;font-family:inherit}
+.ct-chip.on{background:var(--az);border-color:var(--az);color:#fff}
+.ct-qrbox{display:flex;gap:14px;align-items:center;background:var(--grl);border-radius:12px;padding:10px 12px}
+.ct-qrbox svg{flex:none;background:#fff;border-radius:6px}
+#ct-msg{min-height:110px!important;font-size:13px!important}
+.ct-wa{background:linear-gradient(135deg,#25d366,#128c7e)!important;color:#fff}
+</style>
+<div class="seg-modal-bg" id="lead-ct" onclick="if(event.target===this)cerrarContactoLead()">
+  <div class="seg-modal">
+    <h3 style="margin-bottom:2px">💬 Contactar a <span id="ct-nombre"></span></h3>
+    <div id="ct-tel" style="font-size:12.5px;color:var(--gr)"></div>
+
+    <div id="ct-agendar">
+      <div class="ct-paso"><b>1</b> Agendalo en tu celu</div>
+      <div class="ct-qrbox">
+        <div id="ct-qr"></div>
+        <div style="font-size:12.5px;color:var(--grd);line-height:1.45">Abrí la <b>cámara del celu</b>, apuntá al código y tocá <b>Agregar contacto</b>.<br><span style="color:var(--gr)">Queda guardado con nombre y apellido.</span></div>
+      </div>
+    </div>
+    <div id="ct-agendar-mini" style="display:none;margin-top:10px;font-size:12px"><a href="#" onclick="mostrarQRContacto();return false" style="color:var(--az);font-weight:600">📇 Ver QR para agendarlo</a></div>
+
+    <div class="ct-paso"><b id="ct-n2">2</b> ¿Qué día le proponés?</div>
+    <div class="ct-chips" id="ct-dias"></div>
+    <div class="ct-paso"><b id="ct-n3">3</b> ¿A qué hora?</div>
+    <div class="ct-chips" id="ct-horas"></div>
+    <input id="ct-hora-otra" placeholder="Otra hora (ej: 15:30)" style="margin-top:8px" oninput="ctHora=this.value.trim();document.querySelectorAll('#ct-horas .ct-chip').forEach(c=>c.classList.remove('on'));armarMsgContacto()">
+
+    <label>Mensaje (lo podés retocar)</label>
+    <textarea id="ct-msg" oninput="ctEditado=true"></textarea>
+
+    <div class="seg-modal-actions">
+      <button class="seg-modal-cancel" onclick="cerrarContactoLead()">Cancelar</button>
+      <button class="ct-wa" onclick="enviarContactoLead()">💬 Abrir WhatsApp</button>
+    </div>
+  </div>
+</div>
+
 <!-- VIEW SEGUIMIENTO -->
 <div class="view" id="view-seguimiento">
 <div class="vbody">
@@ -3251,7 +3294,7 @@ function renderSeguimiento(){
               <div class="seg-card-nom">${escH(n.cliente_nombre||'Sin nombre')}</div>
               <div class="seg-card-meta" style="color:var(--grd);font-style:italic">"${escH(n.motivo)}"</div>
               <div class="seg-card-btns">
-                ${tel?`<a class="seg-btn-wa" href="https://wa.me/${tel}?text=${msg}" target="_blank" rel="noopener">💬 Escribir</a>`:'<span class="seg-sin-tel">Sin celular vinculado</span>'}
+                ${tel?`<a class="seg-btn-wa" href="https://web.whatsapp.com/send?phone=${tel}&text=${msg}" target="zittano_whatsapp">💬 Escribir</a>`:'<span class="seg-sin-tel">Sin celular vinculado</span>'}
                 <button class="seg-btn-ok" onclick="completarNota('${n.id}')" title="Ya lo contacté, sacalo de la lista">✓</button>
               </div>
             </div>`;
@@ -3279,7 +3322,7 @@ function renderSeguimiento(){
             <div class="seg-card-nom">${escH(c.nombre||'Sin nombre')}</div>
             <div class="seg-card-meta">⏱ ${diasTxt}</div>
             <div class="seg-card-btns">
-              ${tel?`<a class="seg-btn-wa" href="https://wa.me/${tel}?text=${msg}" target="_blank" rel="noopener">💬 Escribir</a>`:'<span class="seg-sin-tel">Sin celular cargado</span>'}
+              ${tel?`<a class="seg-btn-wa" href="https://web.whatsapp.com/send?phone=${tel}&text=${msg}" target="zittano_whatsapp">💬 Escribir</a>`:'<span class="seg-sin-tel">Sin celular cargado</span>'}
               <button class="seg-btn-ok" onclick="marcarContactado('${c.id}')" title="Ya lo contacté, sacalo de la lista">✓</button>
             </div>
           </div>`;
@@ -7737,17 +7780,99 @@ function renderTableroLeads(lista){
   box.innerHTML = html;
 }
 
-// Abre el WhatsApp propio de la profesional con un primer mensaje armado
-async function escribirLead(id){
+// Abre WhatsApp Web siempre en la MISMA pestaña (no abre una nueva cada vez)
+function abrirWpp(tel, msg){
+  const num = _telLimpio(String(tel||''));
+  const url = 'https://web.whatsapp.com/send?phone='+num+(msg?'&text='+encodeURIComponent(msg):'');
+  const w = window.open(url, 'zittano_whatsapp');
+  if(w) try{ w.focus(); }catch(e){}
+}
+
+// Mensaje para coordinar la consulta inicial, según quién escribe
+const LEAD_FIRMA = {'Malena':'Malena Martino','Sofía':'Sofia Di Tullio'};
+function msjConsultaLead(prof, dia, hora){
+  const quien = LEAD_FIRMA[prof] ? `Mi nombre es ${LEAD_FIRMA[prof]}, soy la profesional del equipo de Zittano que llevará tu caso😊`
+                                 : `Soy ${LEAD_APODO[prof]||prof}, del equipo de Zittano😊`;
+  const h = hora ? (/hs$/i.test(hora)?hora:hora+' hs') : '… hs';
+  return `Hola! Cómo estás? ${quien}\n\nMe comunico para coordinar la consulta inicial. Podrías ${dia||'este ...'} a las ${h}?`;
+}
+
+let ctLeadId=null, ctDia='', ctHora='', ctEditado=false;
+const CT_HORAS=['10','11','12','14','15','16','17','18'];
+
+// Un solo paso: agendar (QR) + elegir día y hora + abrir WhatsApp con el mensaje completo
+function escribirLead(id){
   const l = allLeads.find(x => x.id===id); if(!l) return;
-  const nombre = (l.nombre||'').trim().split(/\s+/)[0];
-  const yo = LEAD_APODO[curG] || curG;
-  const tema = l.tramite==='AIRE' ? 'tu inscripción en el AIRE' : l.tramite==='RECO' ? 'tu ciudadanía italiana' : 'tu consulta';
-  const msg = `Hola ${nombre}! ¿Cómo estás? Soy ${yo}, de Zittano 😊\n\nMe pasaron tu contacto por ${tema}. Voy a ser quien te acompañe en el trámite.\n\n¿Tenés un ratito para que lo veamos juntos?`;
-  window.open('https://wa.me/'+String(l.telefono).replace(/\D/g,'')+'?text='+encodeURIComponent(msg), '_blank');
+  if(!l.telefono){ toast('Este lead no tiene celular cargado','err'); return; }
+  ctLeadId=id; ctDia=''; ctHora=''; ctEditado=false;
+  document.getElementById('ct-nombre').textContent = (l.nombre||'').trim() || 'cliente';
+  document.getElementById('ct-tel').textContent = '+'+_telLimpio(String(l.telefono));
+  document.getElementById('ct-hora-otra').value='';
+  // QR: se muestra grande la primera vez; después queda como link
+  const yaAgendado = l.estado!=='nuevo';
+  dibujarQRContacto(l);
+  document.getElementById('ct-agendar').style.display = yaAgendado?'none':'';
+  document.getElementById('ct-agendar-mini').style.display = yaAgendado?'':'none';
+  document.getElementById('ct-n2').textContent = yaAgendado?'1':'2';
+  document.getElementById('ct-n3').textContent = yaAgendado?'2':'3';
+  // Días: hoy + próximos 6 días hábiles
+  const DN=['domingo','lunes','martes','miércoles','jueves','viernes','sábado'];
+  const dias=[]; const d=new Date(); let i=0;
+  while(dias.length<6 && i<14){
+    const x=new Date(d.getFullYear(),d.getMonth(),d.getDate()+i); i++;
+    if(x.getDay()===0||x.getDay()===6) continue;
+    const fecha=`${x.getDate()}/${x.getMonth()+1}`;
+    const lab = i===1?'Hoy':i===2?'Mañana':DN[x.getDay()][0].toUpperCase()+DN[x.getDay()].slice(1)+' '+fecha;
+    const txt = i===1?`hoy ${fecha}`:i===2?`mañana ${DN[x.getDay()]} ${fecha}`:`este ${DN[x.getDay()]} ${fecha}`;
+    dias.push([lab,txt]);
+  }
+  document.getElementById('ct-dias').innerHTML = dias.map(([lab,txt])=>`<button class="ct-chip" data-v="${escH(txt)}" onclick="ctElegir('dia',this)">${lab}</button>`).join('');
+  document.getElementById('ct-horas').innerHTML = CT_HORAS.map(h=>`<button class="ct-chip" data-v="${h}" onclick="ctElegir('hora',this)">${h} hs</button>`).join('');
+  armarMsgContacto(true);
+  document.getElementById('lead-ct').classList.add('on');
+}
+function ctElegir(tipo, el){
+  const box = el.parentElement; const on = el.classList.contains('on');
+  box.querySelectorAll('.ct-chip').forEach(c=>c.classList.remove('on'));
+  if(!on) el.classList.add('on');
+  if(tipo==='dia') ctDia = on?'':el.dataset.v;
+  else { ctHora = on?'':el.dataset.v; document.getElementById('ct-hora-otra').value=''; }
+  armarMsgContacto();
+}
+function armarMsgContacto(forzar){
+  const l = allLeads.find(x => x.id===ctLeadId); if(!l) return;
+  if(ctEditado && !forzar && !confirm('Modificaste el mensaje a mano. ¿Lo reemplazo con el día y la hora elegidos?')){ return; }
+  ctEditado=false;
+  const prof = LEAD_FIRMA[curG] ? curG : (LEAD_FIRMA[l.asignada_a] ? l.asignada_a : curG);
+  document.getElementById('ct-msg').value = msjConsultaLead(prof, ctDia, ctHora);
+}
+function mostrarQRContacto(){
+  document.getElementById('ct-agendar').style.display='';
+  document.getElementById('ct-agendar-mini').style.display='none';
+}
+function dibujarQRContacto(l){
+  const full = (l.nombre||'Cliente Zittano').trim().replace(/\s+/g,' ');
+  const partes = full.split(' ');
+  const nom = partes.shift(), ape = partes.join(' ');
+  const tel = '+'+_telLimpio(String(l.telefono));
+  const esc = t => t.replace(/([,;\\])/g,'\\$1');
+  const vcard = ['BEGIN:VCARD','VERSION:3.0','N:'+esc(ape)+';'+esc(nom)+';;;','FN:'+esc(full),'TEL;TYPE=CELL:'+tel,'NOTE:Lead Zittano'+(l.tramite?' · '+l.tramite:''),'END:VCARD'].join('\n');
+  const box = document.getElementById('ct-qr');
+  if(typeof qrcode==='undefined'){ box.innerHTML='<div style="color:#b91c1c;font-size:12px;width:120px">No cargó el QR. Recargá la página.</div>'; return; }
+  qrcode.stringToBytes = qrcode.stringToBytesFuncs['UTF-8'];
+  const qr = qrcode(0,'L'); qr.addData(vcard); qr.make();
+  box.innerHTML = qr.createSvgTag({cellSize:3, margin:2});
+}
+function cerrarContactoLead(){ document.getElementById('lead-ct').classList.remove('on'); ctLeadId=null; }
+async function enviarContactoLead(){
+  const l = allLeads.find(x => x.id===ctLeadId); if(!l) return;
+  const msg = document.getElementById('ct-msg').value;
+  if(/\.\.\.|…/.test(msg) && !confirm('Todavía no elegiste día y hora (quedaron los "..."). ¿Abrir WhatsApp igual?')) return;
+  abrirWpp(l.telefono, msg);
+  cerrarContactoLead();
   if(l.estado==='nuevo'){
     const ahora = new Date().toISOString();
-    const {error} = await SB.from('leads').update({estado:'contactado', contactado_at:ahora, actualizado_at:ahora}).eq('id', id);
+    const {error} = await SB.from('leads').update({estado:'contactado', contactado_at:ahora, actualizado_at:ahora}).eq('id', l.id);
     if(!error){ l.estado='contactado'; l.contactado_at=ahora; renderLeads(); }
   }
 }
