@@ -269,6 +269,7 @@ tr.row-int{background:#fff7ed!important;}
 .cl:nth-child(3n+2)::before{background:#009246;}
 .cl:nth-child(3n+3)::before{background:#c9ccd2;}
 .ptbl .tot td.r{white-space:nowrap;}
+.ptbl .tot td.r .tl{display:block;white-space:nowrap;line-height:1.25;}
 .dft{padding:14px 44px;background:#1c2433;display:flex;align-items:center;justify-content:space-between;gap:16px;}
 .dfl{font-family:"DM Serif Display",serif;font-size:13px;letter-spacing:4px;text-transform:uppercase;color:#fff;}
 .dfl small{font-family:"DM Sans",sans-serif;font-size:8px;letter-spacing:2.5px;color:#9aa3b2;margin-left:10px;}
@@ -3233,7 +3234,7 @@ function render(){
       return`<tr><td><strong>${s.desc||'—'}</strong></td><td>${uS}</td><td class="c">${c}</td><td class="r" colspan="2">${sD}</td><td>${s.tiempo||'—'}</td></tr>`;
     }).join('');
     pf.style.display='';
-    dTT.textContent=[dA&&'$'+fmt(dA),dU&&'USD '+fmt(dU)].filter(Boolean).join(' + ')||'—';
+    dTT.innerHTML=totLineas(dA,dU);
     return;
   }
   let tA=0,eA=0,tU=0,eU=0;
@@ -3243,11 +3244,21 @@ function render(){
     let sT='—',sE='—';
     if(tN){const v=tN*c;sT=isUT?'USD '+fmt(v):'$'+fmt(v);if(isUT)tU+=v;else tA+=v;}
     if(eN){const v=eN*c;sE=isUE?'USD '+fmt(v):'$'+fmt(v);if(isUE)eU+=v;else eA+=v;}
-    return`<tr><td><strong>${s.desc||'—'}</strong></td><td>${s.transf||'—'} / ${s.efect||'—'}</td><td class="c">${c}</td><td class="r">${sT}</td><td class="r">${sE}</td><td>${s.tiempo||'—'}</td></tr>`;
+    return`<tr><td><strong>${s.desc||'—'}</strong></td><td>${fmtUnit(s.transf)} / ${fmtUnit(s.efect)}</td><td class="c">${c}</td><td class="r">${sT}</td><td class="r">${sE}</td><td>${s.tiempo||'—'}</td></tr>`;
   }).join('');
   pf.style.display='';
-  document.getElementById('d-tt').textContent=[tA&&'$'+fmt(tA),tU&&'USD '+fmt(tU)].filter(Boolean).join(' + ')||'—';
-  document.getElementById('d-te').textContent=[eA&&'$'+fmt(eA),eU&&'USD '+fmt(eU)].filter(Boolean).join(' + ')||'—';
+  document.getElementById('d-tt').innerHTML=totLineas(tA,tU);
+  document.getElementById('d-te').innerHTML=totLineas(eA,eU);
+}
+// Total en líneas separadas ($ arriba, + USD abajo) para que nunca se corte
+function totLineas(a,u){
+  const p=[a&&'$'+fmt(a), u&&(a?'+ ':'')+'USD '+fmt(u)].filter(Boolean);
+  return p.length ? p.map(x=>`<span class="tl">${x}</span>`).join('') : '—';
+}
+// Valor unitario prolijo: 602000 → $602.000 · USD 420 queda igual
+function fmtUnit(v){
+  if(!v) return '—'; const n=pn(v); if(!n) return escH(v);
+  return (String(v).toUpperCase().includes('USD')?'USD ':'$')+fmt(n);
 }
 
 // SAVE
@@ -8226,15 +8237,25 @@ let presBlobP=null, presBlob=null;
 function generarImgPres(){
   const doc=document.querySelector('#view-presup .doc');
   if(!doc || typeof html2canvas==='undefined') return Promise.reject(new Error('lib'));
-  return html2canvas(doc,{scale:2,backgroundColor:'#ffffff',useCORS:true,logging:false,
-    onclone:(cd)=>{ cd.querySelectorAll('.pbv,#d-obj-t,[data-no-print="true"],p.ph').forEach(e=>e.style.display='none');
-      const dc=cd.querySelector('#view-presup .doc'); if(!dc) return;
-      dc.style.borderRadius='0'; dc.style.boxShadow='none'; dc.style.border='none';
-      // Secciones vacías fuera de la imagen (más prolijo para el cliente)
-      if(!etas.length){ const s3=dc.querySelector('.deta'); if(s3) s3.style.display='none'; }
-      if(!['e-asc','e-par','e-nac','e-com','e-cas','e-pad'].some(k=>g(k).trim())){ dc.querySelectorAll('.dsec.s2,.dtbl.t2').forEach(e=>e.style.display='none'); }
-      let n=0; dc.querySelectorAll('.dsec').forEach(sec=>{ if(sec.offsetParent===null) return; const b=sec.querySelector('b'); if(b && /^\d+$/.test(b.textContent.trim())) b.textContent=String(++n).padStart(2,'0'); }); }})
-    .then(cv=>new Promise((res,rej)=>cv.toBlob(b=>b?res(b):rej(new Error('blob')),'image/png')));
+  // Copia fuera de pantalla con ancho fijo de hoja: así sale igual en cualquier compu
+  const ANCHO=980;
+  const wrap=document.createElement('div');
+  wrap.style.cssText='position:fixed;left:-30000px;top:0;width:'+ANCHO+'px;z-index:-1;pointer-events:none';
+  const dc=doc.cloneNode(true);
+  dc.id='pres-snap'; dc.style.width=ANCHO+'px'; dc.style.maxWidth='none';
+  dc.style.borderRadius='0'; dc.style.boxShadow='none'; dc.style.border='none';
+  dc.querySelectorAll('.pbv,[data-no-print="true"],p.ph').forEach(e=>e.style.display='none');
+  dc.querySelectorAll('[id="d-obj-t"]').forEach(e=>e.style.display='none');
+  if(!etas.length){ const s3=dc.querySelector('.deta'); if(s3) s3.style.display='none'; }
+  if(!['e-asc','e-par','e-nac','e-com','e-cas','e-pad'].some(k=>g(k).trim())){ dc.querySelectorAll('.dsec.s2,.dtbl.t2').forEach(e=>e.style.display='none'); }
+  wrap.appendChild(dc); document.body.appendChild(wrap);
+  let n=0; dc.querySelectorAll('.dsec').forEach(sec=>{ if(sec.offsetParent===null) return; const b=sec.querySelector('b'); if(b && /^\d+$/.test(b.textContent.trim())) b.textContent=String(++n).padStart(2,'0'); });
+  // Si algo igual no entra (montos muy largos), ensanchar la hoja lo justo
+  const t=dc.querySelector('.ptbl'); if(t && t.scrollWidth>t.clientWidth+1){ dc.style.width=(ANCHO+(t.scrollWidth-t.clientWidth)+8)+'px'; wrap.style.width=dc.style.width; }
+  const quitar=()=>{ try{ wrap.remove(); }catch(e){} };
+  return html2canvas(dc,{scale:2,backgroundColor:'#ffffff',useCORS:true,logging:false,windowWidth:Math.max(1400,dc.offsetWidth+100),scrollX:0,scrollY:0})
+    .then(cv=>{ quitar(); return new Promise((res,rej)=>cv.toBlob(b=>b?res(b):rej(new Error('blob')),'image/png')); })
+    .catch(e=>{ quitar(); throw e; });
 }
 function enviarPresWpp(){
   const cel=g('e-cel').trim(), nom=g('e-nom').trim();
