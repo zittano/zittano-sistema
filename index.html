@@ -4099,15 +4099,15 @@ function updPagoCalc(i,field,value){
   if(!modC.pagos_manual||!modC.pagos_manual[i]) return;
   const p=modC.pagos_manual[i];
   p[field]=value?parseFloat(value):null;
-  // Calcular A Pagar según tipo de trámite
+  // Calcular A Pagar (misma regla que Ingresos: efectivo + transferencia ÷ factor)
   let ap=0;
   if(esSoloBelen(p.tipo)){
-    ap=0; // Divorcio/Correo/CIE: va directo a Belén
-  } else if(esConsulta(p.tipo)){
-    ap=parseFloat(p.efectivo||p.transferencia||0);
+    ap=0;
   } else {
-    if(p.efectivo) ap=parseFloat(p.efectivo);
-    else if(p.transferencia) ap=Math.round(parseFloat(p.transferencia)/(esClienteInterior(modC)?FACTOR_INTERIOR:1.4));
+    const pe=parseFloat(p.efectivo)||0, pt=parseFloat(p.transferencia)||0;
+    if(esConsulta(p.tipo)) ap=Math.round(pe+pt);
+    else if(esClienteInterior(modC)) ap=Math.round((pe+pt)/FACTOR_INTERIOR);
+    else ap=Math.round(pe+pt/1.4);
   }
   p.a_pagar=ap||null;
   const el=document.getElementById('apagar-pago-'+i);
@@ -4453,7 +4453,7 @@ function renderIngRow(r){
     <td style="${cellStyle};text-align:center">
       <button type="button" id="zona-btn-${r.id}" class="ing-zona${r.es_interior?' int':''}" onclick="toggleZonaIng('${r.id}')" title="Tocá para cambiar · Interior = domicilio del DNI fuera de CABA y GBA">${r.es_interior?'🗺️ INTERIOR':'🏙️ CABA/GBA'}</button>
     </td>
-    <td style="${cellStyle};background:#f0fdf4"><input type="number" value="${r.a_pagar||''}" placeholder="auto" id="apagar-${r.id}" style="${inp};background:#f0fdf4;font-weight:700;color:var(--vd);min-width:100px"></td>
+    <td style="${cellStyle};background:#f0fdf4"><input type="number" value="${r.a_pagar??''}" placeholder="0" readonly id="apagar-${r.id}" style="${inp};background:#f0fdf4;font-weight:800;font-size:14px;color:var(--vd);min-width:100px;cursor:default" title="Se calcula solo: siempre en valor efectivo"><div id="apagar-hint-${r.id}" style="font-size:9.5px;color:#64748b;margin-top:2px;white-space:nowrap">${hintAPagar(r)}</div></td>
     <td style="${cellStyle}">
       <select onchange="updIng('${r.id}','quien_cobro',this.value)" style="${inp};min-width:140px;cursor:pointer">
         <option value="">— Quién cobró —</option>
@@ -4524,6 +4524,7 @@ function toggleZonaIng(id){
   const b=document.getElementById('zona-btn-'+id);
   if(b){b.classList.toggle('int',v);b.textContent=v?'🗺️ INTERIOR':'🏙️ CABA/GBA';}
   const row=document.getElementById('row-'+id); if(row) row.classList.toggle('row-int',v);
+  refrescarColumnaSueldo();
 }
 function updIng(id,field,value){
   const r=ingresosData.find(x=>x.id===id);
@@ -4532,10 +4533,8 @@ function updIng(id,field,value){
     
     // Si cambió tipo, consulta, o es_interior → recalcular A PAGAR
     if(field === 'tipo' || field === 'consulta' || field === 'es_interior') {
-      const pagar = calcularAPagarExcel(r);
-      r.a_pagar = pagar || null;
-      const el = document.getElementById('apagar-' + id);
-      if(el) el.value = pagar || '';
+      r.a_pagar = calcularAPagarExcel(r);
+      pintarAPagar(r);
     }
     if(field === 'tipo' || field === 'gestor'){
       refrescarColumnaSueldo();
@@ -4567,6 +4566,7 @@ function esSoloBelen(tipo){
    LÓGICA:
    1. Si TIPO contiene "correo" o "divorcio" → A PAGAR = 0
       (la CIE ya NO entra acá: la sacan y cobran las gestoras)
+   (REGLA NUEVA oct-2026, ver calcularAPagarExcel: efectivo + transferencia ÷ factor)
    2. Si tiene CONSULTA ☑️ Y ES DEL INTERIOR ☑️ → A PAGAR = TRANSFERENCIA
    3. Si solo ES DEL INTERIOR ☑️ → A PAGAR = TRANSFERENCIA / 1.25 (precio a distancia)
    4. Si solo CONSULTA ☑️ → A PAGAR = TRANSFERENCIA
@@ -4664,40 +4664,39 @@ function refrescarColumnaSueldo(){
 }
 
 function calcularAPagarExcel(r) {
+  // A PAGAR = siempre el precio CASH de la lista (la base de las chicas).
+  //   · CABA / GBA: efectivo tal cual + transferencia ÷ 1.4
+  //   · INTERIOR: paga precio único (×1.25) por el medio que sea →
+  //               (efectivo + transferencia) ÷ 1.25
+  //   · CONSULTA: no lleva recargo → efectivo + transferencia
+  //   · Correo / Divorcio → 0 (van directo a Belén)
   const tipo = (r.tipo || '').toLowerCase();
+  if (tipo.includes('correo') || tipo.includes('divorcio')) return 0;
   const efectivo = parseFloat(r.efectivo) || 0;
   const transferencia = parseFloat(r.transferencia) || 0;
-  const consulta = r.consulta || false;
-  const esInterior = r.es_interior || false;
-  
-  // 1. Si TIPO contiene "correo", "divorcio" o "CIE" (palabra completa) → A PAGAR = 0
-  if (tipo.includes('correo') || tipo.includes('divorcio')) {
-    return 0;
-  }
-  
-  // 2. Si tiene CONSULTA Y ES DEL INTERIOR → A PAGAR = TRANSFERENCIA
-  if (consulta && esInterior) {
-    return transferencia;
-  }
-  
-  // 3. Si solo tiene ES DEL INTERIOR → A PAGAR = TRANSFERENCIA / 1.25
-  //    (precio único a distancia = efectivo × 1.25 → la base vuelve a ser el efectivo)
-  if (esInterior) {
-    return Math.round(transferencia / FACTOR_INTERIOR);
-  }
-  
-  // 4. Si solo tiene CONSULTA → A PAGAR = TRANSFERENCIA
-  if (consulta) {
-    return transferencia;
-  }
-  
-  // 5. Si tiene TRANSFERENCIA sin marcas → A PAGAR = TRANSFERENCIA / 1.4
-  if (transferencia > 0) {
-    return Math.round(transferencia / 1.4);
-  }
-  
-  // 6. Si no hay TRANSFERENCIA → A PAGAR = EFECTIVO
-  return efectivo;
+  const f = factorAPagar(r);
+  if (f === FACTOR_INTERIOR) return Math.round((efectivo + transferencia) / f);
+  return Math.round(efectivo + transferencia / f);
+}
+function factorAPagar(r){
+  if (r.consulta || esConsulta(r.tipo)) return 1;
+  return r.es_interior ? FACTOR_INTERIOR : 1.4;
+}
+// Texto chiquito debajo del A Pagar: muestra la cuenta para que se entienda
+function hintAPagar(r){
+  const tipo=(r.tipo||'').toLowerCase();
+  if(tipo.includes('correo')||tipo.includes('divorcio')) return 'va directo a Belén';
+  const e=parseFloat(r.efectivo)||0, t=parseFloat(r.transferencia)||0, f=factorAPagar(r);
+  const n=v=>Math.round(v).toLocaleString('es-AR');
+  if(f===FACTOR_INTERIOR&&(e||t)) return n(e+t)+' ÷ 1,25 (interior)';
+  const partes=[];
+  if(e) partes.push(n(e)+' efvo');
+  if(t) partes.push(f===1?n(t)+' transf':n(t)+' ÷ '+String(f).replace('.',','));
+  return partes.length?partes.join(' + '):'cargá efectivo o transferencia';
+}
+function pintarAPagar(r){
+  const el=document.getElementById('apagar-'+r.id); if(el) el.value=(r.a_pagar??'');
+  const h=document.getElementById('apagar-hint-'+r.id); if(h) h.textContent=hintAPagar(r);
 }
 
 function updIngNum(id,field,value){
@@ -4706,10 +4705,8 @@ function updIngNum(id,field,value){
   r[field]=value?parseFloat(value):null;
   
   // Calcular A PAGAR con fórmula Excel
-  const pagar = calcularAPagarExcel(r);
-  r.a_pagar=pagar||null;
-  const el=document.getElementById('apagar-'+id);
-  if(el) el.value=pagar||'';
+  r.a_pagar = calcularAPagarExcel(r);
+  pintarAPagar(r);
   refrescarColumnaSueldo();
   
   // Marcar visualmente que hay cambios sin guardar
@@ -6414,6 +6411,8 @@ async function loadIngresos(){
     ingresosData = ingresosData.filter(r => r.gestor === curG);
   }
   
+  // Completar A Pagar vacíos con la cuenta (así nunca queda en 'auto')
+  ingresosData.forEach(r=>{ if(r.a_pagar===null||r.a_pagar===undefined||r.a_pagar===''){ r.a_pagar=calcularAPagarExcel(r); } });
   // Ordenar por fecha desc
   ingresosData.sort((a, b) => (b.fecha || '').localeCompare(a.fecha || ''));
   
