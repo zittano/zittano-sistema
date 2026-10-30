@@ -1912,6 +1912,63 @@ renderConsulados();
   </div>
 </div>
 
+<style>
+.lm-wrap{position:relative;display:inline-block}
+.lm-menu{display:none;position:absolute;right:0;top:calc(100% + 4px);background:#fff;border:1px solid var(--bo);border-radius:10px;box-shadow:0 10px 30px rgba(15,23,42,.15);z-index:60;min-width:200px;padding:5px}
+.lm-menu.on{display:block}
+.lm-menu button{display:block;width:100%;text-align:left;padding:9px 11px;border:none;background:none;border-radius:7px;font-size:13px;font-weight:600;color:var(--grd);cursor:pointer;font-family:inherit}
+.lm-menu button:hover{background:var(--grl)}
+</style>
+<div class="seg-modal-bg" id="lead-msg" onclick="if(event.target===this)cerrarMsgLead()">
+  <div class="seg-modal" style="max-width:480px;max-height:92vh;overflow-y:auto">
+    <h3 id="lmsg-tit" style="margin-bottom:2px"></h3>
+    <div id="lmsg-sub" style="font-size:12.5px;color:var(--gr);margin-bottom:10px"></div>
+    <div class="ct-chips" id="lmsg-ops" style="margin-bottom:10px"></div>
+    <div id="lmsg-extra"></div>
+    <label>Mensaje (lo podés retocar)</label>
+    <textarea id="lmsg-txt" style="min-height:150px"></textarea>
+    <div class="seg-modal-actions">
+      <button class="seg-modal-cancel" onclick="cerrarMsgLead()">Cancelar</button>
+      <button class="ct-wa" onclick="enviarMsgLead()">💬 Abrir WhatsApp</button>
+    </div>
+  </div>
+</div>
+<div class="seg-modal-bg" id="lead-alias" onclick="if(event.target===this)this.classList.remove('on')">
+  <div class="seg-modal">
+    <h3>💳 Alias de cobro de <span id="al-quien"></span></h3>
+    <div style="font-size:12.5px;color:var(--gr)">Se carga una sola vez. Cada una tiene el suyo y sale solo en el mensaje de pago de sus leads.</div>
+    <label>Alias</label><input id="al-alias" placeholder="ej: zittano.male">
+    <label>Nombre del titular</label><input id="al-titular" placeholder="Como figura en la cuenta">
+    <div class="seg-modal-actions">
+      <button class="seg-modal-cancel" onclick="document.getElementById('lead-alias').classList.remove('on')">Cancelar</button>
+      <button class="seg-modal-send" onclick="guardarAliasLead()">Guardar</button>
+    </div>
+  </div>
+</div>
+<div class="seg-modal-bg" id="lead-form" onclick="if(event.target===this)this.classList.remove('on')">
+  <div class="seg-modal" style="max-width:500px;max-height:92vh;overflow-y:auto">
+    <h3 style="margin-bottom:2px">📋 Formulario de <span id="fv-tit"></span></h3>
+    <div id="fv-fecha" style="font-size:12px;color:var(--gr);margin-bottom:10px"></div>
+    <table style="width:100%;border-collapse:collapse" id="fv-tabla"></table>
+    <div class="seg-modal-actions">
+      <button class="seg-modal-cancel" onclick="document.getElementById('lead-form').classList.remove('on')">Cerrar</button>
+      <button class="seg-modal-send" id="fv-pres">📄 Armar presupuesto</button>
+    </div>
+  </div>
+</div>
+<div class="seg-modal-bg" id="lead-avance" onclick="if(event.target===this)this.classList.remove('on')">
+  <div class="seg-modal" style="max-width:460px">
+    <h3 style="margin-bottom:2px">📲 Contarle cómo va</h3>
+    <div id="av-sub" style="font-size:12.5px;color:var(--gr);margin-bottom:6px"></div>
+    <label>Mensaje (lo podés retocar)</label>
+    <textarea id="av-txt" style="min-height:140px"></textarea>
+    <div class="seg-modal-actions">
+      <button class="seg-modal-cancel" onclick="document.getElementById('lead-avance').classList.remove('on')">Ahora no</button>
+      <button class="ct-wa" onclick="enviarAvance()">💬 Abrir WhatsApp</button>
+    </div>
+  </div>
+</div>
+
 <div class="seg-modal-bg" id="lead-ct" onclick="if(event.target===this)cerrarContactoLead()">
   <div class="seg-modal">
     <h3 style="margin-bottom:2px">💬 Contactar a <span id="ct-nombre"></span></h3>
@@ -3755,6 +3812,7 @@ async function openM(id){
   const idx = allC.findIndex(x=>x.id===id);
   if(idx>=0) allC[idx] = c;
   modC={...c,checklist:Array.isArray(c.checklist)?[...c.checklist.map(x=>({...x}))]:[]};
+  modC._estadoIni=c.estado;
   document.getElementById('mtit').textContent=c.nombre||'Ficha';
   renderMBody();
   document.getElementById('mbg').classList.add('on');
@@ -3820,8 +3878,9 @@ function renderMBody(){
       <div style="display:flex;gap:6px;flex-wrap:wrap">
         <button type="button" onclick="copiarLinkPortal()" style="padding:7px 12px;border:none;border-radius:8px;background:#059669;color:#fff;font-size:12px;font-weight:700;cursor:pointer">Copiar link</button>
         <button type="button" onclick="copiarMsjPortal()" style="padding:7px 12px;border:1.5px solid #a7f3d0;border-radius:8px;background:#fff;color:#065f46;font-size:12px;font-weight:700;cursor:pointer">Copiar mensaje WhatsApp</button>
+        <button type="button" onclick="avisarAvance(modC, modC.estado)" style="padding:7px 12px;border:none;border-radius:8px;background:#25d366;color:#fff;font-size:12px;font-weight:700;cursor:pointer">📲 Contarle cómo va</button>
       </div>
-    </div>`:''}
+    </div>`:`<div style="display:flex;justify-content:flex-end"><button type="button" onclick="avisarAvance(modC, modC.estado)" style="padding:7px 12px;border:none;border-radius:8px;background:#25d366;color:#fff;font-size:12px;font-weight:700;cursor:pointer">📲 Contarle cómo va</button></div>`}
 
     <!-- INFO RÁPIDA -->
     <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:10px">
@@ -4029,7 +4088,9 @@ async function saveM(){
   // Sync pagos to ingresos table automatically
   await syncPagosToIngresos(modC.id, modC.nombre, pagos);
   
+  const cAviso={...modC}; const cambioEst = modC._estadoIni!==modC.estado && AVANCE_MSJ[modC.estado];
   updStats();filterDb();toast('✅ Cambios guardados','ok');closeM();
+  if(cambioEst && cAviso.celular) avisarAvance(cAviso, cAviso.estado, true);
 }
 
 async function syncPagosToIngresos(clienteId, clienteNombre, pagos){
@@ -7775,7 +7836,7 @@ const leadHoras = f => (Date.now() - new Date(f).getTime()) / 36e5;
 // Frenado: nuevo sin contactar hace +48 hs, o contactado sin consulta hace +7 días
 function leadFrenado(l){
   if(l.estado==='nuevo') return leadHoras(l.created_at) > 48;
-  if(l.estado==='contactado') return leadHoras(l.contactado_at||l.created_at) > 24*7;
+  if(l.estado==='contactado'){ const sg=leadSeg(l); return leadHoras(sg.at||l.contactado_at||l.created_at) > 24*7 && sg.n<3; }
   return false;
 }
 
@@ -7789,6 +7850,9 @@ async function loadLeads(){
     return;
   }
   allLeads = data || [];
+  await detectarLeadsV2();
+  await cargarFormularios();
+  await cargarEquipoConfig();
   await sincronizarLeads();
   armarMesesLeads();
   renderLeads();
@@ -7886,20 +7950,38 @@ function filaLead(l){
   const quien = curG==='Belén' ? `<span class="gb3 ${gbCl(l.asignada_a)}" style="font-size:10px;padding:2px 7px;margin-left:6px">${LEAD_APODO[l.asignada_a]||escH(l.asignada_a)}</span>` : '';
   const abierto = !['avanzo','no_avanzo'].includes(l.estado);
   const btn = (txt, fn, bg, col) => `<button onclick="${fn}" style="padding:7px 12px;border:none;border-radius:8px;background:${bg};color:${col};font-size:12px;font-weight:700;cursor:pointer;white-space:nowrap">${txt}</button>`;
+  const cons = consultaLead(l.id), consPas = consultaPasada(cons);
+  const form = FORMS[l.id];
+  const sg = leadSeg(l), segDue = abierto && segToca(l);
+  const chip = (txt,bg,col,fn) => `<span ${fn?`onclick="${fn}"`:''} style="display:inline-block;font-size:11.5px;font-weight:700;margin:6px 6px 0 0;padding:3px 9px;border-radius:7px;background:${bg};color:${col};${fn?'cursor:pointer':''}">${txt}</span>`;
+  // Acciones del menú "Más"
+  const mas = [
+    abierto ? ['💳 Cobrar consulta', `cobrarConsultaLead('${l.id}')`] : null,
+    abierto ? ['📝 Mandar formulario', `mandarFormLead('${l.id}')`] : null,
+    ['⚡ Respuestas rápidas', `respuestasLead('${l.id}')`],
+    ['📄 Armar presupuesto', `presupuestoDesdeLead('${l.id}')`],
+    abierto && l.estado!=='nuevo' ? ['🔁 Mandar seguimiento', `seguimientoLead('${l.id}')`] : null,
+    cons && !consPas ? ['🔔 Recordar consulta', `recordarConsultaLead('${l.id}')`] : null,
+    form ? ['📋 Ver formulario', `verFormLead('${l.id}')`] : null,
+  ].filter(Boolean);
   return `<div style="background:var(--wh);border:1px solid ${frenado?'#fca5a5':'var(--bo)'};border-radius:11px;padding:12px 15px;display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap">
     <div style="min-width:0;flex:1 1 260px">
       <div style="font-size:14px;font-weight:700;color:var(--grd)">${frenado?'🔴 ':''}${escH(l.nombre)}${quien}</div>
       <div style="font-size:12px;color:var(--gr);margin-top:2px">${escH(l.tramite)} · ${escH(l.canal||'')} · ${f} · derivó ${escH(l.derivado_por)}${l.motivo?' · '+escH(l.motivo):''}</div>
       ${l.nota?`<div style="font-size:12.5px;color:var(--grd);margin-top:5px;background:var(--grl);border-radius:7px;padding:6px 9px">${escH(l.nota)}</div>`:''}
-      ${consultaLead(l.id)?`<div style="display:inline-block;font-size:12px;font-weight:700;margin-top:6px;padding:3px 9px;border-radius:7px;background:${consultaPasada(consultaLead(l.id))?'#f1f5f9':'#e0f5fa'};color:${consultaPasada(consultaLead(l.id))?'#64748b':'#0e6f86'}">📅 Consulta: ${textoConsulta(consultaLead(l.id))}</div>`:''}
+      <div>${cons?chip('📅 Consulta: '+textoConsulta(cons), consPas?'#f1f5f9':'#e0f5fa', consPas?'#64748b':'#0e6f86'):''}${form?chip('📋 Formulario completo','#ecfdf5','#047857',`verFormLead('${l.id}')`):''}${sg.n?chip('🔁 Seguimiento '+sg.n+'/3'+(sg.at?' · '+haceTxt(sg.at):''),'#f5f3ff','#6d28d9'):''}</div>
     </div>
     <div style="display:flex;gap:6px;align-items:center;flex-wrap:wrap">
       <span style="font-size:11px;font-weight:700;padding:4px 10px;border-radius:20px;background:${e.bg};color:${e.c}">${e.t}</span>
       ${btn('💬 Escribirle', `escribirLead('${l.id}')`, '#e6f7ee', '#009246')}
+      ${segDue ? btn('🔁 Toca seguimiento', `seguimientoLead('${l.id}')`, '#ede9fe', '#6d28d9') : ''}
+      ${form && abierto ? btn('📄 Armar presupuesto', `presupuestoDesdeLead('${l.id}')`, '#fef3c7', '#92400e') : ''}
       ${abierto ? btn('📅 Agendar consulta', `agendarConsultaLead('${l.id}')`, '#e0f5fa', '#0e6f86') : ''}
-      ${abierto && consultaLead(l.id) && !consultaPasada(consultaLead(l.id)) ? btn('🔔 Recordar', `recordarConsultaLead('${l.id}')`, '#fff4d6', '#8a5a00') : ''}
+      ${abierto && cons && !consPas ? btn('🔔 Recordar', `recordarConsultaLead('${l.id}')`, '#fff4d6', '#8a5a00') : ''}
       ${l.cliente_id ? btn('📂 Ficha', `openM('${l.cliente_id}')`, 'var(--azl)', 'var(--az)')
                      : (abierto ? btn('📂 Crear ficha', `crearFichaLead('${l.id}')`, 'var(--azl)', 'var(--az)') : '')}
+      <span class="lm-wrap"><button onclick="toggleMasLead(event,'${l.id}')" style="padding:7px 11px;border:1px solid var(--bo);border-radius:8px;background:#fff;color:var(--grd);font-size:12px;font-weight:700;cursor:pointer">⋯ Más</button>
+        <div class="lm-menu" id="lm-${l.id}">${mas.map(([t,fn])=>`<button onclick="cerrarMasLead();${fn}">${t}</button>`).join('')}</div></span>
       ${abierto ? btn('❌', `abrirMotivoLead('${l.id}')`, '#fee2e2', '#b91c1c') : ''}
     </div>
   </div>`;
@@ -7938,6 +8020,19 @@ function renderTableroLeads(lista){
       <table style="width:100%;border-collapse:collapse;font-size:13px">
       <thead><tr style="border-bottom:1px solid var(--bo)"><th style="padding:8px 10px;text-align:left;font-size:11px;color:var(--gr);font-weight:600">Profesional</th>${th('Derivados')}${th('Consulta')}${th('Avanzaron')}${th('Tasa')}${th('Frenados')}</tr></thead>
       <tbody>${fila('Sofía')}${fila('Malena')}</tbody></table></div>`;
+  }
+  if(curG==='Belén' && tot){
+    const canales=[...new Set(lista.map(l=>l.canal||'Sin dato'))].sort();
+    const filaC = c => { const s=lista.filter(l=>(l.canal||'Sin dato')===c); const cn=s.filter(l=>['consulta','avanzo'].includes(l.estado)).length; const a=s.filter(l=>l.estado==='avanzo').length; const tasa=s.length?a/s.length:0;
+      return `<tr><td style="padding:8px 10px;font-weight:700">${c==='Instagram'?'📸 ':c==='WhatsApp'?'💬 ':c==='Pauta'?'📣 ':''}${escH(c)}</td>
+        <td style="padding:8px 10px;text-align:right">${s.length}</td><td style="padding:8px 10px;text-align:right">${cn}</td><td style="padding:8px 10px;text-align:right">${a}</td>
+        <td style="padding:8px 10px;text-align:right"><div style="display:flex;align-items:center;gap:8px;justify-content:flex-end"><div style="width:70px;height:7px;background:var(--grl);border-radius:4px;overflow:hidden"><div style="width:${Math.round(tasa*100)}%;height:100%;background:#009246"></div></div><b>${pct(a,s.length)}</b></div></td></tr>`; };
+    const th2 = t => `<th style="padding:8px 10px;text-align:right;font-size:11px;color:var(--gr);font-weight:600">${t}</th>`;
+    html += `<div style="background:var(--wh);border:1px solid var(--bo);border-radius:12px;margin:10px 0 4px;overflow-x:auto">
+      <div style="padding:10px 12px 0;font-size:12px;font-weight:700;color:var(--gr);text-transform:uppercase;letter-spacing:.4px">¿Qué canal vende más?</div>
+      <table style="width:100%;border-collapse:collapse;font-size:13px">
+      <thead><tr style="border-bottom:1px solid var(--bo)"><th style="padding:8px 10px;text-align:left;font-size:11px;color:var(--gr);font-weight:600">Canal</th>${th2('Derivados')}${th2('Consulta')}${th2('Avanzaron')}${th2('Tasa de cierre')}</tr></thead>
+      <tbody>${canales.map(filaC).join('')}</tbody></table></div>`;
   }
   box.innerHTML = html;
 }
@@ -8029,7 +8124,11 @@ function dibujarQRContacto(l){
 function leerLeadLS(k){ try{ return JSON.parse(localStorage.getItem(k)||'{}')||{}; }catch(e){ return {}; } }
 function guardarLeadLS(k,id,v){ try{ const o=leerLeadLS(k); if(v) o[id]=v; else delete o[id]; localStorage.setItem(k,JSON.stringify(o)); }catch(e){} }
 function isoLocal(d){ return d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0'); }
-function consultaLead(id){ return leerLeadLS('zit_lead_cons')[id]||null; }
+function consultaLead(id){
+  const l=(allLeads||[]).find(x=>x.id===id);
+  if(l && l.consulta_at){ const d=new Date(l.consulta_at); return {iso:isoLocal(d), hora:String(d.getHours()).padStart(2,'0')+':'+String(d.getMinutes()).padStart(2,'0')}; }
+  return leerLeadLS('zit_lead_cons')[id]||null;
+}
 function consultaPasada(c){ return !c || (c.iso+'T'+(c.hora||'23:59')) < isoLocal(new Date())+'T'+new Date().toTimeString().slice(0,5); }
 function horaTxt(h){ if(!h) return ''; const [hh,mm]=String(h).split(':'); return (mm&&mm!=='00')?(parseInt(hh)+':'+mm+' hs'):(parseInt(hh)+' hs'); }
 function textoConsulta(c, paraMsj){
@@ -8062,8 +8161,8 @@ function agendarConsultaLead(id){
   document.getElementById('cal-hora-otra').value = (calHora&&!hChip.includes(calHora))?calHora:'';
   document.getElementById('cal-dur').innerHTML=CAL_DUR.map(m=>`<button class="ct-chip${m===calDur?' on':''}" data-v="${m}" onclick="calElegir('dur',this)">${m} min</button>`).join('');
   const cli = l.cliente_id ? (allC||[]).find(c=>c.id===l.cliente_id) : null;
-  document.getElementById('cal-mail').value = (cli&&cli.mail)||'';
-  document.getElementById('cal-mail-nota').textContent = cli ? 'Si lo cargás o lo cambiás, se guarda solo en su ficha.' : 'Pedíselo por WhatsApp. Sin mail igual se agenda, pero al cliente no le llega la invitación.';
+  document.getElementById('cal-mail').value = (cli&&cli.mail)||l.email||((FORMS[l.id]||{}).datos||{}).mail||'';
+  document.getElementById('cal-mail-nota').textContent = cli ? 'Si lo cargás o lo cambiás, se guarda solo en su ficha.' : ((FORMS[l.id]||{}).datos||{}).mail ? 'Lo sacamos del formulario que completó.' : 'Pedíselo por WhatsApp (o mandale el formulario). Sin mail igual se agenda, pero no le llega la invitación.';
   document.getElementById('lead-cal').classList.add('on');
 }
 function calElegir(tipo, el){
@@ -8079,7 +8178,8 @@ function detalleConsulta(l, prof){
   const traer = t==='AIRE' ? '• Tu pasaporte italiano o los datos de tu ciudadanía ya reconocida\n• Tu DNI y tu domicilio actual'
     : t==='RECO' ? '• Nombre completo de tu antepasado italiano y, si los tenés, fechas y lugar de nacimiento\n• Las actas o partidas que ya tengas (fotos sirven)\n• Tu DNI'
     : '• Toda la documentación que ya tengas de tu trámite (fotos sirven)\n• Tu DNI';
-  return `Consulta inicial con ${quien}, de Zittano.\n\nPara aprovecharla al máximo, tené a mano:\n${traer}\n\nCualquier cosa, escribinos por WhatsApp. ¡Te esperamos! 😊`;
+  const formTxt = FORMS[l.id] ? '' : `\n\n📝 Antes de la consulta, completá este formulario cortito (3 minutos) así llegamos con tu caso estudiado:\n${linkFormLead(l)}`;
+  return `Consulta inicial con ${quien}, de Zittano.\n\nPara aprovecharla al máximo, tené a mano:\n${traer}${formTxt}\n\nCualquier cosa, escribinos por WhatsApp. ¡Te esperamos! 😊`;
 }
 async function abrirCalLead(){
   const l = allLeads.find(x => x.id===calLeadId); if(!l) return;
@@ -8096,6 +8196,8 @@ async function abrirCalLead(){
   const w = window.open('https://calendar.google.com/calendar/render?'+q.toString(), 'zittano_calendar');
   if(w) try{ w.focus(); }catch(e){}
   guardarLeadLS('zit_lead_cons', l.id, {iso:calDia, hora:calHora});
+  if(LEADS_V2){ const upd={consulta_at:ini.toISOString(), actualizado_at:new Date().toISOString()}; if(mail) upd.email=mail;
+    SB.from('leads').update(upd).eq('id', l.id).then(({error})=>{ if(!error){ l.consulta_at=upd.consulta_at; if(mail) l.email=mail; } }); }
   cerrarCalLead();
   renderLeads();
   toast('📅 Revisá en Calendar y tocá Guardar','ok');
@@ -8168,6 +8270,212 @@ function descargarPresWpp(){
 }
 function abrirPresWpp(){ abrirWpp(g('e-cel'), document.getElementById('pw-msg').value); }
 function cerrarPresWpp(){ document.getElementById('pres-wa').classList.remove('on'); }
+
+// ════ LEADS v2: columnas nuevas, formularios, alias, seguimiento ════
+let LEADS_V2=false, FORMS_OK=false, FORMS={}, EQUIPO={}, EQUIPO_OK=false;
+const FORM_URL='https://zittano.github.io/zittano-sistema/formulario.html';
+const CONSULTA_PRECIO={RECO:90000, AIRE:35000, Otro:50000};
+async function detectarLeadsV2(){
+  if(allLeads.length) { LEADS_V2 = ('consulta_at' in allLeads[0]) && ('seguimientos' in allLeads[0]); return; }
+  const {error}=await SB.from('leads').select('consulta_at,seguimientos').limit(1); LEADS_V2=!error;
+}
+async function cargarFormularios(){
+  FORMS={}; const ids=allLeads.map(l=>l.id); if(!ids.length) return;
+  for(let i=0;i<ids.length;i+=150){
+    const {data,error}=await SB.from('formularios_previos').select('id,lead_id,datos,created_at').in('lead_id', ids.slice(i,i+150)).order('created_at',{ascending:true});
+    if(error){ FORMS_OK=false; return; }
+    FORMS_OK=true; (data||[]).forEach(f=>{ FORMS[f.lead_id]=f; });
+  }
+}
+async function cargarEquipoConfig(){
+  const {data,error}=await SB.from('equipo_config').select('*');
+  EQUIPO_OK=!error; EQUIPO={};
+  (data||[]).forEach(r=>EQUIPO[r.gestor]=r);
+  try{ const ls=JSON.parse(localStorage.getItem('zit_equipo')||'{}'); Object.keys(ls).forEach(g=>{ if(!EQUIPO[g]) EQUIPO[g]=ls[g]; }); }catch(e){}
+}
+function haceTxt(iso){ const h=leadHoras(iso); if(h<1) return 'recién'; if(h<24) return 'hace '+Math.round(h)+' h'; const d=Math.round(h/24); return 'hace '+d+(d===1?' día':' días'); }
+function primerNombre(l){ return (l.nombre||'').trim().split(/\s+/)[0]||''; }
+function temaLead(l){ return l.tramite==='AIRE' ? 'tu inscripción en el AIRE' : l.tramite==='RECO' ? 'tu ciudadanía italiana' : 'tu trámite'; }
+function profLead(l){ return LEAD_FIRMA[curG] ? curG : (LEAD_FIRMA[l.asignada_a] ? l.asignada_a : curG); }
+
+// Modal genérico de "mensaje listo para WhatsApp"
+let lmsgLeadId=null;
+function abrirMsgLead(l, titulo, opciones, extraHtml){
+  lmsgLeadId=l.id;
+  document.getElementById('lmsg-tit').textContent=titulo;
+  document.getElementById('lmsg-sub').textContent=(l.nombre||'')+' · +'+_telLimpio(String(l.telefono||''));
+  const ops=document.getElementById('lmsg-ops');
+  ops.innerHTML = opciones.length>1 ? opciones.map((o,i)=>`<button class="ct-chip${i===0?' on':''}" data-i="${i}">${o.t}</button>`).join('') : '';
+  ops.style.display = opciones.length>1 ? '' : 'none';
+  ops.onclick = ev => { const b=ev.target.closest('.ct-chip'); if(!b) return; ops.querySelectorAll('.ct-chip').forEach(c=>c.classList.remove('on')); b.classList.add('on'); document.getElementById('lmsg-txt').value=opciones[+b.dataset.i].m; };
+  document.getElementById('lmsg-extra').innerHTML=extraHtml||'';
+  document.getElementById('lmsg-txt').value=opciones[0].m;
+  document.getElementById('lead-msg').classList.add('on');
+}
+let lmsgAlEnviar=null;
+function enviarMsgLead(){
+  const l=allLeads.find(x=>x.id===lmsgLeadId); if(!l) return;
+  abrirWpp(l.telefono, document.getElementById('lmsg-txt').value);
+  document.getElementById('lead-msg').classList.remove('on');
+  if(lmsgAlEnviar){ const f=lmsgAlEnviar; lmsgAlEnviar=null; f(l); }
+}
+function cerrarMsgLead(){ document.getElementById('lead-msg').classList.remove('on'); lmsgAlEnviar=null; }
+
+// ⋯ Más
+function toggleMasLead(ev,id){ ev.stopPropagation(); const m=document.getElementById('lm-'+id); const ab=m.classList.contains('on'); cerrarMasLead(); if(!ab) m.classList.add('on'); }
+function cerrarMasLead(){ document.querySelectorAll('.lm-menu.on').forEach(m=>m.classList.remove('on')); }
+document.addEventListener('click', cerrarMasLead);
+
+// 💳 Cobrar consulta (con el alias de quien lleva el lead)
+function cobrarConsultaLead(id){
+  const l=allLeads.find(x=>x.id===id); if(!l) return;
+  const g = LEAD_FIRMA[l.asignada_a] ? l.asignada_a : curG;
+  const cfg = EQUIPO[g];
+  if(!cfg || !cfg.alias){ pedirAliasLead(g, ()=>cobrarConsultaLead(id)); return; }
+  const monto = CONSULTA_PRECIO[l.tramite] || CONSULTA_PRECIO.Otro;
+  const armar = m => `Hola ${primerNombre(l)}! 😊 Para confirmar tu consulta te paso los datos para la transferencia:\n\n💳 Alias: ${cfg.alias}\n👤 Titular: ${cfg.titular||''}\n💲 Monto: $${Number(m).toLocaleString('es-AR')}\n\nEste valor se descuenta de los honorarios si avanzás con el trámite. Cuando la hagas, mandame el comprobante por acá y te confirmo el horario 🙌`;
+  const extra = `<div style="display:flex;gap:8px;align-items:end;margin-bottom:6px">
+     <div style="flex:1"><label>Monto de la consulta</label><input id="lmsg-monto" type="number" value="${monto}" oninput="document.getElementById('lmsg-txt').value=lmsgArmar(this.value||0)"></div>
+     <button type="button" onclick="pedirAliasLead('${g}',()=>cobrarConsultaLead('${id}'))" style="padding:10px 12px;border:1px solid var(--bo);border-radius:9px;background:#fff;font-size:12px;font-weight:700;cursor:pointer;white-space:nowrap">✏️ Cambiar alias</button>
+   </div>
+   <div style="font-size:12px;color:var(--gr);margin-bottom:4px">Alias de <b>${LEAD_APODO[g]||g}</b>: ${escH(cfg.alias)} · ${escH(cfg.titular||'')}</div>`;
+  lmsgArmar = armar;
+  abrirMsgLead(l, '💳 Cobrar la consulta', [{t:'Datos de pago', m:armar(monto)}], extra);
+}
+let aliasCb=null, aliasG='', lmsgArmar=null;
+function pedirAliasLead(g, cb){
+  aliasG=g; aliasCb=cb; const c=EQUIPO[g]||{};
+  document.getElementById('al-quien').textContent=LEAD_APODO[g]||g;
+  document.getElementById('al-alias').value=c.alias||''; document.getElementById('al-titular').value=c.titular||'';
+  document.getElementById('lead-msg').classList.remove('on');
+  document.getElementById('lead-alias').classList.add('on');
+}
+async function guardarAliasLead(){
+  const alias=document.getElementById('al-alias').value.trim(), titular=document.getElementById('al-titular').value.trim();
+  if(!alias){ toast('Falta el alias','err'); return; }
+  if(!titular){ toast('Falta el nombre del titular','err'); return; }
+  EQUIPO[aliasG]={gestor:aliasG, alias, titular};
+  let ok=false;
+  if(EQUIPO_OK){ const {error}=await SB.from('equipo_config').upsert({gestor:aliasG, alias, titular, actualizado_at:new Date().toISOString()},{onConflict:'gestor'}); ok=!error; }
+  try{ const ls=JSON.parse(localStorage.getItem('zit_equipo')||'{}'); ls[aliasG]={gestor:aliasG,alias,titular}; localStorage.setItem('zit_equipo',JSON.stringify(ls)); }catch(e){}
+  document.getElementById('lead-alias').classList.remove('on');
+  toast(ok?'✅ Alias guardado':'✅ Alias guardado en esta compu','ok');
+  if(aliasCb){ const f=aliasCb; aliasCb=null; f(); }
+}
+
+// 📝 Formulario previo
+function linkFormLead(l){ return FORM_URL+'?l='+encodeURIComponent(l.id)+'&t='+encodeURIComponent(l.tramite||'RECO')+'&n='+encodeURIComponent((l.nombre||'').trim()); }
+function mandarFormLead(id){
+  const l=allLeads.find(x=>x.id===id); if(!l) return;
+  abrirMsgLead(l,'📝 Mandar formulario previo',[{t:'Formulario', m:`Hola ${primerNombre(l)}! 😊 Para aprovechar al máximo la consulta, ¿me completás este formulario cortito? Son 3 minutos y así llego con tu caso ya estudiado:\n\n${linkFormLead(l)}\n\n¡Gracias!`}],
+    FORMS_OK?'':'<div style="font-size:12px;background:#fff7ed;color:#9a3412;border-radius:8px;padding:8px 10px;margin-bottom:6px">⚠️ Falta activar los formularios en la base (el SQL que te pasé). Hasta entonces el cliente no va a poder enviarlo.</div>');
+}
+const FORM_LBL={nombre:'Nombre',apellido:'Apellido',dni:'DNI',celular:'Celular',mail:'Mail',domicilio:'Domicilio',zona:'Vive en',asc_nombre:'Antepasado italiano',asc_parentesco:'Parentesco',asc_nacimiento:'Nacimiento',asc_comuna:'Comuna en Italia',asc_padres:'Padres del antepasado',asc_casado:'Se casó en',docs:'Documentos que tiene',ciudadania:'Ciudadanía reconocida',aire:'Inscripto en AIRE',necesita:'Necesita',consulado:'Consulado',menores:'Hijos menores',necesidad:'Qué necesita',comentarios:'Comentarios'};
+const ZONA_LBL={caba:'CABA / GBA',interior:'Interior',exterior:'Exterior'};
+function verFormLead(id){
+  const l=allLeads.find(x=>x.id===id); const f=FORMS[id]; if(!l||!f) return;
+  const d=f.datos||{};
+  const filas=Object.keys(FORM_LBL).filter(k=>d[k]&&String(d[k]).length).map(k=>`<tr><td style="padding:6px 8px;color:var(--gr);font-size:12px;width:40%;vertical-align:top">${FORM_LBL[k]}</td><td style="padding:6px 8px;font-size:13px;font-weight:600">${escH(Array.isArray(d[k])?d[k].join(', '):(k==='zona'?ZONA_LBL[d[k]]||d[k]:d[k]))}</td></tr>`).join('');
+  document.getElementById('fv-tit').textContent=(d.nombre||'')+' '+(d.apellido||'');
+  document.getElementById('fv-fecha').textContent='Lo completó '+new Date(f.created_at).toLocaleString('es-AR',{day:'numeric',month:'short',hour:'2-digit',minute:'2-digit'});
+  document.getElementById('fv-tabla').innerHTML=filas||'<tr><td>Sin datos</td></tr>';
+  document.getElementById('fv-pres').onclick=()=>{ document.getElementById('lead-form').classList.remove('on'); presupuestoDesdeLead(id); };
+  document.getElementById('lead-form').classList.add('on');
+}
+
+// 📄 Del lead al presupuesto en un clic
+function presupuestoDesdeLead(id){
+  const l=allLeads.find(x=>x.id===id); if(!l) return;
+  const hayAlgo = ['e-nom','e-ape','e-cel'].some(k=>g(k).trim()) || srvs.length || etas.length;
+  if(hayAlgo && !confirm('Tenés un presupuesto a medio armar. ¿Lo reemplazo por uno nuevo para '+(l.nombre||'este lead')+'?')) return;
+  clearAll(true);
+  const d=((FORMS[id]||{}).datos)||{};
+  const partes=(l.nombre||'').trim().split(/\s+/);
+  const set=(k,v)=>{ const el=document.getElementById(k); if(el&&v){ el.removeAttribute('readonly'); el.value=v; } };
+  set('e-nom', d.nombre || partes[0]); set('e-ape', d.apellido || partes.slice(1).join(' '));
+  set('e-cel', d.celular || l.telefono); set('e-mail', d.mail || l.email); set('e-dni', d.dni); set('e-dom', d.domicilio);
+  set('e-asc', d.asc_nombre); set('e-par', d.asc_parentesco && d.asc_parentesco!=='No sé' ? d.asc_parentesco : '');
+  set('e-nac', d.asc_nacimiento); set('e-com', d.asc_comuna); set('e-cas', d.asc_casado); set('e-pad', d.asc_padres);
+  const notas=[d.docs&&d.docs.length?'Docs que tiene: '+d.docs.join(', '):'', d.necesita&&d.necesita.length?'Necesita: '+d.necesita.join(', '):'', d.necesidad||'', d.comentarios?'Comentario del cliente: '+d.comentarios:''].filter(Boolean).join(' · ');
+  set('e-obj', notas);
+  const et=document.getElementById('e-tipo'); if(et){ et.value = l.tramite==='AIRE'?'aire':l.tramite==='RECO'?'reconstruccion':''; }
+  if(d.zona==='caba') setZona(false); else if(d.zona==='interior'||d.zona==='exterior') setZona(true);
+  render(); if(typeof toggleBtnPlantilla==='function') toggleBtnPlantilla(); if(typeof guardarBorrador==='function') try{guardarBorrador();}catch(e){}
+  const tab=[...document.querySelectorAll('.htab')].find(b=>(b.getAttribute('onclick')||'').includes("'presup'"));
+  showTab('presup', tab);
+  window.scrollTo({top:0,behavior:'smooth'});
+  toast(d.zona ? '📄 Presupuesto precargado con los datos del formulario' : '📄 Presupuesto precargado · elegí si es CABA/GBA o INTERIOR','ok');
+}
+
+// 🔁 Seguimiento de los que no contestan
+function leadSeg(l){
+  if(LEADS_V2) return {n:l.seguimientos||0, at:l.ultimo_seguimiento_at||null};
+  return leerLeadLS('zit_lead_seg')[l.id]||{n:0,at:null};
+}
+function segToca(l){
+  if(l.estado!=='contactado' || consultaLead(l.id)) return false;
+  const sg=leadSeg(l); if(sg.n>=3) return false;
+  const desde = sg.at || l.contactado_at || l.created_at;
+  return leadHoras(desde) >= [48, 24*5, 24*7][sg.n];
+}
+function seguimientoLead(id){
+  const l=allLeads.find(x=>x.id===id); if(!l) return;
+  const n=primerNombre(l), t=temaLead(l), sg=leadSeg(l);
+  const ops=[
+    {t:'1 · A las 48 hs', m:`Hola ${n}! ¿Cómo estás? 😊 Te escribo para saber si pudiste ver mi mensaje. Me encantaría ayudarte con ${t}. ¿Te queda bien que coordinemos la consulta esta semana?`},
+    {t:'2 · A los 7 días', m:`Hola ${n}! Te escribo de nuevo desde Zittano 🇮🇹 Sé que estos trámites a veces quedan para después, pero cuanto antes arranquemos, antes lo tenés resuelto. ¿Querés que te reserve un horario para la consulta?`},
+    {t:'3 · Último mensaje', m:`Hola ${n}! Es mi último mensaje para no molestarte 😊 Si en algún momento querés avanzar con ${t}, escribime por acá y lo retomamos cuando quieras. ¡Un abrazo!`},
+  ];
+  const i=Math.min(sg.n,2); const orden=[ops[i],...ops.filter((_,k)=>k!==i)];
+  lmsgAlEnviar = (lead)=>registrarSeguimiento(lead);
+  abrirMsgLead(l, `🔁 Seguimiento ${Math.min(sg.n+1,3)}/3`, orden, sg.n>=3?'<div style="font-size:12px;background:#f1f5f9;border-radius:8px;padding:8px 10px;margin-bottom:6px">Ya se mandaron los 3 seguimientos. Si no contesta, marcalo como <b>No avanzó → No respondió</b>.</div>':'');
+}
+async function registrarSeguimiento(l){
+  const sg=leadSeg(l); const n=Math.min(sg.n+1,3); const ahora=new Date().toISOString();
+  if(LEADS_V2){ const {error}=await SB.from('leads').update({seguimientos:n, ultimo_seguimiento_at:ahora, actualizado_at:ahora}).eq('id', l.id); if(!error){ l.seguimientos=n; l.ultimo_seguimiento_at=ahora; } }
+  else guardarLeadLS('zit_lead_seg', l.id, {n, at:ahora});
+  renderLeads();
+  toast(n>=3?'🔁 Último seguimiento enviado':'🔁 Seguimiento '+n+'/3 registrado','ok');
+}
+
+// ⚡ Respuestas rápidas a objeciones
+function respuestasLead(id){
+  const l=allLeads.find(x=>x.id===id); if(!l) return;
+  const n=primerNombre(l), aire=l.tramite==='AIRE';
+  const tarda = aire ? 'La inscripción en el AIRE lleva alrededor de 6 meses, que son los tiempos del consulado. Nosotros nos encargamos de todo y te vamos avisando cada avance' : 'Una reconstrucción completa lleva alrededor de un año de punta a punta, porque depende de los tiempos del consulado y de los registros. Nosotros nos encargamos de todo y te vamos avisando cada avance';
+  abrirMsgLead(l,'⚡ Respuestas rápidas',[
+    {t:'"Es caro"', m:`Te entiendo totalmente, ${n} 😊 Por eso trabajamos por etapas: no pagás todo junto. Abonás el 50% para arrancar cada etapa y el resto cuando la terminamos. Y la consulta se descuenta de los honorarios si avanzás. ¿Querés que te arme el presupuesto por etapas así lo ves claro?`},
+    {t:'"Lo pienso"', m:`¡Claro, ${n}! Es una decisión importante 😊 Si te sirve, contame qué es lo que más te hace dudar (el costo, los tiempos, la documentación) y lo vemos juntos. Sin compromiso.`},
+    {t:'"¿Cuánto tarda?"', m:`Buena pregunta, ${n}. ${tarda} 🇮🇹 Cuanto antes arranquemos, antes lo tenés.`},
+    {t:'"¿Por qué pagar la consulta?"', m:`En la consulta estudiamos tu caso en detalle y te armamos el plan completo con el presupuesto. Y lo mejor: si avanzás, ese valor se descuenta de los honorarios, así que no es un gasto extra 😊`},
+    {t:'"¿Cómo sé que son serios?"', m:`Re válido preguntarlo, ${n} 😊 Zittano trabaja en ciudadanías desde 2014 y acompañamos a cientos de familias. Desde que arrancás tenés un link para seguir tu trámite en tiempo real, y te vamos contando cada avance. ¿Querés que coordinemos la consulta y lo vemos?`},
+    {t:'"Vivo lejos"', m:`¡No hay problema, ${n}! Hacemos todo a distancia: la consulta es online y tenemos un precio único para el interior, pagues como pagues. Sin viajar 😊`},
+  ]);
+}
+
+// 📲 Avisar avance del trámite (ficha)
+const AVANCE_MSJ={
+  'En proceso': (n,lk)=>`¡Hola${n?' '+n:''}! 🇮🇹 Te cuento que ya arrancamos con tu trámite: estamos trabajando en tu carpeta.${lk}`,
+  'Con turno':  (n,lk,f)=>`¡Hola${n?' '+n:''}! 🎉 ¡Buenas noticias! Ya tenés turno en el consulado${f?' para el '+f:''}. Te vamos a contar todo lo que tenés que llevar ese día.${lk}`,
+  'Concluido':  (n,lk)=>`¡Hola${n?' '+n:''}! 🇮🇹🎉 ¡Tu trámite está concluido! Fue un placer acompañarte en este camino. Cualquier cosa que necesites, acá estamos.${lk}`,
+};
+function msjAvance(c, estado){
+  const n=((c.nombre||'').trim().split(' ')[0])||'';
+  const link = c.portal_codigo ? PORTAL_URL+'?c='+encodeURIComponent(c.portal_codigo) : '';
+  const lk = link ? `\n\nPodés ver el detalle cuando quieras acá:\n${link}` : '';
+  const f = c.fecha_turno ? c.fecha_turno.split('-').reverse().join('/') : '';
+  const fn = AVANCE_MSJ[estado];
+  return fn ? fn(n,lk,f) : `¡Hola${n?' '+n:''}! 🇮🇹 Te cuento cómo viene tu trámite: ahora está en "${estado||'en proceso'}".${lk}`;
+}
+let avanceC=null;
+function avisarAvance(c, estado, auto){
+  if(!c) return; avanceC=c;
+  if(!c.celular){ toast('Este cliente no tiene celular cargado','err'); return; }
+  document.getElementById('av-sub').textContent = auto ? `El trámite de ${c.nombre||''} pasó a "${estado}". ¿Le avisás?` : `Mensaje para ${c.nombre||''}`;
+  document.getElementById('av-txt').value = msjAvance(c, estado);
+  document.getElementById('lead-avance').classList.add('on');
+}
+function enviarAvance(){ if(!avanceC) return; abrirWpp(avanceC.celular, document.getElementById('av-txt').value); document.getElementById('lead-avance').classList.remove('on'); }
 
 function cerrarContactoLead(){ document.getElementById('lead-ct').classList.remove('on'); ctLeadId=null; }
 async function enviarContactoLead(){
