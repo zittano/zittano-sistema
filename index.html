@@ -137,6 +137,19 @@ textarea{resize:vertical;}
 .doc-edit textarea{min-height:220px;line-height:1.6;resize:vertical;}
 .doc-edit input:focus,.doc-edit textarea:focus,.doc-edit select:focus{outline:none;border-color:var(--az);}
 .docs-empty{text-align:center;padding:50px 20px;color:var(--gr);font-size:13px;}
+/* PREGUNTAS */
+.preg-btn{background:#f59e0b!important;border-color:#f59e0b!important;color:#fff!important;}
+.preg-btn:hover{background:#d97706!important;}
+.preg-badge{display:inline-block;min-width:18px;padding:1px 6px;border-radius:10px;background:#dc2626;color:#fff;font-size:10px;font-weight:800;margin-left:6px;line-height:16px;text-align:center;}
+.preg-sug{background:#fffbeb;border:1px solid #fde68a;border-radius:9px;padding:10px 12px;margin-bottom:10px;font-size:12px;}
+.preg-sug b{display:block;margin-bottom:6px;color:#92400e;}
+.preg-sug a{display:block;color:var(--az);cursor:pointer;padding:3px 0;font-weight:600;text-decoration:none;}
+.preg-sug a:hover{text-decoration:underline;}
+.preg-estado{font-size:10px;font-weight:800;border-radius:10px;padding:2px 8px;white-space:nowrap;}
+.preg-estado.pend{background:#fef3c7;color:#92400e;}
+.preg-estado.resp{background:#dcfce7;color:#166534;}
+.preg-q{font-size:13px;line-height:1.6;white-space:pre-wrap;padding:12px 0 6px;color:var(--grd);}
+.preg-ctx{font-size:12px;color:var(--gr);white-space:pre-wrap;margin-bottom:8px;}
 @media(max-width:900px){.docs-layout{grid-template-columns:1fr;}.docs-side{position:static;display:flex;flex-wrap:wrap;gap:4px;}.docs-cat{margin-bottom:0;}}
 
 /* PRESUPUESTO */
@@ -573,7 +586,7 @@ tr.row-int{background:#fff7ed!important;}
 <div id="app">
 <div class="sidebar" id="sidebar">
   <button class="sb-btn" data-c="ro" id="sb-gastos" onclick="showTab('gastos',this)"><span class="sb-ico">💸</span>Gastos</button>
-  <button class="sb-btn" data-c="az" id="sb-sops" onclick="showTab('sops',this)"><span class="sb-ico">📚</span>SOPs</button>
+  <button class="sb-btn" data-c="az" id="sb-sops" onclick="showTab('sops',this)"><span class="sb-ico">📚</span>SOPs<span class="preg-badge" id="preg-badge-sb" style="display:none"></span></button>
   <button class="sb-btn" data-c="vd" id="sb-precios" onclick="showTab('precios',this)"><span class="sb-ico">💲</span>Precios</button>
   <button class="sb-btn" data-c="am" id="sb-seguimiento" onclick="showTab('seguimiento',this)"><span class="sb-ico">📞</span>Seguim.</button>
   <button class="sb-btn" data-c="gr" id="sb-papelera" onclick="showTab('papelera',this)"><span class="sb-ico">🗑️</span>Papelera</button>
@@ -1696,6 +1709,7 @@ renderConsulados();
       <div class="docs-main">
         <div class="docs-toolbar">
           <input class="docs-search" id="docs-search" placeholder="🔍 Buscar en títulos y contenido..." oninput="renderSops()">
+          <button class="doc-btn preg-btn" onclick="nuevaPregunta()">❓ Preguntar<span class="preg-badge" id="preg-badge-tb" style="display:none"></span></button>
           <button class="doc-btn pri" onclick="nuevoSop()">+ Nuevo documento</button>
         </div>
         <div id="docs-list"></div>
@@ -2227,6 +2241,8 @@ function initApp(){
   etas=[];srvs=[];chkItems=[];curId=null;resetPresInterior();
   renderEtas();renderSrvs();render();
   setTimeout(restaurarBorrador,1300); // después de la limpieza contra el autocompletar
+  setTimeout(()=>{loadPreguntas();},1500);
+  if(!window.__pregInt) window.__pregInt=setInterval(()=>{if(document.visibilityState==='visible')loadPreguntas();},120000);
   // Show gestor filter only for Belén (admin)
   if(curG==='Belén'){
     const gf=document.getElementById('db-g');
@@ -2800,6 +2816,7 @@ async function loadSops(){
       sopsCargados=true;
     }
   }catch(e){console.warn('Supabase no disponible:',e);}
+  await loadPreguntas();
   renderSopsSide();
   renderSops();
 }
@@ -2807,7 +2824,8 @@ async function loadSops(){
 function renderSopsSide(){
   const side=document.getElementById('docs-side');
   if(!side)return;
-  side.innerHTML=SOPS_CATS.map(c=>{
+  const pend=preguntasData.filter(p=>p.estado==='pendiente').length;
+  side.innerHTML=`<div class="docs-cat${sopsCat==='preguntas'?' on':''}" onclick="setSopsCat('preguntas')"><span>❓ Preguntas</span><span class="cnt"${pend?' style="background:#dc2626;color:#fff"':''}>${pend||preguntasData.length}</span></div>`+SOPS_CATS.map(c=>{
     const cnt=c.id==='todos'?sopsData.length:sopsData.filter(d=>d.categoria===c.id).length;
     return `<div class="docs-cat${sopsCat===c.id?' on':''}" onclick="setSopsCat('${c.id}')"><span>${c.label}</span><span class="cnt">${cnt}</span></div>`;
   }).join('');
@@ -2826,6 +2844,7 @@ function fmtFechaSop(iso){
 function renderSops(){
   const list=document.getElementById('docs-list');
   if(!list)return;
+  if(sopsCat==='preguntas'){renderPreguntas();return;}
   const q=(document.getElementById('docs-search')?.value||'').toLowerCase().trim();
   let docs=sopsData;
   if(sopsCat!=='todos')docs=docs.filter(d=>d.categoria===sopsCat);
@@ -2940,6 +2959,177 @@ async function borrarSop(id){
   renderSopsSide();
   renderSops();
   toast('Documento eliminado','err');
+}
+
+// ══════════ PREGUNTAS → SOPs ══════════
+// El equipo pregunta acá en vez de por WhatsApp. Belén o Germán responden
+// y la respuesta queda guardada sola como SOP para que nadie la vuelva a preguntar.
+let preguntasData=[];
+let preguntasOk=true;
+const PREG_RESPONDEN=['Belén','Germán'];
+function puedeResponder(){return PREG_RESPONDEN.includes(curG);}
+
+async function loadPreguntas(){
+  try{
+    const {data,error}=await SB.from('preguntas').select('*').order('created_at',{ascending:false});
+    if(error){preguntasOk=false;console.warn('Preguntas:',error.message);}
+    else {preguntasOk=true;preguntasData=data||[];}
+  }catch(e){preguntasOk=false;}
+  actualizarBadgePreg();
+}
+
+function actualizarBadgePreg(){
+  // Para quien responde: preguntas pendientes. Para el resto: sus preguntas respondidas que todavía no vio.
+  let n=0;
+  if(puedeResponder()) n=preguntasData.filter(p=>p.estado==='pendiente').length;
+  else n=preguntasData.filter(p=>p.autor===curG&&p.estado==='respondida'&&!p.vista).length;
+  ['preg-badge-tb','preg-badge-sb'].forEach(id=>{const b=document.getElementById(id);if(b){b.textContent=n;b.style.display=n?'inline-block':'none';}});
+}
+
+const PREG_STOP=new Set('el la los las un una unos unas de del al a en y o que se si no es por para con como cual cuando donde lo le les mi tu su sus me te nos ya hay mas muy esto esta este eso esa ese hace tiene puede podemos hacer sale queda cliente clienta belu ger hola consulta pregunta'.split(' '));
+function pregTokens(t){return (t||'').toLowerCase().normalize('NFD').replace(/[̀-ͯ]/g,'').replace(/[^a-z0-9ñ ]/g,' ').split(/\s+/).filter(w=>w.length>2&&!PREG_STOP.has(w));}
+function sopsSimilares(texto,max=3){
+  const tk=[...new Set(pregTokens(texto))];
+  if(tk.length<2)return [];
+  return sopsData.map(d=>{
+    const tit=pregTokens(d.titulo).join(' '), con=pregTokens(d.contenido).join(' ');
+    let sc=0; tk.forEach(w=>{if(tit.includes(w))sc+=3;else if(con.includes(w))sc+=1;});
+    return {d,sc};
+  }).filter(x=>x.sc>=Math.max(3,tk.length)).sort((a,b)=>b.sc-a.sc).slice(0,max).map(x=>x.d);
+}
+function abrirSopDesdePreg(id){
+  sopsCat='todos';const s=document.getElementById('docs-search');if(s)s.value='';
+  renderSopsSide();renderSops();
+  setTimeout(()=>{toggleSop(id);document.getElementById('doc-'+id)?.scrollIntoView({behavior:'smooth',block:'start'});},50);
+}
+
+function nuevaPregunta(){
+  if(!preguntasOk){toast('⚠️ Falta correr el SQL de preguntas en Supabase','err');return;}
+  if(sopsCat!=='preguntas'){sopsCat='preguntas';renderSopsSide();renderSops();}
+  const list=document.getElementById('docs-list');
+  if(!list||document.getElementById('preg-nueva'))return;
+  const wrap=document.createElement('div');
+  wrap.className='doc-card open';wrap.id='preg-nueva';
+  wrap.innerHTML=`<div class="doc-head"><div class="doc-title">❓ Nueva pregunta</div></div>
+  <div class="doc-body" style="display:block"><div class="doc-edit" style="padding-top:12px">
+    <textarea id="preg-f-txt" style="min-height:90px" placeholder="Escribí tu pregunta como se la harías a Belu o a Ger. Ej: ¿Las actas de San Juan van con apostilla para AIRE?" oninput="sugerirSopsPreg()"></textarea>
+    <div id="preg-sug"></div>
+    <input id="preg-f-ctx" placeholder="Contexto opcional (cliente, consulado, caso)...">
+    <select id="preg-f-cat">${SOPS_CATS.filter(c=>c.id!=='todos').map(c=>`<option value="${c.id}"${c.id==='general'?' selected':''}>${c.label}</option>`).join('')}</select>
+    <div class="doc-actions">
+      <button class="doc-btn pri" onclick="enviarPregunta()">Enviar pregunta</button>
+      <button class="doc-btn" onclick="document.getElementById('preg-nueva').remove()">Cancelar</button>
+    </div>
+  </div></div>`;
+  list.prepend(wrap);
+  document.getElementById('preg-f-txt').focus();
+}
+
+function sugerirSopsPreg(){
+  const box=document.getElementById('preg-sug');if(!box)return;
+  const sim=sopsSimilares(document.getElementById('preg-f-txt').value);
+  box.innerHTML=sim.length?`<div class="preg-sug"><b>💡 Antes de enviar: ¿la respuesta está en alguno de estos SOPs?</b>${sim.map(d=>`<a onclick="abrirSopDesdePreg('${d.id}')">📄 ${escSop(d.titulo)}</a>`).join('')}</div>`:'';
+}
+
+async function enviarPregunta(){
+  const pregunta=document.getElementById('preg-f-txt').value.trim();
+  if(pregunta.length<8){toast('Escribí la pregunta completa','err');return;}
+  const row={id:'q_'+Date.now(),pregunta,contexto:document.getElementById('preg-f-ctx').value.trim()||null,categoria:document.getElementById('preg-f-cat').value,autor:curG,estado:'pendiente'};
+  const {data,error}=await SB.from('preguntas').insert(row).select().single();
+  if(error){toast('⚠️ Error: '+error.message,'err');return;}
+  preguntasData.unshift(data||row);
+  toast('✅ Pregunta enviada. Te aviso acá cuando esté la respuesta','ok');
+  actualizarBadgePreg();renderSopsSide();renderPreguntas();
+}
+
+function renderPreguntas(){
+  const list=document.getElementById('docs-list');if(!list)return;
+  if(!preguntasOk){list.innerHTML='<div class="docs-empty">⚠️ Falta correr el SQL de preguntas en Supabase.</div>';return;}
+  const q=(document.getElementById('docs-search')?.value||'').toLowerCase().trim();
+  let ps=preguntasData;
+  if(q)ps=ps.filter(p=>(p.pregunta+' '+(p.respuesta||'')+' '+(p.contexto||'')).toLowerCase().includes(q));
+  ps=[...ps].sort((a,b)=>(a.estado==='pendiente'?0:1)-(b.estado==='pendiente'?0:1)||(b.created_at||'').localeCompare(a.created_at||''));
+  const intro=`<div class="preg-sug" style="background:#eff6ff;border-color:#bfdbfe"><b style="color:#1e40af">Cómo funciona</b>Preguntá acá en vez de por WhatsApp. ${puedeResponder()?'Cuando respondés, la respuesta se guarda sola como SOP.':'Cuando Belu o Ger responden, la respuesta queda guardada como SOP para todo el equipo.'}</div>`;
+  if(!ps.length){list.innerHTML=intro+`<div class="docs-empty">${q?'No hay preguntas que coincidan.':'Todavía no hay preguntas. Tocá "❓ Preguntar".'}</div>`;return;}
+  list.innerHTML=intro+ps.map(p=>{
+    const color=GC[p.autor]||'#64748b';
+    const est=p.estado==='pendiente'?'<span class="preg-estado pend">Pendiente</span>':'<span class="preg-estado resp">Respondida</span>';
+    return `<div class="doc-card" id="preg-${p.id}">
+      <div class="doc-head" onclick="togglePreg('${p.id}')">
+        <div class="doc-title">${escSop(p.pregunta.length>110?p.pregunta.slice(0,110)+'…':p.pregunta)}</div>
+        ${est}
+        <span class="doc-author"><span class="adot" style="background:${color}"></span>${escSop(p.autor||'—')}</span>
+        <span class="doc-meta">${fmtFechaSop(p.created_at)}</span>
+      </div>
+      <div class="doc-body" id="preg-body-${p.id}"></div>
+    </div>`;
+  }).join('');
+}
+
+function togglePreg(id){
+  const card=document.getElementById('preg-'+id);if(!card)return;
+  if(card.classList.contains('open')){card.classList.remove('open');return;}
+  document.querySelectorAll('.doc-card.open').forEach(c=>c.classList.remove('open'));
+  card.classList.add('open');
+  const p=preguntasData.find(x=>x.id===id);const body=document.getElementById('preg-body-'+id);
+  if(!p||!body)return;
+  let html=`<div class="preg-q">${escSop(p.pregunta)}</div>${p.contexto?`<div class="preg-ctx">📎 ${escSop(p.contexto)}</div>`:''}`;
+  if(p.estado==='respondida'){
+    html+=`<div class="doc-content-view" style="background:#f0fdf4;border-radius:8px;padding:12px">${escSop(p.respuesta)}</div>
+      <div class="preg-ctx">Respondió ${escSop(p.respondida_por||'')} · ${fmtFechaSop(p.respondida_at)}</div>
+      <div class="doc-actions">${p.doc_id?`<button class="doc-btn pri" onclick="abrirSopDesdePreg('${p.doc_id}')">📄 Ver el SOP</button>`:''}</div>`;
+    if(p.autor===curG&&!p.vista) marcarPregVista(p);
+  } else if(puedeResponder()){
+    const sim=sopsSimilares(p.pregunta);
+    html+=`${sim.length?`<div class="preg-sug"><b>💡 Puede que ya esté en estos SOPs</b>${sim.map(d=>`<a onclick="abrirSopDesdePreg('${d.id}')">📄 ${escSop(d.titulo)}</a>`).join('')}</div>`:''}
+    <div class="doc-edit">
+      <input id="preg-r-tit-${p.id}" value="${escSop(p.pregunta.replace(/^¿/,'').replace(/\?$/,'').slice(0,120))}" placeholder="Título del SOP">
+      <select id="preg-r-cat-${p.id}">${SOPS_CATS.filter(c=>c.id!=='todos').map(c=>`<option value="${c.id}"${(p.categoria||'general')===c.id?' selected':''}>${c.label}</option>`).join('')}</select>
+      <textarea id="preg-r-txt-${p.id}" style="min-height:120px" placeholder="Tu respuesta. Escribila como regla general para que sirva la próxima vez."></textarea>
+      <div class="doc-actions">
+        <button class="doc-btn pri" onclick="responderPregunta('${p.id}')">✅ Responder y guardar como SOP</button>
+        <button class="doc-btn del" onclick="borrarPregunta('${p.id}')">🗑️ Eliminar</button>
+      </div>
+    </div>`;
+  } else {
+    html+=`<div class="preg-ctx">⏳ Esperando respuesta de Belu o Ger.</div>${p.autor===curG?`<div class="doc-actions"><button class="doc-btn del" onclick="borrarPregunta('${p.id}')">🗑️ Retirar pregunta</button></div>`:''}`;
+  }
+  body.innerHTML=html;
+}
+
+async function responderPregunta(id){
+  const p=preguntasData.find(x=>x.id===id);if(!p)return;
+  const respuesta=document.getElementById('preg-r-txt-'+id).value.trim();
+  const titulo=document.getElementById('preg-r-tit-'+id).value.trim()||p.pregunta.slice(0,120);
+  const categoria=document.getElementById('preg-r-cat-'+id).value;
+  if(respuesta.length<3){toast('Escribí la respuesta','err');return;}
+  const now=new Date().toISOString();
+  const docId='doc_q_'+Date.now();
+  const contenido=`PREGUNTA (${p.autor||'equipo'})\n${p.pregunta}${p.contexto?`\n\nContexto: ${p.contexto}`:''}\n\nRESPUESTA (${curG})\n${respuesta}`;
+  const doc={id:docId,categoria,titulo,contenido,actualizado_por:curG,creado_por:curG,created_at:now,updated_at:now};
+  const {error:e1}=await SB.from('documentacion').insert(doc);
+  if(e1){toast('⚠️ Error guardando el SOP: '+e1.message,'err');return;}
+  const upd={estado:'respondida',respuesta,respondida_por:curG,respondida_at:now,doc_id:docId,categoria};
+  const {error:e2}=await SB.from('preguntas').update(upd).eq('id',id);
+  if(e2){toast('⚠️ El SOP se guardó pero no se marcó la pregunta: '+e2.message,'err');}
+  Object.assign(p,upd);
+  sopsData.unshift(doc);
+  toast('✅ Respondida y guardada como SOP','ok');
+  actualizarBadgePreg();renderSopsSide();renderPreguntas();
+}
+
+async function marcarPregVista(p){
+  p.vista=true;actualizarBadgePreg();
+  try{await SB.from('preguntas').update({vista:true}).eq('id',p.id);}catch(e){}
+}
+
+async function borrarPregunta(id){
+  const p=preguntasData.find(x=>x.id===id);if(!p)return;
+  if(!confirm('¿Eliminar esta pregunta?'))return;
+  const {error}=await SB.from('preguntas').delete().eq('id',id);
+  if(error){toast('⚠️ Error: '+error.message,'err');return;}
+  preguntasData=preguntasData.filter(x=>x.id!==id);
+  actualizarBadgePreg();renderSopsSide();renderPreguntas();
 }
 
 // CHECKLIST
