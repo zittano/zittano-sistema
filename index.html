@@ -138,6 +138,7 @@ textarea{resize:vertical;}
 .doc-edit input:focus,.doc-edit textarea:focus,.doc-edit select:focus{outline:none;border-color:var(--az);}
 .docs-empty{text-align:center;padding:50px 20px;color:var(--gr);font-size:13px;}
 /* PREGUNTAS */
+.rol-yesi .htab:not([data-yesi]),.rol-yesi .sb-btn:not([data-yesi]),.rol-yesi #btn-excel-todo,.rol-yesi .solo-editores{display:none!important;}
 .preg-btn{background:#f59e0b!important;border-color:#f59e0b!important;color:#fff!important;}
 .preg-btn:hover{background:#d97706!important;}
 .preg-badge{display:inline-block;min-width:18px;padding:1px 6px;border-radius:10px;background:#dc2626;color:#fff;font-size:10px;font-weight:800;margin-left:6px;line-height:16px;text-align:center;}
@@ -572,6 +573,7 @@ tr.row-int{background:#fff7ed!important;}
         <button class="gb2" data-g="Sofía" onclick="selG(this)"><i>👩‍💼</i>Sofía</button>
         <button class="gb2" data-g="Belén" onclick="selG(this)"><i>👩‍💼</i>Belén</button>
         <button class="gb2" data-g="Germán" onclick="selG(this)"><i>👨‍💼</i>Germán</button>
+        <button class="gb2" data-g="Yesi" onclick="selG(this)"><i>👩‍💼</i>Yesi</button>
       </div>
       <div class="lpw">
         <input type="password" class="lpi" id="pwd" placeholder="Contraseña..." autocomplete="off" onkeydown="if(event.key==='Enter')login()">
@@ -586,7 +588,7 @@ tr.row-int{background:#fff7ed!important;}
 <div id="app">
 <div class="sidebar" id="sidebar">
   <button class="sb-btn" data-c="ro" id="sb-gastos" onclick="showTab('gastos',this)"><span class="sb-ico">💸</span>Gastos</button>
-  <button class="sb-btn" data-c="az" id="sb-sops" onclick="showTab('sops',this)"><span class="sb-ico">📚</span>SOPs<span class="preg-badge" id="preg-badge-sb" style="display:none"></span></button>
+  <button class="sb-btn" data-c="az" data-yesi id="sb-sops" onclick="showTab('sops',this)"><span class="sb-ico">📚</span>SOPs<span class="preg-badge" id="preg-badge-sb" style="display:none"></span></button>
   <button class="sb-btn" data-c="vd" id="sb-precios" onclick="showTab('precios',this)"><span class="sb-ico">💲</span>Precios</button>
   <button class="sb-btn" data-c="am" id="sb-seguimiento" onclick="showTab('seguimiento',this)"><span class="sb-ico">📞</span>Seguim.</button>
   <button class="sb-btn" data-c="gr" id="sb-papelera" onclick="showTab('papelera',this)"><span class="sb-ico">🗑️</span>Papelera</button>
@@ -600,7 +602,7 @@ tr.row-int{background:#fff7ed!important;}
     <div class="htabs">
       <button class="htab on" onclick="showTab('presup',this)">📄 Nuevo Presupuesto</button>
       <button class="htab" onclick="showTab('base',this)">📂 Base de Clientes</button>
-      <button class="htab" onclick="showTab('leads',this)">🎯 Leads</button>
+      <button class="htab" data-yesi id="htab-leads" onclick="showTab('leads',this)">🎯 Leads</button>
       <button class="htab" onclick="showTab('ingresos',this)">💰 Ingresos</button>
       <button class="htab" onclick="showTab('info',this)">📌 Info</button>
       <button class="htab" onclick="showTab('planillas',this)">📋 Planillas</button>
@@ -1710,7 +1712,7 @@ renderConsulados();
         <div class="docs-toolbar">
           <input class="docs-search" id="docs-search" placeholder="🔍 Buscar en títulos y contenido..." oninput="renderSops()">
           <button class="doc-btn preg-btn" onclick="nuevaPregunta()">❓ Preguntar<span class="preg-badge" id="preg-badge-tb" style="display:none"></span></button>
-          <button class="doc-btn pri" onclick="nuevoSop()">+ Nuevo documento</button>
+          <button class="doc-btn pri solo-editores" onclick="nuevoSop()">+ Nuevo documento</button>
         </div>
         <div id="docs-list"></div>
       </div>
@@ -2167,6 +2169,7 @@ const EMAIL_POR_GESTOR = {
   'Sofía': 'somoszittano@gmail.com',
   'Belén': 'mbloccisano@gmail.com',
   'Germán': 'duttogerman@gmail.com',
+  'Yesi': 'mbloccisano+yesi@gmail.com',
 };
 
 async function login(){
@@ -2198,6 +2201,7 @@ async function login(){
   document.getElementById('login-screen').style.display='none';
   document.getElementById('app').style.display='block';
   curG=perfil.gestor;
+  document.body.classList.toggle('rol-yesi', curG==='Yesi');
   document.getElementById('gname').textContent=curG;
   document.getElementById('gdot').style.background=GC[curG]||'#64748b';
   if(btn){btn.disabled=false;btn.textContent='Entrar';}
@@ -2242,6 +2246,7 @@ function initApp(){
   renderEtas();renderSrvs();render();
   setTimeout(restaurarBorrador,1300); // después de la limpieza contra el autocompletar
   setTimeout(()=>{loadPreguntas();},1500);
+  if(curG==='Yesi') setTimeout(()=>showTab('leads',document.getElementById('htab-leads')),300);
   if(!window.__pregInt) window.__pregInt=setInterval(()=>{if(document.visibilityState==='visible')loadPreguntas();},120000);
   // Show gestor filter only for Belén (admin)
   if(curG==='Belén'){
@@ -2876,7 +2881,7 @@ function toggleSop(id){
   const body=document.getElementById('doc-body-'+id);
   if(!d||!body)return;
   body.innerHTML=`<div class="doc-content-view">${escSop(d.contenido)||'<i style="color:var(--gr)">Sin contenido todavía.</i>'}</div>
-    <div class="doc-actions">
+    <div class="doc-actions solo-editores">
       <button class="doc-btn pri" onclick="editarSop('${id}')">✏️ Editar</button>
       <button class="doc-btn del" onclick="borrarSop('${id}')">🗑️ Eliminar</button>
     </div>`;
@@ -8044,7 +8049,7 @@ function leadFrenado(l){
 async function loadLeads(){
   const wrap = document.getElementById('lead-wrap');
   wrap.innerHTML = '<div class="empty"><i>⏳</i><h3>Cargando leads...</h3></div>';
-  if(curG==='Belén'){ const g=document.getElementById('lead-gest'); if(g) g.style.display='block'; }
+  if(curG==='Belén'||curG==='Yesi'){ const g=document.getElementById('lead-gest'); if(g) g.style.display='block'; }
   const {data, error} = await SB.from('leads').select('*').order('created_at',{ascending:false}).limit(3000);
   if(error){
     wrap.innerHTML = `<div class="empty"><i>⚠️</i><h3>No se pudo cargar</h3><p>${escH(error.message)}</p></div>`;
@@ -8119,7 +8124,7 @@ function armarMesesLeads(){
 
 function leadsFiltrados(){
   const mes = (document.getElementById('lead-mes')||{}).value || '';
-  const g = curG==='Belén' ? ((document.getElementById('lead-gest')||{}).value || '') : '';
+  const g = (curG==='Belén'||curG==='Yesi') ? ((document.getElementById('lead-gest')||{}).value || '') : '';
   return allLeads.filter(l => (!mes || l.created_at.startsWith(mes)) && (!g || l.asignada_a===g));
 }
 
