@@ -598,6 +598,7 @@ tr.row-int{background:#fff7ed!important;}
 <div id="app">
 <div class="sidebar" id="sidebar">
   <button class="sb-btn" data-c="vd" id="sb-caja" style="display:none" onclick="showTab('caja',this)"><span class="sb-ico">🧾</span>Caja</button>
+  <button class="sb-btn" data-c="am" id="sb-deben" onclick="showTab('deben',this)"><span class="sb-ico">🧮</span>Me deben</button>
   <button class="sb-btn" data-c="ro" id="sb-gastos" onclick="showTab('gastos',this)"><span class="sb-ico">💸</span>Gastos</button>
   <button class="sb-btn" data-c="az" data-yesi id="sb-sops" onclick="showTab('sops',this)"><span class="sb-ico">📚</span>SOPs<span class="preg-badge" id="preg-badge-sb" style="display:none"></span></button>
   <button class="sb-btn" data-c="vd" id="sb-precios" onclick="showTab('precios',this)"><span class="sb-ico">💲</span>Precios</button>
@@ -615,6 +616,7 @@ tr.row-int{background:#fff7ed!important;}
       <button class="htab" onclick="showTab('base',this)">📂 Base de Clientes</button>
       <button class="htab" data-yesi id="htab-leads" onclick="showTab('leads',this)">🎯 Leads</button>
       <button class="htab" onclick="showTab('ingresos',this)">💰 Ingresos</button>
+      <button class="htab" onclick="showTab('turnos',this)">🗓️ Turnos</button>
       <button class="htab" onclick="showTab('info',this)">📌 Info</button>
       <button class="htab" onclick="showTab('planillas',this)">📋 Planillas</button>
       <button class="htab" onclick="showTab('checklist',this)">✅ Mi Checklist</button>
@@ -1113,6 +1115,39 @@ tr.row-int{background:#fff7ed!important;}
   </div>
   <datalist id="ing-tipo-list"></datalist>
 
+</div>
+</div>
+
+<!-- VIEW TURNOS -->
+<div class="view" id="view-turnos">
+<div class="vbody">
+  <div style="margin-bottom:16px">
+    <div class="dbtitle" style="margin-bottom:4px;color:var(--az)">🗓️ Turnos</div>
+    <div style="font-size:13px;color:#94a3b8">Cada turno desde que se pide hasta que se cobra. Los cambios se guardan solos.</div>
+    <div style="display:flex;gap:12px;flex-wrap:wrap;align-items:center;margin-top:14px">
+      <select class="fsel" id="tur-de" onchange="renderTurnos()" style="display:none">
+        <option value="mios">Mis turnos</option>
+        <option value="todos">Turnos de todo el equipo</option>
+      </select>
+      <select class="fsel" id="tur-ver" onchange="renderTurnos()">
+        <option value="abiertos">Abiertos</option>
+        <option value="todos">Todos (también cerrados y cancelados)</option>
+      </select>
+      <button onclick="addTurno()" style="padding:9px 16px;border:none;border-radius:8px;background:var(--az);color:#fff;font-size:13px;font-weight:700;cursor:pointer">+ Anotar turno</button>
+    </div>
+  </div>
+  <div id="tur-body"></div>
+</div>
+</div>
+
+<!-- VIEW ME DEBEN -->
+<div class="view" id="view-deben">
+<div class="vbody">
+  <div style="margin-bottom:16px">
+    <div class="dbtitle" style="margin-bottom:4px;color:#b45309">🧮 Me deben</div>
+    <div style="font-size:13px;color:#94a3b8;max-width:720px">Clientes que pagaron un adelanto y todavía no tienen cargado el resto. Sale de lo que se anota en Ingresos (“adel…”, “50%…”, “resto…”), así que es una guía: antes de reclamar, mirá la ficha.</div>
+  </div>
+  <div id="deben-body"></div>
 </div>
 </div>
 
@@ -2802,6 +2837,9 @@ function showTab(name,btn){
     });
   }
   if(name==='caja')loadCaja();
+  if(name==='turnos')loadTurnos();
+  if(name==='deben')loadDeben();
+  if(name==='ingresos')asegurarClientes();
   if(name==='gastos'){
     loadGastos().then(()=>{
       if(!gasMesInicializado){
@@ -5345,7 +5383,10 @@ function buscarCliente(rowId, valor){
   if(!valor||valor.length<2){sug.style.display='none';return;}
   const term=valor.toLowerCase();
   const matches=(allC||[]).filter(c=>(c.nombre||'').toLowerCase().includes(term)).slice(0,8);
-  if(!matches.length){sug.style.display='none';return;}
+  const crear=`<div onmousedown="event.preventDefault()" onclick="crearClienteRapido('${rowId}')"
+      style="padding:9px 12px;cursor:pointer;font-size:12.5px;font-weight:700;color:var(--vd);background:#f0fdf4;display:flex;align-items:center;gap:6px"
+      onmouseover="this.style.background='#dcfce7'" onmouseout="this.style.background='#f0fdf4'">➕ Crear cliente nuevo: “${escH(valor)}”</div>`;
+  if(!matches.length){sug.innerHTML=crear;sug.style.display='block';return;}
   sug.innerHTML=matches.map(c=>`
     <div onclick="vincularCliente('${rowId}','${c.id}','${(c.nombre||'').replace(/'/g,"\'")}','${(c.gestor||'').replace(/'/g,"\'")}');cerrarSugerencias('${rowId}')"
       style="padding:9px 12px;cursor:pointer;font-size:13px;border-bottom:1px solid var(--grl);display:flex;align-items:center;gap:8px"
@@ -5353,8 +5394,32 @@ function buscarCliente(rowId, valor){
       <span style="flex:1;font-weight:500">${escH(c.nombre||'')}</span>
       <span style="font-size:10px;color:#94a3b8">${c.consulado||''}</span>
       <span class="gb3 ${gbCl(c.gestor)}" style="font-size:9px;padding:1px 5px">${c.gestor||''}</span>
-    </div>`).join('');
+    </div>`).join('')+crear;
   sug.style.display='block';
+}
+// Si todavía no se abrió la Base, trae los clientes para poder vincular
+async function asegurarClientes(){
+  if(allC&&allC.length) return;
+  try{ const {data}=await SB.from(TB).select('*'); if(data&&data.length&&(!allC||!allC.length)) allC=data; }catch(e){}
+}
+// Crea la ficha mínima de un cliente nuevo desde Ingresos y la deja vinculada
+async function crearClienteRapido(rowId){
+  const r=ingresosData.find(x=>x.id===rowId);
+  if(!r) return;
+  const nombre=(r.cliente||'').trim().replace(/\s+/g,' ');
+  if(nombre.length<3){toast('Escribí nombre y apellido del cliente','err');return;}
+  const igual=(allC||[]).find(c=>(c.nombre||'').trim().toLowerCase()===nombre.toLowerCase());
+  if(igual){vincularCliente(rowId,igual.id,igual.nombre||nombre,igual.gestor||'');cerrarSugerencias(rowId);return;}
+  const hoy=new Date();
+  const ficha={id:(crypto.randomUUID?crypto.randomUUID():('new-'+Date.now()+'-'+Math.random().toString(36).slice(2))),
+    nombre, gestor:curG, estado:'Consulta', tags:['Potencial cliente'],
+    fecha:String(hoy.getDate()).padStart(2,'0')+'/'+String(hoy.getMonth()+1).padStart(2,'0')+'/'+hoy.getFullYear()};
+  const {error}=await SB.from(TB).insert(ficha);
+  if(error){toast('No se pudo crear el cliente: '+error.message,'err');return;}
+  allC.push(ficha);
+  vincularCliente(rowId,ficha.id,nombre,curG);
+  cerrarSugerencias(rowId);
+  toast('📂 Cliente creado y vinculado','ok');
 }
 function vincularCliente(rowId,clienteId,clienteNombre,gestorCliente){
   const r=ingresosData.find(x=>x.id===rowId);
@@ -5401,6 +5466,13 @@ async function saveIngRow(id){
   const r=ingresosData.find(x=>x.id===id);
   if(!r) return;
   if(!r.cliente||!r.fecha){toast('Completá fecha y cliente','err');return;}
+  // Desde la regla nueva, todo ingreso va vinculado a un cliente de la base
+  if(!r.cliente_id && reglaNuevaAplica(r)){
+    toast('👤 Elegí el cliente de la lista, o tocá “➕ Crear cliente nuevo”','err');
+    const ci=document.getElementById('cli-inp-'+id);
+    if(ci){ci.focus();buscarCliente(id,ci.value);ci.style.borderColor='#dc2626';setTimeout(()=>{ci.style.borderColor='';},2500);}
+    return;
+  }
   // Las transferencias no se guardan sin comprobante (regla desde nov 2026)
   if(esTransferenciaIng(r) && !r.comprobante && reglaNuevaAplica(r)){
     toast('📎 Falta el comprobante: subí la foto o el PDF de la transferencia','err');
@@ -5649,6 +5721,206 @@ function updIngUsd(id,field,value){
     row.style.borderLeft='3px solid #f59e0b';
     row.classList.add('unsaved');
   }
+}
+
+/* ════════════════════════════════════════
+   TURNOS
+════════════════════════════════════════ */
+let turnosData=[], turnosOk=true;
+const TUR_CONSULADOS=['CABA','La Plata','Lomas de Zamora','Morón','Rosario','Córdoba','Mendoza','Bahía Blanca','Mar del Plata','Otro'];
+const TUR_TIPOS=['Reconstrucción','Hijo directo','Pasaporte','CIE','Otro'];
+function turEsAdmin(){ return curG==='Belén'; }
+function turSumarHabiles(fechaISO,dias){
+  const d=new Date(fechaISO+'T12:00:00'); let n=0;
+  while(n<dias){ d.setDate(d.getDate()+1); const w=d.getDay(); if(w!==0&&w!==6) n++; }
+  return d.toISOString().slice(0,10);
+}
+function turEstado(t){
+  const hoy=new Date().toISOString().slice(0,10);
+  if(t.cancelado) return {k:'cancelado',txt:'Cancelado',col:'#64748b',bg:'#f1f5f9',abierto:false};
+  if(!t.fecha_sacado) return {k:'esperando',txt:'Esperando turno',col:'#1e40af',bg:'#dbeafe',abierto:true};
+  if(!t.cobrado){
+    const lim=turSumarHabiles(t.fecha_sacado,5);
+    return hoy>lim ? {k:'vencido',txt:'Cobro vencido el '+fmtFechaIng(lim).slice(0,5),col:'#b91c1c',bg:'#fee2e2',abierto:true}
+                   : {k:'cobrar',txt:'Cobrar antes del '+fmtFechaIng(lim).slice(0,5),col:'#b45309',bg:'#fef3c7',abierto:true};
+  }
+  if(!t.pagado_prog) return {k:'pagar',txt:turEsAdmin()?'Cobrado · pagar a programadores':'Cobrado ✓',col:'#15803d',bg:'#dcfce7',abierto:turEsAdmin()};
+  return {k:'cerrado',txt:'Cerrado ✓',col:'#15803d',bg:'#dcfce7',abierto:false};
+}
+async function loadTurnos(){
+  const wrap=document.getElementById('tur-body');
+  const de=document.getElementById('tur-de');
+  if(de) de.style.display=turEsAdmin()?'':'none';
+  wrap.innerHTML='<div style="padding:30px;text-align:center;color:#94a3b8">Cargando…</div>';
+  const {data,error}=await SB.from('turnos').select('*').order('created_at',{ascending:false});
+  if(error){
+    turnosOk=false;
+    wrap.innerHTML='<div style="padding:30px;text-align:center;color:#b45309;background:#fffbeb;border-radius:12px">La pestaña Turnos todavía no está activada en la base. Avisale a Belén.</div>';
+    return;
+  }
+  turnosOk=true; turnosData=data||[];
+  asegurarClientes();
+  renderTurnos();
+}
+function turVisibles(){
+  const de=(document.getElementById('tur-de')||{}).value||'mios';
+  const ver=(document.getElementById('tur-ver')||{}).value||'abiertos';
+  return turnosData.filter(t=>{
+    if(turEsAdmin()&&de==='mios'&&gbCl(t.gestor)!==gbCl(curG)) return false;
+    if(ver==='abiertos'&&!turEstado(t).abierto&&!t._nuevo) return false;
+    return true;
+  });
+}
+function renderTurnos(){
+  const wrap=document.getElementById('tur-body');
+  if(!turnosOk) return;
+  const adm=turEsAdmin();
+  const lista=turVisibles();
+  const base=turnosData.filter(t=>!(adm&&((document.getElementById('tur-de')||{}).value||'mios')==='mios'&&gbCl(t.gestor)!==gbCl(curG))&&!t.cancelado);
+  const esperando=base.filter(t=>!t.fecha_sacado).length;
+  const porCobrar=base.filter(t=>t.fecha_sacado&&!t.cobrado);
+  const usdCobrar=porCobrar.reduce((a,t)=>a+(parseFloat(t.precio_usd)||0),0);
+  const aPagar=base.filter(t=>t.cobrado&&!t.pagado_prog);
+  const usdPagar=aPagar.reduce((a,t)=>a+(parseFloat(t.costo_usd)||0),0);
+  const card=(tit,val,sub,col)=>`<div style="background:#fff;border:1px solid var(--bo);border-radius:12px;padding:14px 16px">
+    <div style="font-size:10px;font-weight:700;letter-spacing:.5px;text-transform:uppercase;color:#94a3b8">${tit}</div>
+    <div style="font-size:22px;font-weight:800;color:${col};margin-top:4px">${val}</div>
+    <div style="font-size:11px;color:#64748b;margin-top:2px">${sub}</div></div>`;
+  const inp='padding:5px 6px;border:1.5px solid var(--bo);border-radius:5px;font-size:11.5px;outline:none;background:white';
+  const th=h=>`<th style="padding:8px 6px;text-align:left;font-size:9.5px;color:#94a3b8;text-transform:uppercase;white-space:nowrap">${h}</th>`;
+  const cab=['Estado','Cliente','Consulado','Trámite','Pedido','Salió','Día del turno','Precio USD','Cobrado'].concat(adm?['Costo USD','Pagado prog.','Cargó']:[]).concat(['Nota','']);
+  const td='padding:5px 5px;border-bottom:1px solid var(--grl);vertical-align:middle';
+  wrap.innerHTML=`
+  <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(190px,1fr));gap:12px;margin-bottom:16px">
+    ${card('Esperando turno',esperando,'pedidos que todavía no salieron','#1e40af')}
+    ${card('Falta cobrar',porCobrar.length,usdCobrar?'USD '+Math.round(usdCobrar).toLocaleString('es-AR')+' en total':'turnos sacados sin cobrar',porCobrar.length?'#b45309':'#15803d')}
+    ${adm?card('Para pagar a los programadores','USD '+Math.round(usdPagar).toLocaleString('es-AR'),aPagar.length+' turnos ya cobrados al cliente','#15803d'):''}
+  </div>
+  <div class="twrap" style="overflow-x:auto"><table style="width:100%;border-collapse:collapse;min-width:${adm?1250:1000}px">
+    <thead><tr style="background:var(--grl)">${cab.map(th).join('')}</tr></thead><tbody>
+    ${lista.map(t=>{
+      const e=turEstado(t);
+      const sel=(campo,ops)=>`<select onchange="updTurno('${t.id}','${campo}',this.value)" style="${inp};cursor:pointer"><option value="">—</option>${ops.map(o=>`<option${t[campo]===o?' selected':''}>${o}</option>`).join('')}${t[campo]&&!ops.includes(t[campo])?`<option selected>${escH(t[campo])}</option>`:''}</select>`;
+      const fecha=campo=>`<input type="date" value="${t[campo]||''}" onchange="updTurno('${t.id}','${campo}',this.value)" style="${inp};width:118px">`;
+      const num=campo=>`<input type="number" value="${t[campo]??''}" placeholder="0" onchange="updTurno('${t.id}','${campo}',this.value)" style="${inp};width:64px;font-weight:700">`;
+      const chk=campo=>`<input type="checkbox" ${t[campo]?'checked':''} onchange="updTurno('${t.id}','${campo}',this.checked)" style="width:19px;height:19px;cursor:pointer">`;
+      return `<tr id="tur-${t.id}" style="${t.cancelado?'opacity:.55':''}">
+        <td style="${td}"><span id="tur-est-${t.id}" style="display:inline-block;padding:3px 9px;border-radius:20px;font-size:10.5px;font-weight:700;white-space:nowrap;color:${e.col};background:${e.bg}">${e.txt}</span></td>
+        <td style="${td}"><input value="${escH(t.cliente||'')}" placeholder="Nombre y apellido" list="tur-clientes" onchange="updTurno('${t.id}','cliente',this.value)" style="${inp};min-width:170px;font-weight:600"></td>
+        <td style="${td}">${sel('consulado',TUR_CONSULADOS)}</td>
+        <td style="${td}">${sel('tipo',TUR_TIPOS)}</td>
+        <td style="${td}">${fecha('fecha_pedido')}</td>
+        <td style="${td}">${fecha('fecha_sacado')}</td>
+        <td style="${td}">${fecha('fecha_turno')}</td>
+        <td style="${td}">${num('precio_usd')}</td>
+        <td style="${td};text-align:center">${chk('cobrado')}</td>
+        ${adm?`<td style="${td}">${num('costo_usd')}</td><td style="${td};text-align:center">${chk('pagado_prog')}</td><td style="${td}"><span class="gb3 ${gbCl(t.gestor)}" style="font-size:9px;padding:1px 6px">${escH(t.gestor||'')}</span></td>`:''}
+        <td style="${td}"><input value="${escH(t.nota||'')}" placeholder="Nota…" onchange="updTurno('${t.id}','nota',this.value)" style="${inp};min-width:140px"></td>
+        <td style="${td};text-align:center"><label title="Cancelar el turno (no se borra, queda guardado)" style="font-size:10px;color:#94a3b8;cursor:pointer;white-space:nowrap"><input type="checkbox" ${t.cancelado?'checked':''} onchange="updTurno('${t.id}','cancelado',this.checked)" style="vertical-align:middle"> cancelado</label></td>
+      </tr>`;}).join('')||`<tr><td colspan="${cab.length}" style="padding:26px;text-align:center;color:#94a3b8">No hay turnos para mostrar. Tocá “+ Anotar turno”.</td></tr>`}
+    </tbody></table></div>
+  <datalist id="tur-clientes">${(allC||[]).slice(0,1500).map(c=>`<option value="${escH(c.nombre||'')}">`).join('')}</datalist>`;
+}
+async function addTurno(){
+  if(!turnosOk){toast('La pestaña Turnos todavía no está activada','err');return;}
+  const nuevo={gestor:curG,cliente:'',fecha_pedido:new Date().toISOString().slice(0,10)};
+  const {data,error}=await SB.from('turnos').insert(nuevo).select('*').single();
+  if(error||!data){toast('No se pudo anotar el turno. Probá de nuevo','err');return;}
+  data._nuevo=true;
+  turnosData.unshift(data);
+  renderTurnos();
+  const i=document.querySelector('#tur-'+CSS.escape(data.id)+' input');
+  if(i) i.focus();
+}
+async function updTurno(id,campo,valor){
+  const t=turnosData.find(x=>x.id===id);
+  if(!t) return;
+  const antes={...t};
+  const cambio={};
+  if(['precio_usd','costo_usd'].includes(campo)) valor=(valor===''||valor===null)?null:parseFloat(valor);
+  if(['fecha_pedido','fecha_sacado','fecha_turno'].includes(campo)&&!valor) valor=null;
+  if(campo==='cliente'){
+    valor=(valor||'').trim();
+    const c=(allC||[]).find(x=>(x.nombre||'').trim().toLowerCase()===valor.toLowerCase());
+    cambio.cliente_id=c?c.id:null;
+    if(c&&c.nombre) valor=c.nombre.trim();
+  }
+  cambio[campo]=valor;
+  const hoy=new Date().toISOString().slice(0,10);
+  if(campo==='cobrado') cambio.fecha_cobro=valor?hoy:null;
+  if(campo==='pagado_prog') cambio.fecha_pago_prog=valor?hoy:null;
+  // el costo de los programadores se completa solo según el trámite (se puede cambiar a mano)
+  if(campo==='tipo'&&turEsAdmin()&&(t.costo_usd===null||t.costo_usd===undefined)&&valor) cambio.costo_usd=(valor==='CIE'?50:150);
+  Object.assign(t,cambio);
+  const {error}=await SB.from('turnos').update(cambio).eq('id',id);
+  if(error){
+    Object.assign(t,antes);
+    toast('⚠️ No se guardó el cambio. Revisá internet y probá de nuevo','err');
+    renderTurnos();
+    return;
+  }
+  toast('✓ Guardado','ok');
+  if(['cobrado','pagado_prog','cancelado','fecha_sacado','tipo','cliente'].includes(campo)) renderTurnos();
+}
+
+/* ════════════════════════════════════════
+   ME DEBEN (adelantos sin resto cargado)
+════════════════════════════════════════ */
+const RE_ADEL=/(adel|anticipo|se[ñn]a|50\s?%|1er pago|primer pago)/i;
+const RE_RESTO=/(resto|saldo|cancel|2do pago|segundo pago|pago final)/i;
+function calcularDeben(ingresos){
+  const porCli={};
+  ingresos.forEach(r=>{
+    const k=r.cliente_id||('n:'+(r.cliente||'').trim().toLowerCase().replace(/\s+/g,' '));
+    if(!k||k==='n:') return;
+    (porCli[k]=porCli[k]||[]).push(r);
+  });
+  const out=[];
+  Object.values(porCli).forEach(lista=>{
+    lista.sort((a,b)=>(a.fecha||'').localeCompare(b.fecha||'')||(a.created_at||'').localeCompare(b.created_at||''));
+    let pend=[];
+    lista.forEach(r=>{
+      const t=r.tipo||'';
+      if(RE_RESTO.test(t)&&pend.length) pend.shift();
+      if(RE_ADEL.test(t)) pend.push(r);
+    });
+    pend.forEach(r=>out.push(r));
+  });
+  return out.sort((a,b)=>(a.fecha||'').localeCompare(b.fecha||''));
+}
+async function loadDeben(){
+  const wrap=document.getElementById('deben-body');
+  wrap.innerHTML='<div style="padding:30px;text-align:center;color:#94a3b8">Cargando…</div>';
+  const desde=new Date(); desde.setMonth(desde.getMonth()-12);
+  const {data,error}=await SB.from('ingresos').select('*').gte('fecha',desde.toISOString().slice(0,10)).order('fecha',{ascending:true}).limit(20000);
+  if(error){wrap.innerHTML='<div style="padding:30px;text-align:center;color:#b91c1c">No se pudo cargar.</div>';return;}
+  await asegurarClientes();
+  const deben=calcularDeben(data||[]);
+  const hoy=new Date();
+  const dias=f=>Math.floor((hoy-new Date(f+'T12:00:00'))/86400000);
+  const td='padding:7px 8px;border-bottom:1px solid var(--grl);font-size:12px;vertical-align:middle';
+  const viejos=deben.filter(r=>dias(r.fecha)>60).length;
+  wrap.innerHTML=`
+  <div style="display:flex;gap:12px;flex-wrap:wrap;margin-bottom:14px">
+    <div style="background:#fff;border:1px solid var(--bo);border-radius:12px;padding:12px 16px"><div style="font-size:10px;font-weight:700;color:#94a3b8;text-transform:uppercase">Adelantos sin resto</div><div style="font-size:22px;font-weight:800;color:#b45309">${deben.length}</div></div>
+    <div style="background:#fff;border:1px solid var(--bo);border-radius:12px;padding:12px 16px"><div style="font-size:10px;font-weight:700;color:#94a3b8;text-transform:uppercase">Hace más de 2 meses</div><div style="font-size:22px;font-weight:800;color:${viejos?'#b91c1c':'#15803d'}">${viejos}</div></div>
+  </div>
+  <div class="twrap" style="overflow-x:auto"><table style="width:100%;border-collapse:collapse;min-width:760px">
+    <thead><tr style="background:var(--grl)">${['Cliente','Pagó el adelanto de','Fecha','Hace','Adelantó','Cargó',''].map(h=>`<th style="padding:8px 8px;text-align:left;font-size:10px;color:#94a3b8;text-transform:uppercase;white-space:nowrap">${h}</th>`).join('')}</tr></thead><tbody>
+    ${deben.map(r=>{
+      const d=dias(r.fecha);
+      const c=r.cliente_id?(allC||[]).find(x=>x.id===r.cliente_id):null;
+      const monto=(parseFloat(r.efectivo)||0)+(parseFloat(r.transferencia)||0);
+      return `<tr style="${d>60?'background:#fef2f2':''}">
+        <td style="${td};font-weight:600">${escH(r.cliente||'—')}${r.cliente_id?'':' <span style="font-size:9px;color:#b45309">sin vincular</span>'}</td>
+        <td style="${td}">${escH(r.tipo||'')}</td>
+        <td style="${td};white-space:nowrap">${fmtFechaIng(r.fecha)}</td>
+        <td style="${td};white-space:nowrap;color:${d>60?'#b91c1c':'#64748b'};font-weight:${d>60?700:400}">${d} días</td>
+        <td style="${td};white-space:nowrap">$${Math.round(monto).toLocaleString('es-AR')}</td>
+        <td style="${td}">${escH(r.gestor||'')}</td>
+        <td style="${td}">${c&&c.celular?`<button type="button" onclick="abrirWpp('${escH(String(c.celular))}','')" style="padding:4px 9px;border:none;border-radius:6px;background:#dcfce7;color:#15803d;font-size:11px;font-weight:700;cursor:pointer;white-space:nowrap">💬 WhatsApp</button>`:''}</td>
+      </tr>`;}).join('')||'<tr><td colspan="7" style="padding:24px;text-align:center;color:#94a3b8">Nadie debe un resto ✓</td></tr>'}
+    </tbody></table></div>`;
 }
 
 /* ════════════════════════════════════════
@@ -9136,7 +9408,7 @@ async function enviarContactoLead(){
 async function crearFichaLead(id){
   const l = allLeads.find(x => x.id===id); if(!l) return;
   const hoy = new Date().toISOString().slice(0,10);
-  const ficha = {nombre:l.nombre, celular:l.telefono, gestor:l.asignada_a, fecha:hoy, estado:'Consulta',
+  const ficha = {id:(crypto.randomUUID?crypto.randomUUID():undefined), nombre:l.nombre, celular:l.telefono, gestor:l.asignada_a, fecha:hoy, estado:'Consulta',
                  tipo_tramite:l.tramite, tags:['Potencial cliente']};
   const {data, error} = await SB.from(TB).insert(ficha).select('id').single();
   if(error){ toast('No se pudo crear la ficha: '+error.message,'err'); return; }
