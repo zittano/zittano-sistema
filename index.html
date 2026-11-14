@@ -3260,7 +3260,7 @@ function esQuienCobroLibre(clave, valor){
    fila de Ingresos, o 'pago:<i>' para una fila de Pagos del presupuesto. */
 function guardarQuienCobro(destino, valor){
   const [donde, ref] = destino.split(':');
-  if(donde === 'ing')  updIng(ref, 'quien_cobro', valor);
+  if(donde === 'ing'){ updIng(ref, 'quien_cobro', valor); const rr=ingresosData.find(x=>x.id===ref); if(rr&&typeof pintarComprobante==='function') pintarComprobante(rr); }
   else if(donde === 'pago') updPago(parseInt(ref,10), 'quien_cobro', valor);
 }
 
@@ -5321,6 +5321,7 @@ function updIngNum(id,field,value){
   const r=ingresosData.find(x=>x.id===id);
   if(!r) return;
   r[field]=value?parseFloat(value):null;
+  if(field==='transferencia'&&typeof pintarComprobante==='function') pintarComprobante(r);
   
   // Calcular A PAGAR con fórmula Excel
   r.a_pagar = calcularAPagarExcel(r);
@@ -5401,7 +5402,7 @@ async function saveIngRow(id){
   if(!r) return;
   if(!r.cliente||!r.fecha){toast('Completá fecha y cliente','err');return;}
   // Las transferencias no se guardan sin comprobante (regla desde nov 2026)
-  if(parseFloat(r.transferencia)>0 && !r.comprobante && reglaNuevaAplica(r)){
+  if(esTransferenciaIng(r) && !r.comprobante && reglaNuevaAplica(r)){
     toast('📎 Falta el comprobante: subí la foto o el PDF de la transferencia','err');
     const td=document.getElementById('td-comp-'+id);
     if(td){td.style.background='#fee2e2';setTimeout(()=>{td.style.background='';},2500);}
@@ -5566,6 +5567,9 @@ function addIngresoRow(){
 // con fecha desde este día. Todo lo anterior queda como estaba y se puede editar sin trabas.
 const REGLA_NUEVA_DESDE='2026-11-16';
 function reglaNuevaAplica(r){ return (r&&r.fecha||'')>=REGLA_NUEVA_DESDE; }
+// Es transferencia si tiene monto en la columna Transf. o si en "Quién cobró" dice Transferencia
+// (los dólares transferidos se cargan en la columna Efectivo por el precio, pero entran por banco)
+function esTransferenciaIng(r){ return (parseFloat(r&&r.transferencia)>0) || /transfer/i.test((r&&r.quien_cobro)||''); }
 function esLinkComp(c){ return /^https?:\/\//i.test(c||''); }
 function htmlComprobante(r){
   if(r.comprobante){
@@ -5574,7 +5578,7 @@ function htmlComprobante(r){
       <button type="button" onclick="subirComprobante('${r.id}')" title="Cambiar comprobante" style="padding:4px 5px;border:none;background:transparent;color:#94a3b8;font-size:11px;cursor:pointer">↻</button>
     </div>`;
   }
-  const falta=parseFloat(r.transferencia)>0 && reglaNuevaAplica(r);
+  const falta=esTransferenciaIng(r) && reglaNuevaAplica(r);
   return `<button type="button" onclick="subirComprobante('${r.id}')" title="Subir foto o PDF del comprobante" style="padding:4px 8px;border:1.5px dashed ${falta?'#f87171':'var(--bo)'};border-radius:6px;background:${falta?'#fef2f2':'transparent'};color:${falta?'#b91c1c':'#94a3b8'};font-size:11px;font-weight:700;cursor:pointer;white-space:nowrap">📎 Subir</button>`;
 }
 function pintarComprobante(r){
@@ -5674,7 +5678,7 @@ function cajaProblemas(r){
   const p=[];
   if(!reglaNuevaAplica(r)) return p; // lo anterior a la regla nueva no se marca
   const tr=parseFloat(r.transferencia)||0, ef=parseFloat(r.efectivo)||0;
-  if(tr>0&&!r.comprobante) p.push('Sin comprobante');
+  if(esTransferenciaIng(r)&&!r.comprobante) p.push('Sin comprobante');
   if(!r.cliente_id) p.push('Sin cliente vinculado');
   if(!r.quien_cobro) p.push('Sin quién cobró');
   if(!tr&&!ef) p.push('Sin monto');
@@ -5687,12 +5691,14 @@ function renderCaja(){
   const mes=document.getElementById('caja-mes').value;
   const soloProb=document.getElementById('caja-solo-prob').checked;
   const filas=cajaData.filter(r=>(r.fecha||'').startsWith(mes));
-  let ef=0,tr=0,usd=0,conComp=0,trCount=0;
+  let ef=0,tr=0,usd=0,usdEf=0,usdTr=0,conComp=0,trCount=0;
   const porCaja={};
   filas.forEach(r=>{
     const e=parseFloat(r.efectivo)||0,t=parseFloat(r.transferencia)||0,u=parseFloat(r.monto_usd)||0;
-    ef+=e;tr+=t;usd+=u;
-    if(t>0){trCount++;if(r.comprobante)conComp++;}
+    const esTr=esTransferenciaIng(r);
+    if(esTr){tr+=e+t;usdTr+=u;trCount++;if(r.comprobante)conComp++;}
+    else{ef+=e+t;usdEf+=u;}
+    usd+=u;
     const k=r.quien_cobro||'Sin anotar';
     if(!porCaja[k]) porCaja[k]={pesos:0,usd:0,n:0};
     porCaja[k].pesos+=e+t;porCaja[k].usd+=u;porCaja[k].n++;
@@ -5707,9 +5713,9 @@ function renderCaja(){
   wrap.innerHTML=`
   <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(170px,1fr));gap:12px;margin-bottom:16px">
     ${card('Total del mes',cajaPesos(ef+tr),filas.length+' ingresos','var(--grd)')}
-    ${card('Efectivo',cajaPesos(ef),'en pesos','#1e40af')}
+    ${card('Efectivo',cajaPesos(ef),'pesos y dólares, pasado a pesos','#1e40af')}
     ${card('Transferencias',cajaPesos(tr),conComp+' de '+trCount+' con comprobante','#0891b2')}
-    ${card('Cobrado en dólares','USD '+Math.round(usd).toLocaleString('es-AR'),'ya incluido en los pesos de arriba','#15803d')}
+    ${card('Cobrado en dólares','USD '+Math.round(usd).toLocaleString('es-AR'),'USD '+Math.round(usdEf).toLocaleString('es-AR')+' en efectivo · USD '+Math.round(usdTr).toLocaleString('es-AR')+' por transferencia','#15803d')}
     ${card('Para revisar',conProb.length,conProb.length?'ingresos con algo que falta':'todo en orden ✓',conProb.length?'#b91c1c':'#15803d')}
   </div>
   <div class="twrap" style="margin-bottom:16px;overflow-x:auto"><table style="width:100%;border-collapse:collapse">
@@ -5736,7 +5742,7 @@ function renderCaja(){
         <td style="${td};white-space:nowrap">${fmtFechaIng(r.fecha)}</td>
         <td style="${td};font-weight:600">${escH(r.cliente||'—')}</td>
         <td style="${td}">${escH(r.tipo||'')}</td>
-        <td style="${td};white-space:nowrap;font-weight:700">${cajaPesos(e+t)} <span style="font-weight:500;color:#94a3b8;font-size:10px">${t>0?'transf.':'efect.'}</span></td>
+        <td style="${td};white-space:nowrap;font-weight:700">${cajaPesos(e+t)} <span style="font-weight:500;color:#94a3b8;font-size:10px">${esTransferenciaIng(r)?'transf.':'efect.'}</span></td>
         <td style="${td};white-space:nowrap;color:#15803d">${r.monto_usd?'USD '+r.monto_usd+(r.cotizacion?' <span style="color:#94a3b8;font-size:10px">a '+r.cotizacion+'</span>':''):''}</td>
         <td style="${td}">${escH(r.quien_cobro||'—')}</td>
         <td style="${td}">${escH(r.gestor||'')}</td>
