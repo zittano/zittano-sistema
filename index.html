@@ -597,6 +597,7 @@ tr.row-int{background:#fff7ed!important;}
 <!-- APP -->
 <div id="app">
 <div class="sidebar" id="sidebar">
+  <button class="sb-btn" data-c="vd" id="sb-caja" style="display:none" onclick="showTab('caja',this)"><span class="sb-ico">🧾</span>Caja</button>
   <button class="sb-btn" data-c="ro" id="sb-gastos" onclick="showTab('gastos',this)"><span class="sb-ico">💸</span>Gastos</button>
   <button class="sb-btn" data-c="az" data-yesi id="sb-sops" onclick="showTab('sops',this)"><span class="sb-ico">📚</span>SOPs<span class="preg-badge" id="preg-badge-sb" style="display:none"></span></button>
   <button class="sb-btn" data-c="vd" id="sb-precios" onclick="showTab('precios',this)"><span class="sb-ico">💲</span>Precios</button>
@@ -1090,10 +1091,12 @@ tr.row-int{background:#fff7ed!important;}
           <th style="padding:7px 6px;text-align:left;font-size:9px;font-weight:600;color:#94a3b8;letter-spacing:.4px;text-transform:uppercase;border-bottom:1px solid var(--bo)">Tipo</th>
           <th style="padding:7px 6px;text-align:left;font-size:9px;font-weight:600;color:#94a3b8;letter-spacing:.4px;text-transform:uppercase;border-bottom:1px solid var(--bo);white-space:nowrap">Efectivo $</th>
           <th style="padding:7px 6px;text-align:left;font-size:9px;font-weight:600;color:#94a3b8;letter-spacing:.4px;text-transform:uppercase;border-bottom:1px solid var(--bo);white-space:nowrap">Transf. $</th>
+          <th style="padding:7px 6px;text-align:left;font-size:9px;font-weight:600;color:#94a3b8;letter-spacing:.4px;text-transform:uppercase;border-bottom:1px solid var(--bo);white-space:nowrap" title="Solo si el cliente pagó en dólares: cuántos USD y a qué cotización">💵 USD</th>
           <th style="padding:7px 5px;text-align:center;font-size:9px;font-weight:600;color:#94a3b8;letter-spacing:.4px;text-transform:uppercase;border-bottom:1px solid var(--bo);white-space:nowrap" title="Marcá si el pago corresponde a una consulta">Cons.</th>
           <th style="padding:7px 5px;text-align:center;font-size:9px;font-weight:600;color:#94a3b8;letter-spacing:.4px;text-transform:uppercase;border-bottom:1px solid var(--bo);white-space:nowrap" title="Domicilio del DNI fuera de CABA y GBA" style="color:#ea580c">📍 Zona</th>
           <th style="padding:7px 6px;text-align:left;font-size:9px;font-weight:600;color:#94a3b8;letter-spacing:.4px;text-transform:uppercase;border-bottom:1px solid var(--bo);white-space:nowrap;background:#f0f9f4">A Pagar</th>
           <th style="padding:7px 6px;text-align:left;font-size:9px;font-weight:600;color:#94a3b8;letter-spacing:.4px;text-transform:uppercase;border-bottom:1px solid var(--bo)">Quién cobró</th>
+          <th style="padding:7px 6px;text-align:left;font-size:9px;font-weight:600;color:#94a3b8;letter-spacing:.4px;text-transform:uppercase;border-bottom:1px solid var(--bo);white-space:nowrap" title="Foto o PDF del comprobante. Obligatorio en transferencias">📎 Comprob.</th>
           <th style="padding:7px 6px;text-align:left;font-size:9px;font-weight:600;color:#94a3b8;letter-spacing:.4px;text-transform:uppercase;border-bottom:1px solid var(--bo)">Comentario</th>
           <th style="padding:7px 5px;border-bottom:1px solid var(--bo);width:28px"></th>
         </tr>
@@ -1101,7 +1104,7 @@ tr.row-int{background:#fff7ed!important;}
       <tbody id="ing-body"></tbody>
       <tfoot>
         <tr>
-          <td colspan="12" style="padding:8px 10px">
+          <td colspan="14" style="padding:8px 10px">
             <button onclick="addIngresoRow()" style="width:100%;padding:9px;border:1.5px dashed var(--bo);border-radius:8px;background:transparent;font-size:13px;font-weight:600;color:#94a3b8;cursor:pointer;transition:all .13s" onmouseover="this.style.borderColor='var(--vd)';this.style.color='var(--vd)'" onmouseout="this.style.borderColor='var(--bo)';this.style.color='#94a3b8'">+ Agregar ingreso</button>
           </td>
         </tr>
@@ -1110,6 +1113,21 @@ tr.row-int{background:#fff7ed!important;}
   </div>
   <datalist id="ing-tipo-list"></datalist>
 
+</div>
+</div>
+
+<!-- VIEW CAJA DEL MES (solo Belén) -->
+<div class="view" id="view-caja">
+<div class="vbody">
+  <div style="margin-bottom:16px">
+    <div class="dbtitle" style="margin-bottom:4px;color:var(--vd)">🧾 Caja del mes</div>
+    <div style="font-size:13px;color:#94a3b8">Todo lo que entró, en pesos y en dólares, con su comprobante</div>
+    <div style="display:flex;gap:12px;flex-wrap:wrap;align-items:center;margin-top:14px">
+      <select class="fsel" id="caja-mes" onchange="renderCaja()"></select>
+      <label style="display:flex;align-items:center;gap:6px;font-size:12.5px;color:#475569;cursor:pointer"><input type="checkbox" id="caja-solo-prob" onchange="renderCaja()" style="width:16px;height:16px"> Ver solo lo que hay que revisar</label>
+    </div>
+  </div>
+  <div id="caja-body"></div>
 </div>
 </div>
 
@@ -2281,6 +2299,8 @@ function initApp(){
     const gf=document.getElementById('db-g');
     if(gf) gf.style.display='block';
 
+    const sbc=document.getElementById('sb-caja');
+    if(sbc) sbc.style.display='';
     // Mostrar filtro de gestor en ingresos
     const igf=document.getElementById('ing-gestor');
     if(igf) igf.style.display='block';
@@ -2781,6 +2801,7 @@ function showTab(name,btn){
       }
     });
   }
+  if(name==='caja')loadCaja();
   if(name==='gastos'){
     loadGastos().then(()=>{
       if(!gasMesInicializado){
@@ -4570,7 +4591,7 @@ function renderPagos(c) {
         </td>
         <td style="padding:4px 4px;text-align:center">
           ${p.comprobante
-            ?`<a href="${p.comprobante}" target="_blank" style="font-size:15px;text-decoration:none">📄</a>`
+            ?`<a href="#" onclick="abrirComprobante('${escH(p.comprobante)}');return false" style="font-size:15px;text-decoration:none">📄</a>`
             :`<button onclick="setPagoComprobante(${i})" style="padding:3px 6px;border:1.5px dashed var(--bo);border-radius:6px;background:transparent;font-size:10px;font-weight:600;color:#94a3b8;cursor:pointer">📎</button>`}
         </td>
         <td style="padding:4px 4px;text-align:center">
@@ -4892,7 +4913,7 @@ function renderIngresos(){
         html+=rows.map(r=>renderIngRow(r)).join('');
       } else {
         html+=`<tr style="background:#fafcff">
-          <td colspan="12" style="padding:20px 14px;color:#94a3b8;font-size:13px;text-align:center;font-style:italic">
+          <td colspan="14" style="padding:20px 14px;color:#94a3b8;font-size:13px;text-align:center;font-style:italic">
             Sin ingresos registrados en ${mesLabel}
           </td>
         </tr>`;
@@ -4900,7 +4921,7 @@ function renderIngresos(){
     }
 
     // Spacer entre meses
-    html+=`<tr><td colspan="12" style="padding:6px;background:var(--bg)"></td></tr>`;
+    html+=`<tr><td colspan="14" style="padding:6px;background:var(--bg)"></td></tr>`;
   });
 
   tbody.innerHTML=html;
@@ -4960,6 +4981,13 @@ function renderIngRow(r){
     <td style="${cellStyle}"><input value="${escH(r.tipo||'')}" placeholder="consulta, AIRE..." list="ing-tipo-list" oninput="updIng('${r.id}','tipo',this.value)" style="${inp};min-width:120px"></td>
     <td style="${cellStyle}"><input type="number" value="${r.efectivo||''}" placeholder="0" oninput="updIngNum('${r.id}','efectivo',this.value)" style="${inp};min-width:100px;color:#1e40af;font-weight:600"></td>
     <td style="${cellStyle}"><input type="number" value="${r.transferencia||''}" placeholder="0" oninput="updIngNum('${r.id}','transferencia',this.value)" style="${inp};min-width:100px;color:#0891b2;font-weight:600"></td>
+    <td style="${cellStyle}">
+      <div style="display:flex;gap:3px;align-items:center">
+        <input type="number" value="${r.monto_usd||''}" placeholder="USD" title="Dólares que pagó el cliente (dejá vacío si pagó en pesos)" oninput="updIngUsd('${r.id}','monto_usd',this.value)" style="${inp};width:64px;color:#15803d;font-weight:700">
+        <input type="number" value="${r.cotizacion||''}" placeholder="cotiz." title="Cotización del día" oninput="updIngUsd('${r.id}','cotizacion',this.value)" style="${inp};width:62px;font-size:10.5px">
+      </div>
+      <div id="usd-hint-${r.id}" style="font-size:9.5px;color:#64748b;margin-top:2px;white-space:nowrap">${hintUsd(r)}</div>
+    </td>
     <td style="${cellStyle};text-align:center">
       <input type="checkbox" ${r.consulta?'checked':''} onchange="updIng('${r.id}','consulta',this.checked)" style="width:20px;height:20px;cursor:pointer" title="Marcar si es consulta">
     </td>
@@ -4974,6 +5002,7 @@ function renderIngRow(r){
         📎 DESCARGAR COMPROBANTE EN DRIVE
       </span>` : ''}</span>
     </td>
+    <td style="${cellStyle};text-align:center" id="td-comp-${r.id}">${htmlComprobante(r)}</td>
     <td style="${cellStyle}"><input value="${escH(r.comentario||'')}" placeholder="Notas..." oninput="updIng('${r.id}','comentario',this.value)" style="${inp};min-width:150px"></td>
 
     <td style="${cellStyle};text-align:center">
@@ -5371,6 +5400,13 @@ async function saveIngRow(id){
   const r=ingresosData.find(x=>x.id===id);
   if(!r) return;
   if(!r.cliente||!r.fecha){toast('Completá fecha y cliente','err');return;}
+  // Las transferencias no se guardan sin comprobante (regla desde nov 2026)
+  if(parseFloat(r.transferencia)>0 && !r.comprobante){
+    toast('📎 Falta el comprobante: subí la foto o el PDF de la transferencia','err');
+    const td=document.getElementById('td-comp-'+id);
+    if(td){td.style.background='#fee2e2';setTimeout(()=>{td.style.background='';},2500);}
+    return;
+  }
   
   // Preparar registro limpio
   const recordToSave = {
@@ -5384,6 +5420,8 @@ async function saveIngRow(id){
     quien_cobro: r.quien_cobro || '',
     comentario: r.comentario || '',
     comprobante: r.comprobante || '',
+    monto_usd: r.monto_usd || null,
+    cotizacion: r.cotizacion || null,
     gestor: r.gestor || curG,
     cliente_id: r.cliente_id || null,
     es_interior: !!r.es_interior
@@ -5408,18 +5446,27 @@ async function saveIngRow(id){
   }
   
   // PASO 2: UPSERT en Supabase (evita duplicados)
+  let nubeOk=false;
   try {
     const {error} = await SB.from('ingresos').upsert(recordToSave, {onConflict: 'id'});
     if(error) {
       console.warn('Error Supabase:', error.message);
     } else {
       console.log('✅ Guardado en Supabase:', id);
+      nubeOk=true;
       if(r._new) delete r._new;
     }
   } catch(e) {
     console.warn('Supabase no disponible:', e);
   }
   
+  // Si no llegó a la nube, se avisa: antes decía "Guardado" igual y el ingreso quedaba solo en esta compu
+  if(!nubeOk){
+    toast('⚠️ Quedó guardado solo en esta compu. Revisá internet y tocá ✓ de nuevo','err');
+    const rowE=document.getElementById('row-'+id);
+    if(rowE){rowE.style.borderLeft='3px solid #dc2626';}
+    return;
+  }
   toast('✅ Guardado','ok');
   renderMotivacion();
   renderAlertasIng();
@@ -5514,16 +5561,184 @@ function addIngresoRow(){
   }
 }
 
-function setComprobante(id){
+/* ── COMPROBANTES: se suben como foto o PDF y quedan guardados en el sistema ── */
+function esLinkComp(c){ return /^https?:\/\//i.test(c||''); }
+function htmlComprobante(r){
+  if(r.comprobante){
+    return `<div style="display:flex;gap:3px;justify-content:center;align-items:center">
+      <button type="button" onclick="verComprobante('${r.id}')" title="Ver comprobante" style="padding:4px 8px;border:1.5px solid #86efac;border-radius:6px;background:#f0fdf4;color:#15803d;font-size:11px;font-weight:700;cursor:pointer;white-space:nowrap">📄 Ver</button>
+      <button type="button" onclick="subirComprobante('${r.id}')" title="Cambiar comprobante" style="padding:4px 5px;border:none;background:transparent;color:#94a3b8;font-size:11px;cursor:pointer">↻</button>
+    </div>`;
+  }
+  const falta=parseFloat(r.transferencia)>0;
+  return `<button type="button" onclick="subirComprobante('${r.id}')" title="Subir foto o PDF del comprobante" style="padding:4px 8px;border:1.5px dashed ${falta?'#f87171':'var(--bo)'};border-radius:6px;background:${falta?'#fef2f2':'transparent'};color:${falta?'#b91c1c':'#94a3b8'};font-size:11px;font-weight:700;cursor:pointer;white-space:nowrap">📎 Subir</button>`;
+}
+function pintarComprobante(r){
+  const td=document.getElementById('td-comp-'+r.id);
+  if(td) td.innerHTML=htmlComprobante(r);
+}
+function subirComprobante(id){
   const r=ingresosData.find(x=>x.id===id);
   if(!r) return;
-  const url=prompt('Pegá el link del comprobante (Drive, MP, etc.):', r.comprobante||'');
-  if(url===null) return;
-  r.comprobante=url.trim();
-  // Auto-save comprobante
-  SB.from('ingresos').update({comprobante:r.comprobante}).eq('id',id).then(({error})=>{
-    if(!error){toast('Comprobante guardado','ok');filterIngresos();}
+  const inp=document.createElement('input');
+  inp.type='file';
+  inp.accept='image/*,application/pdf';
+  inp.onchange=async()=>{
+    const f=inp.files&&inp.files[0];
+    if(!f) return;
+    if(f.size>10*1024*1024){toast('El archivo pesa más de 10 MB. Sacale una foto más liviana','err');return;}
+    const ext=((f.name.split('.').pop()||'').toLowerCase().replace(/[^a-z0-9]/g,''))||(f.type==='application/pdf'?'pdf':'jpg');
+    const mes=(r.fecha||new Date().toISOString()).slice(0,7);
+    const path=mes+'/'+id+'-'+Date.now()+'.'+ext;
+    toast('Subiendo comprobante…');
+    const {error}=await SB.storage.from('comprobantes').upload(path,f,{contentType:f.type||undefined,upsert:false});
+    if(error){console.warn('Error subiendo comprobante:',error.message);toast('No se pudo subir. Probá de nuevo','err');return;}
+    r.comprobante=path;
+    pintarComprobante(r);
+    // Si el ingreso ya existe en la base, el comprobante queda guardado al toque
+    if(!r._new){
+      const {error:e2}=await SB.from('ingresos').update({comprobante:path}).eq('id',id);
+      if(e2){toast('Se subió, pero tocá ✓ para guardarlo','err');return;}
+      try{
+        const loc=JSON.parse(localStorage.getItem('zittano_ingresos')||'[]');
+        const k=loc.findIndex(x=>x.id===id);
+        if(k>=0){loc[k].comprobante=path;localStorage.setItem('zittano_ingresos',JSON.stringify(loc));}
+      }catch(e){}
+      toast('📎 Comprobante guardado','ok');
+    } else {
+      toast('📎 Comprobante listo. Ahora tocá ✓ para guardar','ok');
+    }
+  };
+  inp.click();
+}
+async function abrirComprobante(c){
+  if(!c) return;
+  if(esLinkComp(c)){window.open(c,'_blank');return;}
+  const w=window.open('','_blank');
+  const {data,error}=await SB.storage.from('comprobantes').createSignedUrl(c,600);
+  if(error||!data){if(w)w.close();toast('No se pudo abrir el comprobante','err');return;}
+  if(w) w.location=data.signedUrl; else window.location=data.signedUrl;
+}
+function verComprobante(id){
+  const r=ingresosData.find(x=>x.id===id)||(typeof cajaData!=='undefined'?cajaData.find(x=>x.id===id):null);
+  if(r) abrirComprobante(r.comprobante);
+}
+/* ── PAGOS EN DÓLARES ── */
+function hintUsd(r){
+  const u=parseFloat(r.monto_usd)||0, c=parseFloat(r.cotizacion)||0;
+  if(u&&c) return '= $'+Math.round(u*c).toLocaleString('es-AR');
+  if(u&&!c) return 'falta la cotización';
+  return '';
+}
+function updIngUsd(id,field,value){
+  const r=ingresosData.find(x=>x.id===id);
+  if(!r) return;
+  r[field]=value?parseFloat(value):null;
+  const h=document.getElementById('usd-hint-'+id);
+  if(h) h.textContent=hintUsd(r);
+  const row=document.getElementById('row-'+id);
+  if(row && !row.classList.contains('unsaved')){
+    row.style.borderLeft='3px solid #f59e0b';
+    row.classList.add('unsaved');
+  }
+}
+
+/* ════════════════════════════════════════
+   CAJA DEL MES (solo Belén)
+════════════════════════════════════════ */
+let cajaData=[];
+const CAJA_MESES=['Enero','Febrero','Marzo','Abril','Mayo','Junio','Julio','Agosto','Septiembre','Octubre','Noviembre','Diciembre'];
+function cajaPesos(n){ return '$'+Math.round(n||0).toLocaleString('es-AR'); }
+async function loadCaja(){
+  const wrap=document.getElementById('caja-body');
+  if(!wrap) return;
+  wrap.innerHTML='<div style="padding:30px;text-align:center;color:#94a3b8">Cargando…</div>';
+  const {data,error}=await SB.from('ingresos').select('*').order('fecha',{ascending:false}).limit(20000);
+  if(error){wrap.innerHTML='<div style="padding:30px;text-align:center;color:#b91c1c">No se pudo cargar la caja.</div>';return;}
+  cajaData=data||[];
+  const sel=document.getElementById('caja-mes');
+  const hoy=new Date();
+  const mesHoy=hoy.getFullYear()+'-'+String(hoy.getMonth()+1).padStart(2,'0');
+  const meses=[...new Set(cajaData.map(r=>(r.fecha||'').slice(0,7)).filter(m=>/^\d{4}-\d{2}$/.test(m)))];
+  if(!meses.includes(mesHoy)) meses.push(mesHoy);
+  meses.sort().reverse();
+  const cur=sel.value||mesHoy;
+  sel.innerHTML=meses.map(m=>`<option value="${m}"${m===cur?' selected':''}>${CAJA_MESES[parseInt(m.slice(5,7))-1]} ${m.slice(0,4)}</option>`).join('');
+  renderCaja();
+}
+function cajaProblemas(r){
+  const p=[];
+  const tr=parseFloat(r.transferencia)||0, ef=parseFloat(r.efectivo)||0;
+  if(tr>0&&!r.comprobante) p.push('Sin comprobante');
+  if(!r.cliente_id) p.push('Sin cliente vinculado');
+  if(!r.quien_cobro) p.push('Sin quién cobró');
+  if(!tr&&!ef) p.push('Sin monto');
+  if(r.monto_usd&&!r.cotizacion) p.push('USD sin cotización');
+  if(!r.monto_usd&&/u[sd]{2}\s*\d|\d\s*u[sd]{2}/i.test(r.comentario||'')) p.push('USD anotado en el comentario');
+  return p;
+}
+function renderCaja(){
+  const wrap=document.getElementById('caja-body');
+  const mes=document.getElementById('caja-mes').value;
+  const soloProb=document.getElementById('caja-solo-prob').checked;
+  const filas=cajaData.filter(r=>(r.fecha||'').startsWith(mes));
+  let ef=0,tr=0,usd=0,conComp=0,trCount=0;
+  const porCaja={};
+  filas.forEach(r=>{
+    const e=parseFloat(r.efectivo)||0,t=parseFloat(r.transferencia)||0,u=parseFloat(r.monto_usd)||0;
+    ef+=e;tr+=t;usd+=u;
+    if(t>0){trCount++;if(r.comprobante)conComp++;}
+    const k=r.quien_cobro||'Sin anotar';
+    if(!porCaja[k]) porCaja[k]={pesos:0,usd:0,n:0};
+    porCaja[k].pesos+=e+t;porCaja[k].usd+=u;porCaja[k].n++;
   });
+  const conProb=filas.filter(r=>cajaProblemas(r).length);
+  const card=(tit,val,sub,col)=>`<div style="background:#fff;border:1px solid var(--bo);border-radius:12px;padding:14px 16px">
+    <div style="font-size:10px;font-weight:700;letter-spacing:.5px;text-transform:uppercase;color:#94a3b8">${tit}</div>
+    <div style="font-size:22px;font-weight:800;color:${col};margin-top:4px">${val}</div>
+    <div style="font-size:11px;color:#64748b;margin-top:2px">${sub}</div></div>`;
+  const cajas=Object.entries(porCaja).sort((a,b)=>b[1].pesos-a[1].pesos);
+  const lista=(soloProb?conProb:filas);
+  wrap.innerHTML=`
+  <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(170px,1fr));gap:12px;margin-bottom:16px">
+    ${card('Total del mes',cajaPesos(ef+tr),filas.length+' ingresos','var(--grd)')}
+    ${card('Efectivo',cajaPesos(ef),'en pesos','#1e40af')}
+    ${card('Transferencias',cajaPesos(tr),conComp+' de '+trCount+' con comprobante','#0891b2')}
+    ${card('Cobrado en dólares','USD '+Math.round(usd).toLocaleString('es-AR'),'ya incluido en los pesos de arriba','#15803d')}
+    ${card('Para revisar',conProb.length,conProb.length?'ingresos con algo que falta':'todo en orden ✓',conProb.length?'#b91c1c':'#15803d')}
+  </div>
+  <div class="twrap" style="margin-bottom:16px;overflow-x:auto"><table style="width:100%;border-collapse:collapse">
+    <thead><tr style="background:var(--grl)">
+      <th style="padding:8px 10px;text-align:left;font-size:10px;color:#94a3b8;text-transform:uppercase">Dónde entró la plata</th>
+      <th style="padding:8px 10px;text-align:right;font-size:10px;color:#94a3b8;text-transform:uppercase">Pesos</th>
+      <th style="padding:8px 10px;text-align:right;font-size:10px;color:#94a3b8;text-transform:uppercase">De eso, en USD</th>
+      <th style="padding:8px 10px;text-align:right;font-size:10px;color:#94a3b8;text-transform:uppercase">Ingresos</th>
+    </tr></thead><tbody>
+    ${cajas.map(([k,v])=>`<tr><td style="padding:7px 10px;border-bottom:1px solid var(--grl);font-weight:600">${escH(k)}</td>
+      <td style="padding:7px 10px;border-bottom:1px solid var(--grl);text-align:right;font-weight:700">${cajaPesos(v.pesos)}</td>
+      <td style="padding:7px 10px;border-bottom:1px solid var(--grl);text-align:right;color:#15803d">${v.usd?'USD '+Math.round(v.usd).toLocaleString('es-AR'):'—'}</td>
+      <td style="padding:7px 10px;border-bottom:1px solid var(--grl);text-align:right;color:#64748b">${v.n}</td></tr>`).join('')||'<tr><td colspan="4" style="padding:16px;text-align:center;color:#94a3b8">Sin ingresos este mes</td></tr>'}
+    </tbody></table></div>
+  <div class="twrap" style="overflow-x:auto"><table style="width:100%;border-collapse:collapse;min-width:820px">
+    <thead><tr style="background:var(--grl)">
+      ${['Fecha','Cliente','Concepto','Pesos','USD','Dónde entró','Cargó','Comp.','Para revisar'].map(h=>`<th style="padding:8px 8px;text-align:left;font-size:10px;color:#94a3b8;text-transform:uppercase;white-space:nowrap">${h}</th>`).join('')}
+    </tr></thead><tbody>
+    ${lista.map(r=>{
+      const e=parseFloat(r.efectivo)||0,t=parseFloat(r.transferencia)||0;
+      const pr=cajaProblemas(r);
+      const td='padding:6px 8px;border-bottom:1px solid var(--grl);font-size:12px;vertical-align:middle';
+      return `<tr style="${pr.length?'background:#fffbeb':''}">
+        <td style="${td};white-space:nowrap">${fmtFechaIng(r.fecha)}</td>
+        <td style="${td};font-weight:600">${escH(r.cliente||'—')}</td>
+        <td style="${td}">${escH(r.tipo||'')}</td>
+        <td style="${td};white-space:nowrap;font-weight:700">${cajaPesos(e+t)} <span style="font-weight:500;color:#94a3b8;font-size:10px">${t>0?'transf.':'efect.'}</span></td>
+        <td style="${td};white-space:nowrap;color:#15803d">${r.monto_usd?'USD '+r.monto_usd+(r.cotizacion?' <span style="color:#94a3b8;font-size:10px">a '+r.cotizacion+'</span>':''):''}</td>
+        <td style="${td}">${escH(r.quien_cobro||'—')}</td>
+        <td style="${td}">${escH(r.gestor||'')}</td>
+        <td style="${td};text-align:center">${r.comprobante?`<button type="button" onclick="verComprobante('${r.id}')" style="border:none;background:transparent;cursor:pointer;font-size:15px" title="Ver comprobante">📄</button>`:'<span style="color:#cbd5e1">—</span>'}</td>
+        <td style="${td};color:#b45309;font-size:11px">${pr.join(' · ')}</td>
+      </tr>`;}).join('')||`<tr><td colspan="9" style="padding:20px;text-align:center;color:#94a3b8">${soloProb?'Nada para revisar este mes ✓':'Sin ingresos este mes'}</td></tr>`}
+    </tbody></table></div>`;
 }
 
 function fmtFechaIng(f){
