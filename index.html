@@ -5401,7 +5401,7 @@ async function saveIngRow(id){
   if(!r) return;
   if(!r.cliente||!r.fecha){toast('Completá fecha y cliente','err');return;}
   // Las transferencias no se guardan sin comprobante (regla desde nov 2026)
-  if(parseFloat(r.transferencia)>0 && !r.comprobante){
+  if(parseFloat(r.transferencia)>0 && !r.comprobante && reglaNuevaAplica(r)){
     toast('📎 Falta el comprobante: subí la foto o el PDF de la transferencia','err');
     const td=document.getElementById('td-comp-'+id);
     if(td){td.style.background='#fee2e2';setTimeout(()=>{td.style.background='';},2500);}
@@ -5562,6 +5562,10 @@ function addIngresoRow(){
 }
 
 /* ── COMPROBANTES: se suben como foto o PDF y quedan guardados en el sistema ── */
+// Las reglas nuevas (comprobante obligatorio y avisos de la Caja) valen solo para ingresos
+// con fecha desde este día. Todo lo anterior queda como estaba y se puede editar sin trabas.
+const REGLA_NUEVA_DESDE='2026-11-16';
+function reglaNuevaAplica(r){ return (r&&r.fecha||'')>=REGLA_NUEVA_DESDE; }
 function esLinkComp(c){ return /^https?:\/\//i.test(c||''); }
 function htmlComprobante(r){
   if(r.comprobante){
@@ -5570,7 +5574,7 @@ function htmlComprobante(r){
       <button type="button" onclick="subirComprobante('${r.id}')" title="Cambiar comprobante" style="padding:4px 5px;border:none;background:transparent;color:#94a3b8;font-size:11px;cursor:pointer">↻</button>
     </div>`;
   }
-  const falta=parseFloat(r.transferencia)>0;
+  const falta=parseFloat(r.transferencia)>0 && reglaNuevaAplica(r);
   return `<button type="button" onclick="subirComprobante('${r.id}')" title="Subir foto o PDF del comprobante" style="padding:4px 8px;border:1.5px dashed ${falta?'#f87171':'var(--bo)'};border-radius:6px;background:${falta?'#fef2f2':'transparent'};color:${falta?'#b91c1c':'#94a3b8'};font-size:11px;font-weight:700;cursor:pointer;white-space:nowrap">📎 Subir</button>`;
 }
 function pintarComprobante(r){
@@ -5668,6 +5672,7 @@ async function loadCaja(){
 }
 function cajaProblemas(r){
   const p=[];
+  if(!reglaNuevaAplica(r)) return p; // lo anterior a la regla nueva no se marca
   const tr=parseFloat(r.transferencia)||0, ef=parseFloat(r.efectivo)||0;
   if(tr>0&&!r.comprobante) p.push('Sin comprobante');
   if(!r.cliente_id) p.push('Sin cliente vinculado');
@@ -7215,6 +7220,13 @@ async function loadIngresos(){
   
   // Luego sobrescribir/agregar desde localStorage (prioridad)
   localIngresos.forEach(ing => {
+    // Si la copia de esta compu es vieja, no pisa el comprobante ni los USD que ya están en la nube
+    const nube = combined[ing.id];
+    if(nube){
+      ['comprobante','monto_usd','cotizacion'].forEach(k=>{
+        if((ing[k]===undefined||ing[k]===null||ing[k]==='') && nube[k]) ing[k]=nube[k];
+      });
+    }
     combined[ing.id] = ing;
   });
   
