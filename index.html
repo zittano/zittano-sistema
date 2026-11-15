@@ -5729,6 +5729,8 @@ function updIngUsd(id,field,value){
 let turnosData=[], turnosOk=true;
 const TUR_CONSULADOS=['CABA','La Plata','Lomas de Zamora','Morón','Rosario','Córdoba','Mendoza','Bahía Blanca','Mar del Plata','Otro'];
 const TUR_TIPOS=['Reconstrucción','Hijo directo','Pasaporte','CIE','Otro'];
+// El equipo solo saca turnos de pasaporte y de CIE; el resto los saca Belén
+const TUR_TIPOS_EQUIPO=['Pasaporte','CIE'];
 function turEsAdmin(){ return curG==='Belén'; }
 function turSumarHabiles(fechaISO,dias){
   const d=new Date(fechaISO+'T12:00:00'); let n=0;
@@ -5808,7 +5810,7 @@ function renderTurnos(){
         <td style="${td}"><span id="tur-est-${t.id}" style="display:inline-block;padding:3px 9px;border-radius:20px;font-size:10.5px;font-weight:700;white-space:nowrap;color:${e.col};background:${e.bg}">${e.txt}</span></td>
         <td style="${td}"><input value="${escH(t.cliente||'')}" placeholder="Nombre y apellido" list="tur-clientes" onchange="updTurno('${t.id}','cliente',this.value)" style="${inp};min-width:170px;font-weight:600"></td>
         <td style="${td}">${sel('consulado',TUR_CONSULADOS)}</td>
-        <td style="${td}">${sel('tipo',TUR_TIPOS)}</td>
+        <td style="${td}">${sel('tipo',adm?TUR_TIPOS:TUR_TIPOS_EQUIPO)}</td>
         <td style="${td}">${fecha('fecha_pedido')}</td>
         <td style="${td}">${fecha('fecha_sacado')}</td>
         <td style="${td}">${fecha('fecha_turno')}</td>
