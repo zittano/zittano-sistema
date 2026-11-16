@@ -1117,7 +1117,7 @@ tr.row-int{background:#fff7ed!important;}
           <th style="padding:7px 5px;text-align:center;font-size:9px;font-weight:600;color:#94a3b8;letter-spacing:.4px;text-transform:uppercase;border-bottom:1px solid var(--bo);white-space:nowrap" title="Domicilio del DNI fuera de CABA y GBA" style="color:#ea580c">📍 Zona</th>
           <th style="padding:7px 6px;text-align:left;font-size:9px;font-weight:600;color:#94a3b8;letter-spacing:.4px;text-transform:uppercase;border-bottom:1px solid var(--bo);white-space:nowrap;background:#f0f9f4">A Pagar</th>
           <th style="padding:7px 6px;text-align:left;font-size:9px;font-weight:600;color:#94a3b8;letter-spacing:.4px;text-transform:uppercase;border-bottom:1px solid var(--bo)">Quién cobró</th>
-          <th style="padding:7px 6px;text-align:left;font-size:9px;font-weight:600;color:#94a3b8;letter-spacing:.4px;text-transform:uppercase;border-bottom:1px solid var(--bo);white-space:nowrap" title="Foto o PDF del comprobante. Obligatorio en transferencias">📎 Comprob.</th>
+          <th style="padding:7px 6px;text-align:left;font-size:9px;font-weight:600;color:#94a3b8;letter-spacing:.4px;text-transform:uppercase;border-bottom:1px solid var(--bo);white-space:nowrap" title="Foto o PDF del comprobante. Obligatorio en transferencias, salvo consultas (esas las cobra Yesi)">📎 Comprob.</th>
           <th style="padding:7px 6px;text-align:left;font-size:9px;font-weight:600;color:#94a3b8;letter-spacing:.4px;text-transform:uppercase;border-bottom:1px solid var(--bo)">Comentario</th>
           <th style="padding:7px 5px;border-bottom:1px solid var(--bo);width:28px"></th>
         </tr>
@@ -5204,6 +5204,10 @@ function updIng(id,field,value){
     if(field === 'tipo' || field === 'gestor'){
       refrescarColumnaSueldo();
     }
+    // Si pasa a ser (o deja de ser) consulta, el aviso de comprobante cambia
+    if((field === 'tipo' || field === 'consulta') && typeof pintarComprobante === 'function'){
+      pintarComprobante(r);
+    }
     
     // Marcar visualmente que hay cambios sin guardar
     const row=document.getElementById('row-'+id);
@@ -5482,9 +5486,10 @@ async function saveIngRow(id){
     if(ci){ci.focus();buscarCliente(id,ci.value);ci.style.borderColor='#dc2626';setTimeout(()=>{ci.style.borderColor='';},2500);}
     return;
   }
-  // Las transferencias no se guardan sin comprobante (regla desde nov 2026)
-  if(esTransferenciaIng(r) && !r.comprobante && reglaNuevaAplica(r)){
-    toast('📎 Falta el comprobante: subí la foto o el PDF de la transferencia','err');
+  // Las transferencias no se guardan sin comprobante (regla desde nov 2026),
+  // salvo las consultas: esas las cobra Yesi y el comprobante lo tiene ella
+  if(pideComprobante(r) && !r.comprobante){
+    toast('📎 Falta el comprobante: subí la foto o el PDF de la transferencia (si es una consulta, poné "Consulta" en Tipo)','err');
     const td=document.getElementById('td-comp-'+id);
     if(td){td.style.background='#fee2e2';setTimeout(()=>{td.style.background='';},2500);}
     return;
@@ -5652,6 +5657,10 @@ function reglaNuevaAplica(r){ return (r&&r.fecha||'')>=REGLA_NUEVA_DESDE; }
 // (los dólares transferidos se cargan en la columna Efectivo por el precio, pero entran por banco)
 function esTransferenciaIng(r){ return (parseFloat(r&&r.transferencia)>0) || /transfer/i.test((r&&r.quien_cobro)||''); }
 function esLinkComp(c){ return /^https?:\/\//i.test(c||''); }
+// Las consultas de leads las cobra Yesi y el comprobante lo tiene ella:
+// las chicas pueden guardar ese ingreso sin comprobante.
+function esIngConsulta(r){ return !!(r && (r.consulta || esConsulta(r.tipo))); }
+function pideComprobante(r){ return esTransferenciaIng(r) && reglaNuevaAplica(r) && !esIngConsulta(r); }
 function htmlComprobante(r){
   if(r.comprobante){
     return `<div style="display:flex;gap:3px;justify-content:center;align-items:center">
@@ -5659,7 +5668,7 @@ function htmlComprobante(r){
       <button type="button" onclick="subirComprobante('${r.id}')" title="Cambiar comprobante" style="padding:4px 5px;border:none;background:transparent;color:#94a3b8;font-size:11px;cursor:pointer">↻</button>
     </div>`;
   }
-  const falta=esTransferenciaIng(r) && reglaNuevaAplica(r);
+  const falta=pideComprobante(r);
   return `<button type="button" onclick="subirComprobante('${r.id}')" title="Subir foto o PDF del comprobante" style="padding:4px 8px;border:1.5px dashed ${falta?'#f87171':'var(--bo)'};border-radius:6px;background:${falta?'#fef2f2':'transparent'};color:${falta?'#b91c1c':'#94a3b8'};font-size:11px;font-weight:700;cursor:pointer;white-space:nowrap">📎 Subir</button>`;
 }
 function pintarComprobante(r){
@@ -5961,7 +5970,7 @@ function cajaProblemas(r){
   const p=[];
   if(!reglaNuevaAplica(r)) return p; // lo anterior a la regla nueva no se marca
   const tr=parseFloat(r.transferencia)||0, ef=parseFloat(r.efectivo)||0;
-  if(esTransferenciaIng(r)&&!r.comprobante) p.push('Sin comprobante');
+  if(pideComprobante(r)&&!r.comprobante) p.push('Sin comprobante');
   if(!r.cliente_id) p.push('Sin cliente vinculado');
   if(!r.quien_cobro) p.push('Sin quién cobró');
   if(!tr&&!ef) p.push('Sin monto');
@@ -5979,7 +5988,7 @@ function renderCaja(){
   filas.forEach(r=>{
     const e=parseFloat(r.efectivo)||0,t=parseFloat(r.transferencia)||0,u=parseFloat(r.monto_usd)||0;
     const esTr=esTransferenciaIng(r);
-    if(esTr){tr+=e+t;usdTr+=u;trCount++;if(r.comprobante)conComp++;}
+    if(esTr){tr+=e+t;usdTr+=u;if(!esIngConsulta(r)){trCount++;if(r.comprobante)conComp++;}}
     else{ef+=e+t;usdEf+=u;}
     usd+=u;
     const k=r.quien_cobro||'Sin anotar';
