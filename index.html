@@ -409,6 +409,25 @@ tr.row-int{background:#fff7ed!important;}
 .fsel:focus{border-color:var(--az);}
 .bref{padding:9px 14px;border:1.5px solid var(--bo);border-radius:9px;background:var(--wh);font-size:13px;font-weight:500;color:var(--gr);cursor:pointer;transition:all .13s;}
 .bref:hover{border-color:var(--az);color:var(--az);background:var(--azl);}
+
+/* ── INGRESOS: pantalla dinámica ── */
+.ing-vbody{max-width:none;padding:20px clamp(10px,2vw,28px);}
+.ing-resumen{display:grid;grid-template-columns:repeat(auto-fit,minmax(170px,1fr));gap:12px;margin-bottom:16px;}
+.ing-scroll{overflow:auto!important;max-height:calc(100vh - 150px);min-height:320px;}
+#ing-tbl thead th{position:sticky;top:0;z-index:5;background:var(--grl);}
+.ing-fecha-inp{width:102px;padding:5px 4px;border:1.5px solid var(--bo);border-radius:5px;font-size:11px;outline:none;background:white;font-family:inherit;}
+/* Fecha y Cliente quedan fijas a la izquierda al deslizar */
+#ing-tbl .ing-col-fecha{position:sticky;left:0;z-index:3;background:#fff;}
+#ing-tbl .ing-col-cli{position:sticky;left:var(--ing-fw,124px);z-index:3;background:#fff;box-shadow:4px 0 6px -4px rgba(15,23,42,.18);}
+#ing-tbl tr.row-int .ing-col-fecha,#ing-tbl tr.row-int .ing-col-cli{background:#fff7ed;}
+#ing-tbl thead th.ing-col-fecha,#ing-tbl thead th.ing-col-cli{z-index:7;background:var(--grl);}
+#ing-tbl .ing-col-cli span{white-space:normal;}
+@media (max-width:1400px){
+  #ing-tbl tr[id^="row-"] td{padding:3px 3px!important;}
+  #ing-tbl th{padding:7px 4px!important;}
+  #ing-tbl input,#ing-tbl select{font-size:11px!important;}
+  #ing-tbl .ing-zona{padding:4px 6px;font-size:9.5px;letter-spacing:0;}
+}
 .twrap{background:var(--wh);border-radius:12px;box-shadow:var(--sh);border:1px solid var(--bo);overflow:hidden;}
 .dbt{width:100%;border-collapse:collapse;}
 .dbt thead th{background:var(--grl);padding:10px 14px;text-align:left;font-size:10.5px;font-weight:600;color:#94a3b8;letter-spacing:.6px;text-transform:uppercase;border-bottom:1px solid var(--bo);}
@@ -986,7 +1005,7 @@ tr.row-int{background:#fff7ed!important;}
 
 <!-- VIEW INGRESOS -->
 <div class="view" id="view-ingresos">
-<div class="vbody">
+<div class="vbody ing-vbody">
 
   <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:16px;flex-wrap:wrap;gap:12px">
     <div class="dbtitle" style="color:var(--vd)">💰 Ingresos</div>
@@ -1080,15 +1099,15 @@ tr.row-int{background:#fff7ed!important;}
 
   <!-- Cards resumen -->
   <div id="ing-alertas"></div>
-  <div id="ing-resumen" style="display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin-bottom:16px"></div>
+  <div id="ing-resumen" class="ing-resumen"></div>
 
   <!-- Tabla inline editable -->
-  <div class="twrap" style="overflow-x:auto">
-    <table style="width:100%;border-collapse:collapse;min-width:1100px" id="ing-tbl">
+  <div class="twrap ing-scroll">
+    <table style="width:100%;border-collapse:separate;border-spacing:0" id="ing-tbl">
       <thead>
         <tr style="background:var(--grl)">
-          <th style="padding:7px 6px;text-align:left;font-size:9px;font-weight:600;color:#94a3b8;letter-spacing:.4px;text-transform:uppercase;border-bottom:1px solid var(--bo);white-space:nowrap">Fecha</th>
-          <th style="padding:7px 6px;text-align:left;font-size:9px;font-weight:600;color:#94a3b8;letter-spacing:.4px;text-transform:uppercase;border-bottom:1px solid var(--bo)">Cliente</th>
+          <th style="padding:7px 6px;text-align:left;font-size:9px;font-weight:600;color:#94a3b8;letter-spacing:.4px;text-transform:uppercase;border-bottom:1px solid var(--bo);white-space:nowrap" class="ing-col-fecha">Fecha</th>
+          <th style="padding:7px 6px;text-align:left;font-size:9px;font-weight:600;color:#94a3b8;letter-spacing:.4px;text-transform:uppercase;border-bottom:1px solid var(--bo)" class="ing-col-cli">Cliente</th>
           <th style="padding:7px 6px;text-align:left;font-size:9px;font-weight:600;color:#94a3b8;letter-spacing:.4px;text-transform:uppercase;border-bottom:1px solid var(--bo)">DNI</th>
           <th style="padding:7px 6px;text-align:left;font-size:9px;font-weight:600;color:#94a3b8;letter-spacing:.4px;text-transform:uppercase;border-bottom:1px solid var(--bo)">Tipo</th>
           <th style="padding:7px 6px;text-align:left;font-size:9px;font-weight:600;color:#94a3b8;letter-spacing:.4px;text-transform:uppercase;border-bottom:1px solid var(--bo);white-space:nowrap">Efectivo $</th>
@@ -4859,7 +4878,7 @@ function renderIngresos(){
   const res=document.getElementById('ing-resumen');
   const ps = calcularProgresoSueldo();
   if(res){
-    res.style.gridTemplateColumns = ps ? 'repeat(5,1fr)' : 'repeat(4,1fr)';
+    
     res.innerHTML=`
     <div class="stat"><div class="stv">${ingresosFiltrados.length}</div><div class="stl">Registros</div></div>
     <div class="stat vd"><div class="stv" style="font-size:15px">$${Math.round(totE).toLocaleString('es-AR')}</div><div class="stl">Efectivo</div></div>
@@ -4940,7 +4959,7 @@ function renderIngresos(){
       <td style="padding:10px 6px;text-align:right;color:#fff;font-size:12px;font-weight:700;background:rgba(0,0,0,.15)">
         ${!isEmpty?'$'+Math.round(mP).toLocaleString('es-AR'):'—'}
       </td>
-      <td colspan="4" style="padding:10px 12px;text-align:right">
+      <td colspan="6" style="padding:10px 12px;text-align:right">
         <span style="font-size:10px;color:rgba(255,255,255,.7);font-weight:600">${rows.length} ${rows.length===1?'ingreso':'ingresos'}</span>
       </td>
     </tr>`;
@@ -4963,6 +4982,8 @@ function renderIngresos(){
   });
 
   tbody.innerHTML=html;
+  const _fth=document.querySelector('#ing-tbl thead th.ing-col-fecha');
+  if(_fth) document.getElementById('ing-tbl').style.setProperty('--ing-fw',_fth.offsetWidth+'px');
   renderAlertasIng();
 }
 
@@ -4980,28 +5001,10 @@ function renderIngRow(r){
   // Badge de gestor visible solo para admin (Belén)
   const badgeGestor=curG==='Belén'&&r.gestor?`<span class="gb3 ${gbCl(r.gestor)}" style="font-size:8px;padding:1px 5px;margin-left:3px">${r.gestor}</span>`:'';
   return `<tr id="row-${r.id}" class="${r.es_interior?'row-int':''}" style="${isNew?'background:#f0fdf4':r.source_ficha?'background:#fafcff':''}">
-    <td style="${cellStyle}">
-      <div style="display:flex;gap:2px;align-items:center">
-        <input type="number" min="1" max="31" value="${(r.fecha||'').slice(8,10)||''}" placeholder="Día"
-          oninput="updIngFecha('${r.id}','dia',this.value)"
-          style="width:40px;padding:5px 3px;border:1.5px solid var(--bo);border-radius:5px;font-size:11px;outline:none;background:white;text-align:center">
-        <select onchange="updIngFecha('${r.id}','mes',this.value)" style="padding:5px 3px;border:1.5px solid var(--bo);border-radius:5px;font-size:11px;outline:none;background:white;cursor:pointer">
-          <option value="">Mes</option>
-          ${['Ene','Feb','Mar','Abr','May','Jun','Jul','Ago','Sep','Oct','Nov','Dic'].map((m,i)=>{
-            const mo=String(i+1).padStart(2,'0');
-            const cur=(r.fecha||'').slice(5,7);
-            return`<option value="${mo}"${cur===mo?' selected':''}>${m}</option>`;
-          }).join('')}
-        </select>
-        <select onchange="updIngFecha('${r.id}','anio',this.value)" style="padding:5px 3px;border:1.5px solid var(--bo);border-radius:5px;font-size:11px;outline:none;background:white;cursor:pointer">
-          ${[2026,2027,2028,2029,2030,2031,2032,2033,2034,2035,2036].map(y=>{
-            const cur=(r.fecha||'').slice(0,4);
-            return`<option value="${y}"${cur===String(y)||(!cur&&y===2026)?' selected':''}>${y}</option>`;
-          }).join('')}
-        </select>
-      </div>
+    <td style="${cellStyle}" class="ing-col-fecha">
+      <input type="date" value="${(r.fecha||'').slice(0,10)}" onchange="updIngFechaFull('${r.id}',this.value)" class="ing-fecha-inp">
     </td>
-    <td style="${cellStyle}" id="td-cli-${r.id}">
+    <td style="${cellStyle}" id="td-cli-${r.id}" class="ing-col-cli">
       ${r.cliente_id
         ? `<div style="display:flex;align-items:center;gap:5px;padding:4px 6px">
              <span style="font-size:13px;font-weight:600;color:var(--grd)">${escH(r.cliente||'')}</span>
@@ -5011,18 +5014,18 @@ function renderIngRow(r){
         : `<div style="position:relative">
              <input value="${escH(r.cliente||'')}" placeholder="Nombre cliente..." id="cli-inp-${r.id}"
                oninput="buscarCliente('${r.id}',this.value)" onblur="setTimeout(()=>cerrarSugerencias('${r.id}'),200)"
-               style="${inp};min-width:160px" autocomplete="off">
+               style="${inp};min-width:94px" autocomplete="off">
              <div id="cli-sug-${r.id}" style="display:none;position:absolute;top:100%;left:0;right:0;background:white;border:1.5px solid var(--az);border-radius:8px;box-shadow:var(--sh);z-index:999;max-height:180px;overflow-y:auto"></div>
            </div>`}
     </td>
-    <td style="${cellStyle}"><input value="${escH(r.dni_cliente||'')}" placeholder="DNI..." oninput="updIng('${r.id}','dni_cliente',this.value)" style="${inp};min-width:90px"></td>
-    <td style="${cellStyle}"><input value="${escH(r.tipo||'')}" placeholder="consulta, AIRE..." list="ing-tipo-list" oninput="updIng('${r.id}','tipo',this.value)" style="${inp};min-width:120px"></td>
-    <td style="${cellStyle}"><input type="number" value="${r.efectivo||''}" placeholder="0" oninput="updIngNum('${r.id}','efectivo',this.value)" style="${inp};min-width:100px;color:#1e40af;font-weight:600"></td>
-    <td style="${cellStyle}"><input type="number" value="${r.transferencia||''}" placeholder="0" oninput="updIngNum('${r.id}','transferencia',this.value)" style="${inp};min-width:100px;color:#0891b2;font-weight:600"></td>
+    <td style="${cellStyle}"><input value="${escH(r.dni_cliente||'')}" placeholder="DNI..." oninput="updIng('${r.id}','dni_cliente',this.value)" style="${inp};min-width:60px"></td>
+    <td style="${cellStyle}"><input value="${escH(r.tipo||'')}" placeholder="consulta, AIRE..." list="ing-tipo-list" oninput="updIng('${r.id}','tipo',this.value)" style="${inp};min-width:88px"></td>
+    <td style="${cellStyle}"><input type="number" value="${r.efectivo||''}" placeholder="0" oninput="updIngNum('${r.id}','efectivo',this.value)" style="${inp};min-width:64px;color:#1e40af;font-weight:600"></td>
+    <td style="${cellStyle}"><input type="number" value="${r.transferencia||''}" placeholder="0" oninput="updIngNum('${r.id}','transferencia',this.value)" style="${inp};min-width:64px;color:#0891b2;font-weight:600"></td>
     <td style="${cellStyle}">
       <div style="display:flex;gap:3px;align-items:center">
-        <input type="number" value="${r.monto_usd||''}" placeholder="USD" title="Dólares que pagó el cliente (dejá vacío si pagó en pesos)" oninput="updIngUsd('${r.id}','monto_usd',this.value)" style="${inp};width:64px;color:#15803d;font-weight:700">
-        <input type="number" value="${r.cotizacion||''}" placeholder="cotiz." title="Cotización del día" oninput="updIngUsd('${r.id}','cotizacion',this.value)" style="${inp};width:62px;font-size:10.5px">
+        <input type="number" value="${r.monto_usd||''}" placeholder="USD" title="Dólares que pagó el cliente (dejá vacío si pagó en pesos)" oninput="updIngUsd('${r.id}','monto_usd',this.value)" style="${inp};width:46px;padding:5px 3px;color:#15803d;font-weight:700">
+        <input type="number" value="${r.cotizacion||''}" placeholder="cotiz." title="Cotización del día" oninput="updIngUsd('${r.id}','cotizacion',this.value)" style="${inp};width:46px;padding:5px 3px;font-size:10.5px">
       </div>
       <div id="usd-hint-${r.id}" style="font-size:9.5px;color:#64748b;margin-top:2px;white-space:nowrap">${hintUsd(r)}</div>
     </td>
@@ -5030,26 +5033,32 @@ function renderIngRow(r){
       <input type="checkbox" ${r.consulta?'checked':''} onchange="updIng('${r.id}','consulta',this.checked)" style="width:20px;height:20px;cursor:pointer" title="Marcar si es consulta">
     </td>
     <td style="${cellStyle};text-align:center">
-      <button type="button" id="zona-btn-${r.id}" class="ing-zona${r.es_interior?' int':''}" onclick="toggleZonaIng('${r.id}')" title="Tocá para cambiar · Interior = domicilio del DNI fuera de CABA y GBA">${r.es_interior?'🗺️ INTERIOR':'🏙️ CABA/GBA'}</button>
+      <button type="button" id="zona-btn-${r.id}" class="ing-zona${r.es_interior?' int':''}" onclick="toggleZonaIng('${r.id}')" title="Tocá para cambiar · Interior = domicilio del DNI fuera de CABA y GBA">${r.es_interior?'INTERIOR':'CABA/GBA'}</button>
     </td>
-    <td style="${cellStyle};background:#f0fdf4"><input type="number" value="${r.a_pagar??''}" placeholder="0" readonly id="apagar-${r.id}" style="${inp};background:#f0fdf4;font-weight:800;font-size:14px;color:var(--vd);min-width:100px;cursor:default" title="Se calcula solo: siempre en valor efectivo"><div id="apagar-hint-${r.id}" style="font-size:9.5px;color:#64748b;margin-top:2px;white-space:nowrap">${hintAPagar(r)}</div></td>
+    <td style="${cellStyle};background:#f0fdf4"><input type="number" value="${r.a_pagar??''}" placeholder="0" readonly id="apagar-${r.id}" style="${inp};background:#f0fdf4;font-weight:800;font-size:14px;color:var(--vd);min-width:84px;cursor:default" title="Se calcula solo: siempre en valor efectivo"><div id="apagar-hint-${r.id}" style="font-size:9.5px;color:#64748b;margin-top:2px;white-space:normal;line-height:1.2;max-width:96px">${hintAPagar(r)}</div></td>
     <td style="${cellStyle}">
-      ${htmlQuienCobro('ing:'+r.id, r.quien_cobro, inp+';min-width:140px')}
+      ${htmlQuienCobro('ing:'+r.id, r.quien_cobro, inp+';min-width:96px')}
       <span id="qcb-ing:${r.id}">${r.quien_cobro==='Transferencia Belén' ? `
       <span style="margin-top:5px;display:inline-flex;align-items:center;gap:4px;padding:4px 9px;border-radius:20px;border:1.5px solid #3b82f6;background:#eff6ff;color:#1d4ed8;font-size:9.5px;font-weight:700;white-space:nowrap">
         📎 DESCARGAR COMPROBANTE EN DRIVE
       </span>` : ''}</span>
     </td>
     <td style="${cellStyle};text-align:center" id="td-comp-${r.id}">${htmlComprobante(r)}</td>
-    <td style="${cellStyle}"><input value="${escH(r.comentario||'')}" placeholder="Notas..." oninput="updIng('${r.id}','comentario',this.value)" style="${inp};min-width:150px"></td>
+    <td style="${cellStyle}"><input value="${escH(r.comentario||'')}" placeholder="Notas..." oninput="updIng('${r.id}','comentario',this.value)" style="${inp};min-width:72px"></td>
 
     <td style="${cellStyle};text-align:center">
-      <div style="display:flex;gap:3px">
+      <div style="display:flex;flex-direction:column;gap:3px">
         <button onclick="saveIngRow('${r.id}')" title="Guardar" style="padding:4px 7px;border:none;border-radius:6px;background:var(--vdl);color:var(--vd);font-size:12px;font-weight:700;cursor:pointer">✓</button>
         <button onclick="delIngRow('${r.id}')" title="Eliminar" style="padding:4px 7px;border:none;border-radius:6px;background:#fee2e2;color:#b91c1c;font-size:12px;font-weight:700;cursor:pointer">✕</button>
       </div>
     </td>
   </tr>`;
+}
+
+function updIngFechaFull(id,value){
+  if(!value) return;
+  const [y,m,d]=value.split('-');
+  updIngFecha(id,'anio',y); updIngFecha(id,'mes',m); updIngFecha(id,'dia',d);
 }
 
 function updIngFecha(id,part,value){
@@ -5102,7 +5111,7 @@ function toggleZonaIng(id){
 function pintarZonaIng(r){
   const v=!!r.es_interior;
   const b=document.getElementById('zona-btn-'+r.id);
-  if(b){b.classList.toggle('int',v);b.textContent=v?'🗺️ INTERIOR':'🏙️ CABA/GBA';}
+  if(b){b.classList.toggle('int',v);b.textContent=v?'INTERIOR':'CABA/GBA';}
   const row=document.getElementById('row-'+r.id); if(row) row.classList.toggle('row-int',v);
 }
 // Zona según el presupuesto guardado en la ficha: 'interior' | 'caba' | null (no se sabe)
