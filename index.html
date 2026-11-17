@@ -1188,6 +1188,7 @@ body{background:var(--bg);}
 
   <!-- Cards resumen -->
   <div id="ing-alertas"></div>
+  <div id="ing-meta"></div>
   <div id="ing-resumen" class="ing-resumen"></div>
 
   <!-- Tabla inline editable -->
@@ -4977,6 +4978,7 @@ function renderIngresos(){
   });
   const res=document.getElementById('ing-resumen');
   const ps = calcularProgresoSueldo();
+  pintarMetaSueldo();
   if(res){
     
     res.innerHTML=`
@@ -5413,6 +5415,22 @@ function calcularMapaSueldoPorFila(){
 // re-renderizar toda la tabla (así no se pierde el foco si alguien
 // sigue tipeando en otra fila).
 // HTML de la tarjeta de sueldo — separado para poder refrescarla sola
+/* ══ OBJETIVO de fin de año (solo el número, sin avance) ══ */
+const OBJETIVOS_SUELDO={ malena:{nombre:'Male', monto:6000000}, sofia:{nombre:'Sofi', monto:2500000} };
+const OBJETIVO_HASTA='2026-12-31';
+function pintarMetaSueldo(){
+  const el=document.getElementById('ing-meta'); if(!el) return;
+  const g = curG!=='Belén' ? curG : ((document.getElementById('ing-gestor')||{value:''}).value);
+  const m = OBJETIVOS_SUELDO[_normGestorIng(g)];
+  if(!m || new Date() > new Date(OBJETIVO_HASTA+'T23:59:59')){ el.innerHTML=''; return; }
+  el.innerHTML=`
+  <div style="margin:4px 0 14px;padding:18px 22px;border-radius:20px;background:linear-gradient(135deg,var(--rosa) 0%,#F06A98 55%,var(--rosa2) 100%);color:#fff;box-shadow:0 10px 26px rgba(224,69,123,.35);position:relative;overflow:hidden">
+    <div style="position:absolute;right:-6px;top:-14px;font-size:96px;opacity:.2">🎯</div>
+    <div style="font-size:12px;font-weight:800;letter-spacing:1.5px;text-transform:uppercase;opacity:.92">🎯 Objetivo de ${m.nombre} · antes de que termine el año</div>
+    <div style="font-family:'Pacifico',cursive;font-size:34px;line-height:1.35;margin:6px 0 4px">Cobrar $${m.monto.toLocaleString('es-AR')} 💖</div>
+    <div style="font-size:16px;font-weight:900">¡Vos podés! Cada cliente te acerca ✨</div>
+  </div>`;
+}
 function htmlTarjetaSueldo(ps){
   if(!ps) return '';
   return `
