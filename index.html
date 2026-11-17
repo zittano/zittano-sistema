@@ -5297,7 +5297,7 @@ function updIng(id,field,value){
     r[field]=value;
     
     // Si cambió tipo, consulta, o es_interior → recalcular A PAGAR
-    if(field === 'tipo' || field === 'consulta' || field === 'es_interior') {
+    if(field === 'tipo' || field === 'consulta' || field === 'es_interior' || field === 'quien_cobro') {
       r.a_pagar = calcularAPagarExcel(r);
       pintarAPagar(r);
     }
@@ -5441,11 +5441,16 @@ function calcularAPagarExcel(r) {
   //   · Correo / Divorcio → 0 (van directo a Belén)
   const tipo = (r.tipo || '').toLowerCase();
   if (tipo.includes('correo') || tipo.includes('divorcio')) return 0;
-  const efectivo = parseFloat(r.efectivo) || 0;
-  const transferencia = parseFloat(r.transferencia) || 0;
+  let efectivo = parseFloat(r.efectivo) || 0;
+  let transferencia = parseFloat(r.transferencia) || 0;
+  // Dólares transferidos: el monto va en la columna Efectivo, pero entró por banco → lleva el factor
+  if (esUsdTransferido(r)) { transferencia += efectivo; efectivo = 0; }
   const f = factorAPagar(r);
   if (r.es_interior && f === FACTOR_INTERIOR) return Math.round((efectivo + transferencia) / f);
   return Math.round(efectivo + transferencia / f);
+}
+function esUsdTransferido(r){
+  return (parseFloat(r&&r.monto_usd)||0)>0 && /transfer/i.test((r&&r.quien_cobro)||'') && (r&&r.fecha||'9999')>=FACTOR_TRANSF_DESDE;
 }
 function factorAPagar(r){
   if (r.consulta || esConsulta(r.tipo)) return 1;
@@ -5455,7 +5460,8 @@ function factorAPagar(r){
 function hintAPagar(r){
   const tipo=(r.tipo||'').toLowerCase();
   if(tipo.includes('correo')||tipo.includes('divorcio')) return 'va directo a Belén';
-  const e=parseFloat(r.efectivo)||0, t=parseFloat(r.transferencia)||0, f=factorAPagar(r);
+  let e=parseFloat(r.efectivo)||0, t=parseFloat(r.transferencia)||0; const f=factorAPagar(r);
+  if(esUsdTransferido(r)){ t+=e; e=0; }
   const n=v=>Math.round(v).toLocaleString('es-AR');
   if(r.es_interior&&f===FACTOR_INTERIOR&&(e||t)) return n(e+t)+' ÷ 1,25 (interior)';
   const partes=[];
@@ -5834,6 +5840,7 @@ function updIngUsd(id,field,value){
   r[field]=value?parseFloat(value):null;
   const h=document.getElementById('usd-hint-'+id);
   if(h) h.textContent=hintUsd(r);
+  if(field==='monto_usd'){ r.a_pagar=calcularAPagarExcel(r); pintarAPagar(r); if(typeof refrescarColumnaSueldo==='function') refrescarColumnaSueldo(); }
   const row=document.getElementById('row-'+id);
   if(row && !row.classList.contains('unsaved')){
     row.style.borderLeft='3px solid #f59e0b';
