@@ -870,7 +870,7 @@ body{background:var(--bg);}
         <div id="pres-zona" style="margin-bottom:12px">
           <div style="font-size:11px;font-weight:800;letter-spacing:.6px;text-transform:uppercase;color:#334155;margin-bottom:7px">📍 ¿Dónde vive el cliente? <span style="color:#CE2B37">*</span> <span style="font-weight:600;text-transform:none;letter-spacing:0;color:#94a3b8">(según domicilio del DNI)</span></div>
           <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px">
-            <button type="button" id="zona-caba" onclick="setZona(false)" class="zona-btn">🏙️ CABA / GBA<small>Efectivo o transferencia (1.4)</small></button>
+            <button type="button" id="zona-caba" onclick="setZona(false)" class="zona-btn">🏙️ CABA / GBA<small>Efectivo o transferencia (1.25)</small></button>
             <button type="button" id="zona-int" onclick="setZona(true)" class="zona-btn">🗺️ INTERIOR<small>Precio único a distancia (×1.25)</small></button>
           </div>
           <div id="zona-aviso" style="margin-top:8px;padding:9px 12px;border-radius:10px;font-size:12.5px;font-weight:700;background:#fff7ed;color:#9a3412;border:1.5px dashed #fb923c">⚠️ Elegí CABA/GBA o INTERIOR antes de guardar</div>
@@ -1003,7 +1003,7 @@ body{background:var(--bg);}
       </div>
       <div class="dcl">
         <div class="dsec s5"><b>05</b><span>Condiciones</span></div>
-        <div class="cl" id="d-cl-pago">Para el pago de los montos en dólares en pesos se tomará la cotización del dólar blue tipo vendedor al día del pago. En caso de abonar por transferencia bancaria se aplicará el 1.4 sobre el valor en efectivo.</div>
+        <div class="cl" id="d-cl-pago">Para el pago de los montos en dólares en pesos se tomará la cotización del dólar blue tipo vendedor al día del pago. En caso de abonar por transferencia bancaria se aplicará el 1.25 sobre el valor en efectivo.</div>
         <div class="cl">Se deberá abonar un porcentaje (50%) por adelantado de cada trámite que vamos realizando.</div>
         <div class="cl">Es importante aclarar que el Consulado Italiano cobra el día del turno 600 EUROS a la cotización del día en pesos para iniciar el reconocimiento de la ciudadanía a cada persona mayor de 18 años, y 116 EUROS la solicitud o renovación de pasaporte italiano.</div>
         <div class="cl">El valor de las traducciones quedará sujeto a la actualización del colegio público de traductores y a las modificaciones en caso de que las actas nacionales presenten notas marginales, hojas adicionales o su extensión lo amerite.</div>
@@ -2298,7 +2298,11 @@ let etas=[],srvs=[],curId=null,allC=[],curG='',chkItems=[],modC=null;
 // La base de las chicas (A Pagar) sigue siendo siempre el efectivo: monto ÷ 1.25.
 let presInterior=null; // null = todavía no eligieron zona
 const FACTOR_INTERIOR=1.25;
-const CL_PAGO_NORMAL='Para el pago de los montos en dólares en pesos se tomará la cotización del dólar blue tipo vendedor al día del pago. En caso de abonar por transferencia bancaria se aplicará el 1.4 sobre el valor en efectivo.';
+// Desde el 12/11/2026 la lista de precios usa transferencia = efectivo × 1.25 para todos.
+// Los ingresos anteriores a esa fecha siguen con el 1.4 (no se toca lo viejo).
+const FACTOR_TRANSF=1.25, FACTOR_TRANSF_VIEJO=1.4, FACTOR_TRANSF_DESDE='2026-11-12';
+function factorTransfCaba(fecha){ return (fecha||'9999')>=FACTOR_TRANSF_DESDE ? FACTOR_TRANSF : FACTOR_TRANSF_VIEJO; }
+const CL_PAGO_NORMAL='Para el pago de los montos en dólares en pesos se tomará la cotización del dólar blue tipo vendedor al día del pago. En caso de abonar por transferencia bancaria se aplicará el 1.25 sobre el valor en efectivo.';
 const CL_PAGO_INTERIOR='Precio único para trámites a distancia: todo incluido, sin recargos por medio de pago. Para el pago de los montos en dólares en pesos se tomará la cotización del dólar blue tipo vendedor al día del pago.';
 // Devuelve el precio unitario a distancia de un servicio (número) — redondeo: USD de a 5, pesos de a 500.
 function precioDistancia(s){
@@ -2343,7 +2347,7 @@ function pintarZona(){
   a.classList.toggle('on',presInterior===false);b.classList.toggle('on',presInterior===true);
   if(presInterior===null){av.style.cssText='margin-top:8px;padding:9px 12px;border-radius:10px;font-size:12.5px;font-weight:700;background:#fff7ed;color:#9a3412;border:1.5px dashed #fb923c';av.textContent='⚠️ Elegí CABA/GBA o INTERIOR antes de guardar';}
   else if(presInterior){av.style.cssText='margin-top:8px;padding:9px 12px;border-radius:10px;font-size:12.5px;font-weight:800;background:#ea580c;color:#fff;border:none';av.textContent='🗺️ CLIENTE DEL INTERIOR · precio único a distancia, sin opción efectivo';}
-  else{av.style.cssText='margin-top:8px;padding:9px 12px;border-radius:10px;font-size:12.5px;font-weight:800;background:#1d4ed8;color:#fff;border:none';av.textContent='🏙️ CLIENTE DE CABA / GBA · efectivo o transferencia con el 1.4';}
+  else{av.style.cssText='margin-top:8px;padding:9px 12px;border-radius:10px;font-size:12.5px;font-weight:800;background:#1d4ed8;color:#fff;border:none';av.textContent='🏙️ CLIENTE DE CABA / GBA · efectivo o transferencia con el 1.25';}
 }
 let planillasData={camaras:[],apostillas:[]};
 
@@ -4793,7 +4797,7 @@ function updPagoCalc(i,field,value){
     const pe=parseFloat(p.efectivo)||0, pt=parseFloat(p.transferencia)||0;
     if(esConsulta(p.tipo)) ap=Math.round(pe+pt);
     else if(esClienteInterior(modC)) ap=Math.round((pe+pt)/FACTOR_INTERIOR);
-    else ap=Math.round(pe+pt/1.4);
+    else ap=Math.round(pe+pt/factorTransfCaba(p.fecha));
   }
   p.a_pagar=ap||null;
   const el=document.getElementById('apagar-pago-'+i);
@@ -5335,7 +5339,7 @@ function esSoloBelen(tipo){
    2. Si tiene CONSULTA ☑️ Y ES DEL INTERIOR ☑️ → A PAGAR = TRANSFERENCIA
    3. Si solo ES DEL INTERIOR ☑️ → A PAGAR = TRANSFERENCIA / 1.25 (precio a distancia)
    4. Si solo CONSULTA ☑️ → A PAGAR = TRANSFERENCIA
-   5. Si tiene TRANSFERENCIA sin checkboxes → A PAGAR = TRANSFERENCIA / 1.4
+   5. Si tiene TRANSFERENCIA sin checkboxes → A PAGAR = TRANSFERENCIA / 1.25 (1.4 antes del 12/11/2026)
    6. Si no hay TRANSFERENCIA → A PAGAR = EFECTIVO
    ══════════════════════════════════════════════════════════════════ */
 
@@ -5430,7 +5434,7 @@ function refrescarColumnaSueldo(){
 
 function calcularAPagarExcel(r) {
   // A PAGAR = siempre el precio CASH de la lista (la base de las chicas).
-  //   · CABA / GBA: efectivo tal cual + transferencia ÷ 1.4
+  //   · CABA / GBA: efectivo tal cual + transferencia ÷ 1.25 (÷ 1.4 si es anterior al 12/11/2026)
   //   · INTERIOR: paga precio único (×1.25) por el medio que sea →
   //               (efectivo + transferencia) ÷ 1.25
   //   · CONSULTA: no lleva recargo → efectivo + transferencia
@@ -5440,12 +5444,12 @@ function calcularAPagarExcel(r) {
   const efectivo = parseFloat(r.efectivo) || 0;
   const transferencia = parseFloat(r.transferencia) || 0;
   const f = factorAPagar(r);
-  if (f === FACTOR_INTERIOR) return Math.round((efectivo + transferencia) / f);
+  if (r.es_interior && f === FACTOR_INTERIOR) return Math.round((efectivo + transferencia) / f);
   return Math.round(efectivo + transferencia / f);
 }
 function factorAPagar(r){
   if (r.consulta || esConsulta(r.tipo)) return 1;
-  return r.es_interior ? FACTOR_INTERIOR : 1.4;
+  return r.es_interior ? FACTOR_INTERIOR : factorTransfCaba(r.fecha);
 }
 // Texto chiquito debajo del A Pagar: muestra la cuenta para que se entienda
 function hintAPagar(r){
@@ -5453,7 +5457,7 @@ function hintAPagar(r){
   if(tipo.includes('correo')||tipo.includes('divorcio')) return 'va directo a Belén';
   const e=parseFloat(r.efectivo)||0, t=parseFloat(r.transferencia)||0, f=factorAPagar(r);
   const n=v=>Math.round(v).toLocaleString('es-AR');
-  if(f===FACTOR_INTERIOR&&(e||t)) return n(e+t)+' ÷ 1,25 (interior)';
+  if(r.es_interior&&f===FACTOR_INTERIOR&&(e||t)) return n(e+t)+' ÷ 1,25 (interior)';
   const partes=[];
   if(e) partes.push(n(e)+' efvo');
   if(t) partes.push(f===1?n(t)+' transf':n(t)+' ÷ '+String(f).replace('.',','));
