@@ -855,8 +855,8 @@ body{background:var(--bg);}
               <option value="aire">AIRE / SPID</option>
               <option value="pasaporte">Turno Pasaporte</option>
               <option value="menor">Inscripción Menor</option>
-              <option value="matrimonio">Inscripción Matrimonio</option>
-              <option value="divorcio">Divorcio</option>
+              <option value="matrimonio">Cambio de Estado Civil</option>
+              <option value="divorcio">Sentencia de Divorcio</option>
             </select>
             <button type="button" id="btn-plantilla" onclick="cargarPlantillaTramite()" disabled
               style="padding:0 14px;border:none;border-radius:8px;background:var(--az);color:#fff;font-size:12px;font-weight:700;cursor:not-allowed;white-space:nowrap;opacity:.4;transition:opacity .13s">
@@ -884,11 +884,11 @@ body{background:var(--bg);}
           <button class="bsm" onclick="addItemSimple('spid')" style="background:#1d4ed8">+ SPID</button>
           <button class="bsm" onclick="addItemSimple('honorarios')" style="background:#064e3b">+ Honorarios</button>
           <button class="bsm" onclick="addItemSimple('pasaportes')" style="background:#0f766e">+ Pasaportes</button>
-          <button class="bsm" onclick="addItemSimple('divorcio')" style="background:#b45309">+ Divorcio</button>
+          <button class="bsm" onclick="addItemTexto('Sentencia de divorcio')" style="background:#b45309">+ Sentencia de divorcio</button>
           <button class="bsm" onclick="addItemSimple('apostilla')" style="background:#6366f1">+ Apostilla</button>
           <button class="bsm" onclick="addItemTexto('Cambio de domicilio')" style="background:#0d9488">+ Cambio de domicilio</button>
           <button class="bsm" onclick="addItemTexto('Inscripción de menores')" style="background:#db2777">+ Inscripción de menores</button>
-          <button class="bsm" onclick="addItemTexto('Inscripción de matrimonio')" style="background:#9333ea">+ Inscripción de matrimonio</button>
+          <button class="bsm" onclick="addItemTexto('Cambio de estado civil')" style="background:#9333ea">+ Cambio de estado civil</button>
         </div>
       </div>
     </div>
@@ -3070,8 +3070,8 @@ const SOPS_CATS=[
   {id:'aire', label:'AIRE / SPID'},
   {id:'pasaporte', label:'Turno Pasaporte'},
   {id:'menor', label:'Inscripción Menor'},
-  {id:'matrimonio', label:'Inscripción Matrimonio'},
-  {id:'divorcio', label:'Divorcio'},
+  {id:'matrimonio', label:'Cambio de Estado Civil'},
+  {id:'divorcio', label:'Sentencia de Divorcio'},
   {id:'general', label:'📝 Notas generales'}
 ];
 function sopsCatLabel(id){const c=SOPS_CATS.find(c=>c.id===id);return c?c.label.replace(/^[^\w]*\s/,'').trim()||c.label:id;}
@@ -3442,13 +3442,17 @@ const ACTA_TIPOS = {
   spid:        {label:'SPID', color:'#1d4ed8', bg:'#eff6ff', simple:true},
   honorarios:  {label:'Honorarios', color:'#064e3b', bg:'#f0fdf4', simple:true},
   pasaportes:  {label:'Pasaportes', color:'#0f766e', bg:'#f0fdfa', simple:true},
-  divorcio:    {label:'Divorcio', color:'#b45309', bg:'#fffbeb', simple:true},
+  divorcio:    {label:'Sentencia de divorcio', color:'#b45309', bg:'#fffbeb', simple:true},
   apostilla:   {label:'Apostilla', color:'#6366f1', bg:'#eef2ff', simple:true},
   // Trámites de anagrafe. Se agregan con su nombre completo como tipo,
   // así que las claves son el texto tal cual, para que tomen color.
   'Cambio de domicilio':      {label:'Cambio de domicilio',      color:'#0d9488', bg:'#f0fdfa', simple:true},
   'Inscripción de menores':   {label:'Inscripción de menores',   color:'#db2777', bg:'#fdf2f8', simple:true},
   'Inscripción de matrimonio':{label:'Inscripción de matrimonio',color:'#9333ea', bg:'#faf5ff', simple:true},
+  // Nombres nuevos (nov 2026). Dejamos arriba los viejos para que los
+  // presupuestos que ya estaban guardados conserven su color y su texto.
+  'Cambio de estado civil': {label:'Cambio de estado civil', color:'#9333ea', bg:'#faf5ff', simple:true},
+  'Sentencia de divorcio':  {label:'Sentencia de divorcio',  color:'#b45309', bg:'#fffbeb', simple:true},
 };
 
 /* ══════════════════════════════════════════════════════════════════
@@ -6506,7 +6510,7 @@ const TRAMITE_SECCIONES = {
     { key:'camara',   titulo:'📁 Expediente de Cámara', items:['Expediente de Cámara','Apostillado','Traducido'] },
     { key:'actas_nac',titulo:'📋 Actas Nacionales', items:[] },
     { key:'tradus',   titulo:'🔤 Traducciones', items:['Traducciones'] },
-    { key:'divorcio', titulo:'⚖️ Divorcio (si aplica)', items:['Divorcio'] },
+    { key:'divorcio', titulo:'⚖️ Sentencia de divorcio (si aplica)', items:['Sentencia de divorcio'] },
   ],
   hijo_directo: [
     { key:'actas_it', titulo:'🇮🇹 Actas Italianas', items:['Acta de Nacimiento Italiana','Acta de Matrimonio Italiana o Arg.','Acta de Defunción'] },
@@ -6536,7 +6540,7 @@ const TRAMITE_SECCIONES = {
 
 const TIPOS_LABEL = {
   reconstruccion:'Reconstrucción', hijo_directo:'Hijo Directo', aire:'AIRE / SPID',
-  pasaporte:'Turno Pasaporte', menor:'Inscripción Menor', matrimonio:'Inscripción Matrimonio', divorcio:'Divorcio'
+  pasaporte:'Turno Pasaporte', menor:'Inscripción Menor', matrimonio:'Cambio de Estado Civil', divorcio:'Sentencia de Divorcio'
 };
 
 const DOC_EST = {
@@ -7047,8 +7051,8 @@ const TIPOS_TRAMITE = {
   aire: 'AIRE / SPID',
   pasaporte: 'Turno Pasaporte',
   menor: 'Inscripción Menor',
-  matrimonio: 'Inscripción Matrimonio',
-  divorcio: 'Divorcio',
+  matrimonio: 'Cambio de Estado Civil',
+  divorcio: 'Sentencia de Divorcio',
 };
 
 // Default doc sections per tipo
@@ -7073,7 +7077,7 @@ const DOC_DEFAULTS = {
       {id:'tr_1', label:'Traducciones'},
     ]},
     { id:'div', titulo:'⚖️ Divorcio (si aplica)', items:[
-      {id:'div_1', label:'Divorcio'},
+      {id:'div_1', label:'Sentencia de divorcio'},
     ]},
   ]},
   hijo_directo: { secciones: [
@@ -8488,7 +8492,7 @@ const DOC_TEMPLATES = {
         {id:'nac_def_h2', label:'Def. Hijo/a 2'},
         {id:'nac_nac_cli', label:'Nac. Cliente'},
         {id:'nac_mat_cli', label:'Mat. Cliente'},
-        {id:'nac_div', label:'Divorcio'},
+        {id:'nac_div', label:'Sentencia de divorcio'},
       ]},
       { id:'tradus', titulo:'🔤 Traducciones', actas:[
         {id:'trad_it', label:'Tradu. Actas Italianas'},
@@ -8813,7 +8817,7 @@ async function guardarPrecios(){
 function actualizarListaTipos(){
   const dl=document.getElementById('ing-tipo-list');
   if(!dl) return;
-  const especiales=['Consulta','Correo','Divorcio','CIE','Honorarios','AIRE','Codice Fiscale','SPID'];
+  const especiales=['Consulta','Correo','Sentencia de divorcio','CIE','Honorarios','AIRE','Codice Fiscale','SPID'];
   const nombres=(preciosData||[]).map(p=>p.nombre).filter(Boolean);
   const todos=[...new Set([...especiales, ...nombres])];
   dl.innerHTML=todos.map(n=>`<option value="${escH(n)}"></option>`).join('');
