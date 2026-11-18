@@ -1946,7 +1946,7 @@ renderConsulados();
   <div style="margin-bottom:20px;display:flex;align-items:flex-start;justify-content:space-between;flex-wrap:wrap;gap:12px">
     <div>
       <div class="dbtitle" style="color:var(--am)">📋 Planillas de Seguimiento</div>
-      <div style="font-size:13px;color:#94a3b8;margin-top:4px">Registros de cámaras y apostillas — se guarda automáticamente</div>
+      <div style="font-size:13px;color:#94a3b8;margin-top:4px">Cámaras, apostillas y partidas nacionales — se guarda automáticamente</div>
     </div>
     <div style="display:flex;gap:8px;align-items:center">
       <select id="plan-mes" onchange="loadPlanillas()" style="padding:7px 12px;border:1.5px solid var(--bo);border-radius:8px;font-size:13px;color:var(--gr);background:white;outline:none;cursor:pointer">
@@ -2016,6 +2016,31 @@ renderConsulados();
       </div>
     </div>
 
+  </div>
+
+  <!-- PARTIDAS NACIONALES -->
+  <div style="margin-top:28px">
+    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:12px">
+      <div style="font-size:11px;font-weight:700;color:#64748b;letter-spacing:1px;text-transform:uppercase">📄 Partidas Nacionales</div>
+      <button onclick="addPlanillaRow('partidas')" style="padding:5px 14px;border:1.5px dashed var(--bo);border-radius:8px;background:transparent;font-size:12px;font-weight:600;color:#64748b;cursor:pointer">+ Agregar</button>
+    </div>
+    <div class="twrap">
+      <table style="width:100%;border-collapse:collapse">
+        <thead>
+          <tr style="background:var(--grl)">
+            <th style="padding:9px 12px;text-align:left;font-size:11px;font-weight:600;color:#64748b;border-bottom:1px solid var(--bo)">De dónde es</th>
+            <th style="padding:9px 12px;text-align:left;font-size:11px;font-weight:600;color:#64748b;border-bottom:1px solid var(--bo)">Código de seguimiento</th>
+            <th style="padding:9px 12px;text-align:left;font-size:11px;font-weight:600;color:#64748b;border-bottom:1px solid var(--bo)">CTE</th>
+            <th style="padding:9px 12px;text-align:left;font-size:11px;font-weight:600;color:#64748b;border-bottom:1px solid var(--bo);width:140px">Fecha</th>
+            <th style="padding:9px 12px;text-align:left;font-size:11px;font-weight:600;color:#64748b;border-bottom:1px solid var(--bo)">Tipo de partida</th>
+            <th style="padding:9px 12px;text-align:left;font-size:11px;font-weight:600;color:#64748b;border-bottom:1px solid var(--bo)">De qué cliente es</th>
+            <th style="padding:9px 12px;text-align:center;font-size:11px;font-weight:600;color:#64748b;border-bottom:1px solid var(--bo);width:90px">Estado</th>
+            <th style="padding:9px 8px;border-bottom:1px solid var(--bo);width:60px"></th>
+          </tr>
+        </thead>
+        <tbody id="planillas-partidas"></tbody>
+      </table>
+    </div>
   </div>
 
 </div>
@@ -2379,7 +2404,7 @@ function pintarZona(){
   else if(presInterior){av.style.cssText='margin-top:8px;padding:9px 12px;border-radius:10px;font-size:12.5px;font-weight:800;background:#ea580c;color:#fff;border:none';av.textContent='🗺️ CLIENTE DEL INTERIOR · precio único a distancia, sin opción efectivo';}
   else{av.style.cssText='margin-top:8px;padding:9px 12px;border-radius:10px;font-size:12.5px;font-weight:800;background:#1d4ed8;color:#fff;border:none';av.textContent='🏙️ CLIENTE DE CABA / GBA · efectivo o transferencia con el 1.25';}
 }
-let planillasData={camaras:[],apostillas:[]};
+let planillasData={camaras:[],apostillas:[],partidas:[]};
 
 // LOGIN
 let selGestor='';
@@ -2788,7 +2813,7 @@ Adjuntar: Presupuesto PDF`
 async function loadPlanillas(){
   // No recargar si hay foco activo en un input de planillas (evita perder ediciones en curso)
   const activo = document.activeElement;
-  if(activo && activo.closest && (activo.closest('#planillas-camaras') || activo.closest('#planillas-apostillas'))){
+  if(activo && activo.closest && (activo.closest('#planillas-camaras') || activo.closest('#planillas-apostillas') || activo.closest('#planillas-partidas'))){
     return;
   }
   const mes = (document.getElementById('plan-mes')||{value:''}).value || '';
@@ -2809,12 +2834,14 @@ async function loadPlanillas(){
   
   planillasData.camaras = rows.filter(r => r.tipo === 'camara');
   planillasData.apostillas = rows.filter(r => r.tipo === 'apostilla');
+  planillasData.partidas = rows.filter(r => r.tipo === 'partida');
   renderPlanillas();
 }
 
 function renderPlanillas(){
   renderPlanilla('camaras');
   renderPlanilla('apostillas');
+  renderPlanilla('partidas');
 }
 
 function renderPlanilla(tipo){
@@ -2872,6 +2899,46 @@ function renderPlanilla(tipo){
       </tr>
       `;
     }).join('');
+  } else if(tipo === 'partidas'){
+    // Partidas Nacionales. Reusa 'fecha' y 'cliente', que ya existían en la
+    // tabla; las otras cuatro columnas son nuevas y solo las usa esta planilla.
+    const campo = (r, col, ph) => `
+      <td style="padding:6px 8px">
+        <input value="${(r[col]||'').replace(/"/g,'&quot;')}" placeholder="${ph}"
+          oninput="updPlanilla('partidas','${r.id}','${col}',this.value)"
+          style="${INP}">
+      </td>`;
+    tbody.innerHTML = planillasData.partidas.map(r => {
+      const est = getEstadoStyle(r.estado);
+      return `
+      <tr style="border-bottom:1px solid var(--grl);background:${est.bg}">
+        ${campo(r,'origen','Provincia, registro...')}
+        ${campo(r,'codigo_seguimiento','Código...')}
+        ${campo(r,'cte','CTE...')}
+        <td style="padding:6px 8px">
+          <input type="date" value="${r.fecha||''}"
+            oninput="updPlanilla('partidas','${r.id}','fecha',this.value)"
+            style="${INP}">
+        </td>
+        ${campo(r,'tipo_partida','Nacimiento, matrimonio...')}
+        ${campo(r,'cliente','Nombre cliente...')}
+        <td style="padding:6px 8px">
+          <div style="display:flex;gap:3px;justify-content:center">
+            <button onclick="updPlanilla('partidas','${r.id}','estado','proceso')"
+              style="padding:3px 8px;border-radius:6px;border:2px solid ${r.estado==='proceso'?'#f59e0b':'#e2e8f0'};background:${r.estado==='proceso'?'#f59e0b':'transparent'};color:${r.estado==='proceso'?'#fff':'#94a3b8'};cursor:pointer;font-size:11px"
+              title="En Proceso">⏳</button>
+            <button onclick="updPlanilla('partidas','${r.id}','estado','listo')"
+              style="padding:3px 8px;border-radius:6px;border:2px solid ${r.estado==='listo'?'#22c55e':'#e2e8f0'};background:${r.estado==='listo'?'#22c55e':'transparent'};color:${r.estado==='listo'?'#fff':'#94a3b8'};cursor:pointer;font-size:11px"
+              title="Listo">✓</button>
+          </div>
+        </td>
+        <td style="padding:6px 8px;text-align:center">
+          <button onclick="delPlanilla('partidas','${r.id}')"
+            style="border:none;background:#fee2e2;color:#b91c1c;border-radius:6px;padding:4px 8px;cursor:pointer;font-size:12px;font-weight:700">✕</button>
+        </td>
+      </tr>
+      `;
+    }).join('');
   } else {
     tbody.innerHTML = planillasData.apostillas.map(r => {
       const est = getEstadoStyle(r.estado);
@@ -2918,7 +2985,7 @@ function renderPlanilla(tipo){
 }
 
 async function addPlanillaRow(tipo){
-  const tipoSingular = tipo === 'camaras' ? 'camara' : 'apostilla';
+  const tipoSingular = tipo === 'camaras' ? 'camara' : (tipo === 'partidas' ? 'partida' : 'apostilla');
   const newRow = {
     id: tipoSingular + '-' + (crypto.randomUUID ? crypto.randomUUID() : (Date.now()+'-'+Math.random().toString(36).slice(2))),
     tipo: tipoSingular,
@@ -2930,6 +2997,13 @@ async function addPlanillaRow(tipo){
     newRow.cliente = '';
     newRow.fecha = null;
     newRow.mail = '';
+  } else if(tipo === 'partidas'){
+    newRow.origen = '';
+    newRow.codigo_seguimiento = '';
+    newRow.cte = '';
+    newRow.fecha = null;
+    newRow.tipo_partida = '';
+    newRow.cliente = '';
   } else {
     newRow.fecha_ingreso = null;
     newRow.expediente = '';
@@ -8230,6 +8304,19 @@ async function descargarTodoExcel(){
       'Gestor': r.gestor||'',
     }));
     XLSX.utils.book_append_sheet(wb, _hojaOVacia(apostillasRows,'Planillas Apostillas'), 'Planillas Apostillas');
+
+    // Hoja Planillas — Partidas Nacionales
+    const partidasRows = (planillasRaw||[]).filter(p=>p.tipo==='partida').map(r=>({
+      'De dónde es': r.origen||'',
+      'Código de seguimiento': r.codigo_seguimiento||'',
+      'CTE': r.cte||'',
+      'Fecha': r.fecha||'',
+      'Tipo de partida': r.tipo_partida||'',
+      'De qué cliente es': r.cliente||'',
+      'Estado': r.estado==='listo'?'Listo':r.estado==='proceso'?'En Proceso':'',
+      'Gestor': r.gestor||'',
+    }));
+    XLSX.utils.book_append_sheet(wb, _hojaOVacia(partidasRows,'Partidas Nacionales'), 'Partidas Nacionales');
 
     // Hoja Precios (lista vigente, la misma que usa el presupuesto)
     const preciosRows = (preciosData||[]).map(p=>({
