@@ -735,6 +735,7 @@ body{background:var(--bg);}
   <button class="sb-btn" data-c="az" data-yesi id="sb-sops" onclick="showTab('sops',this)"><span class="sb-ico">📚</span>SOPs<span class="preg-badge" id="preg-badge-sb" style="display:none"></span></button>
   <button class="sb-btn" data-c="vd" id="sb-precios" onclick="showTab('precios',this)"><span class="sb-ico">💲</span>Precios</button>
   <button class="sb-btn" data-c="am" id="sb-seguimiento" onclick="showTab('seguimiento',this)"><span class="sb-ico">📞</span>Seguim.</button>
+  <button class="sb-btn" data-c="ro" id="sb-calientes" onclick="showTab('calientes',this)" title="Presupuestos calientes: los de los últimos 14 días que todavía no pagaron"><span class="sb-ico">🔥</span>Calientes</button>
   <button class="sb-btn" data-c="ro" id="sb-dormidos" onclick="showTab('dormidos',this)" title="Presupuestos dormidos: gente con presupuesto que nunca pagó más que la consulta"><span class="sb-ico">😴</span>Dormidos</button>
   <button class="sb-btn" data-c="gr" id="sb-papelera" onclick="showTab('papelera',this)"><span class="sb-ico">🗑️</span>Papelera</button>
 </div>
@@ -2276,6 +2277,24 @@ renderConsulados();
 </div>
 </div>
 
+<!-- VIEW PRESUPUESTOS CALIENTES (solo lectura: no modifica ningún dato) -->
+<div class="view" id="view-calientes">
+<div class="vbody">
+  <div style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:12px;margin-bottom:18px">
+    <div>
+      <div class="dbtitle" style="color:var(--rosa)">🔥 Presupuestos calientes</div>
+      <div style="font-size:13px;color:#94a3b8;margin-top:4px">Presupuestos de los últimos 14 días que todavía no pagaron. La mayoría de las ventas se cierra en esas dos semanas: primero los que están por enfriarse.</div>
+    </div>
+    <div style="display:flex;gap:8px;flex-wrap:wrap;align-items:center">
+      <select id="cal-gest" onchange="renderCalientes()" style="display:none;padding:8px 12px;border:1px solid var(--bo);border-radius:9px;font-size:13px;background:#fff"></select>
+      <button onclick="loadCalientes()" style="padding:8px 14px;border:1px solid var(--bo);border-radius:9px;background:#fff;font-size:13px;font-weight:600;color:var(--gr);cursor:pointer">↻ Actualizar</button>
+    </div>
+  </div>
+  <div id="cal-resumen"></div>
+  <div id="cal-wrap"><div class="empty"><i>⏳</i><h3>Cargando...</h3></div></div>
+</div>
+</div>
+
 <!-- VIEW PRESUPUESTOS DORMIDOS (solo lectura: no modifica ningún dato) -->
 <div class="view" id="view-dormidos">
 <div class="vbody">
@@ -3095,6 +3114,7 @@ function showTab(name,btn){
   if(name==='base')loadDb();
   if(name==='leads')loadLeads();
   if(name==='dormidos')loadDormidos();
+  if(name==='calientes')loadCalientes();
   if(name==='ingresos'){
     loadIngresos().then(()=>{
       if(!ingMesInicializado){
@@ -9834,7 +9854,8 @@ function calcularDormidos(clientes, ingresos, opts){
     if(dorExcluidoPorParentesco(c.parentesco)) return;                // bisnietos / tataranietos nunca
     if(!c.created_at) return;
     const dias = Math.floor((ahora - new Date(c.created_at).getTime())/864e5);
-    if(!(dias > DOR_DIAS)) return;
+    // modo 'calientes': de 0 a 14 días (la ventana donde se cierra la venta). Si no, dormidos: más de 14.
+    if(o.modo==='calientes' ? !(dias>=0 && dias<=DOR_DIAS) : !(dias > DOR_DIAS)) return;
     if(pagoId.has(String(c.id))) return;
     const d = dorDni(c.dni); if(d.length>=6 && pagoDni.has(d)) return;
     if((Array.isArray(c.pagos_manual)?c.pagos_manual:[]).some(dorPagoManualCuenta)) return;
@@ -9854,7 +9875,10 @@ function calcularDormidos(clientes, ingresos, opts){
       cerrada: Array.isArray(c.tags) && c.tags.some(t=>/finalizado|cerrado/i.test(t||'')),
     });
   });
-  lista.sort((a,b)=> (b.orden-a.orden) || (b.dias-a.dias));
+  if(o.modo==='calientes'){
+    lista.forEach(d=>{ d.quedan = DOR_DIAS - d.dias; });
+    lista.sort((a,b)=> (a.quedan-b.quedan) || (b.orden-a.orden));   // primero los que están por enfriarse
+  } else lista.sort((a,b)=> (b.orden-a.orden) || (b.dias-a.dias));
   return lista;
 }
 
@@ -9938,6 +9962,91 @@ function renderDormidos(){
         <div style="font-size:14px;font-weight:700;color:var(--grd)"><span style="color:var(--rosa2);font-weight:800;margin-right:6px">${i+1}</span>${escH(d.nombre)}${quien}</div>
         <div style="font-size:12px;color:var(--gr);margin-top:2px">${escH(d.tramite)} · presupuesto del ${f} · hace ${d.dias} días</div>
         <div>${contacto}${suelto}${cerr}</div>
+      </div>
+      <div style="display:flex;gap:10px;align-items:center;flex-wrap:wrap">
+        <div style="text-align:right;line-height:1.35">${monto.length
+          ? monto.map((m,j)=>`<div style="font-size:${j?12.5:15}px;font-weight:800;color:${j?'#0e5a7a':'#9A2350'}">${j?'+ ':''}${m}</div>`).join('')
+          : '<div style="font-size:12px;color:#94a3b8">sin monto</div>'}</div>
+        ${d.sinCel ? '' : btn('💬 Escribirle', `abrirWpp('${escH(String(d.celular).replace(/[^0-9+]/g,''))}','')`, '#e6f7ee', '#009246')}
+        ${btn('📂 Ficha', `openM('${escH(d.id)}')`, 'var(--azl)', 'var(--az)')}
+      </div>
+    </div>`; }).join('')}</div>`;
+}
+
+/* ══════════════════════════════════════════════════════════════════
+   PRESUPUESTOS CALIENTES
+   Lo mismo que "Dormidos" pero al revés: presupuestos de 0 a 14 días sin
+   ningún pago que no sea la consulta. Ordenados por los días que les quedan
+   antes de enfriarse. SOLO LECTURA. Mismas reglas: cada gestora ve lo suyo,
+   admin ve todo, nunca bisnietos ni tataranietos.
+   ══════════════════════════════════════════════════════════════════ */
+let calLista = [], calCotiz = 0;
+
+async function loadCalientes(){
+  const wrap = document.getElementById('cal-wrap');
+  wrap.innerHTML = '<div class="empty"><i>⏳</i><h3>Buscando presupuestos calientes...</h3></div>';
+  document.getElementById('cal-resumen').innerHTML = '';
+  try{
+    const desde = new Date(Date.now() - (DOR_DIAS+1)*864e5).toISOString();
+    const clientes = await dorTraerTodo(TB, 'id,nombre,ficha_nombre,dni,gestor,tipo_tramite,parentesco,created_at,servicios,pagos_manual,celular,mail,tags',
+      q => (curAdmin ? q : q.eq('gestor', curG)).gte('created_at', desde).order('created_at',{ascending:false}));
+    const ingresos = await dorTraerTodo('ingresos', 'id,cliente_id,dni_cliente,cliente,tipo,fecha,cotizacion', q => q.order('id'));
+    const conCot = ingresos.filter(r => parseFloat(r.cotizacion)>0 && r.fecha).sort((a,b)=> a.fecha<b.fecha?1:-1)[0];
+    calCotiz = conCot ? parseFloat(conCot.cotizacion) : 0;
+    calLista = calcularDormidos(clientes, ingresos, {admin:curAdmin, gestor:curG, cotiz:calCotiz, modo:'calientes'});
+  }catch(e){
+    wrap.innerHTML = `<div class="empty"><i>⚠️</i><h3>No se pudo cargar</h3><p>${escH(e.message||String(e))}</p></div>`;
+    return;
+  }
+  const sel = document.getElementById('cal-gest');
+  if(curAdmin){
+    const gs = [...new Set(calLista.map(d=>d.gestor).filter(Boolean))].sort();
+    const prev = sel.value;
+    sel.innerHTML = '<option value="">Todas las gestoras</option>' + gs.map(g=>`<option value="${escH(g)}">Solo ${escH(g)}</option>`).join('');
+    sel.value = gs.includes(prev) ? prev : '';
+    sel.style.display = 'block';
+  } else sel.style.display = 'none';
+  renderCalientes();
+}
+
+function renderCalientes(){
+  const g = curAdmin ? ((document.getElementById('cal-gest')||{}).value||'') : '';
+  const lista = calLista.filter(d => !g || d.gestor===g);
+  const wrap = document.getElementById('cal-wrap'), res = document.getElementById('cal-resumen');
+  if(!lista.length){
+    res.innerHTML = '';
+    wrap.innerHTML = '<div class="empty"><i>🌸</i><h3>No hay presupuestos calientes sin pagar</h3><p>Todos los presupuestos de los últimos 14 días ya pagaron algo, o todavía no se armó ninguno.</p></div>';
+    return;
+  }
+  const urg = lista.filter(d=>d.quedan<=3);
+  const sum = (L,k) => L.reduce((a,d)=>a+d[k],0);
+  const plata = L => [sum(L,'pesos')?'$'+fmt(sum(L,'pesos')):'', sum(L,'usd')?'USD '+fmt(sum(L,'usd')):''].filter(Boolean).join(' + ') || '—';
+  const card = (t,v,s,bg,col) => `<div style="flex:1 1 170px;background:${bg};border-radius:16px;padding:14px 16px">
+      <div style="font-size:11px;font-weight:800;letter-spacing:.5px;text-transform:uppercase;color:${col};opacity:.8">${t}</div>
+      <div style="font-size:22px;font-weight:800;color:${col};margin-top:3px">${v}</div>
+      <div style="font-size:11.5px;color:${col};opacity:.75;margin-top:2px">${s}</div></div>`;
+  res.innerHTML = `<div style="display:flex;gap:10px;flex-wrap:wrap;margin-bottom:10px">
+      ${card('Calientes', lista.length, plata(lista), 'var(--cel)', '#0e5a7a')}
+      ${card('Se enfrían en 3 días', urg.length, urg.length?plata(urg):'ninguno por ahora', 'var(--rosal)', '#9A2350')}
+    </div>
+    <div style="font-size:11.5px;color:#94a3b8;margin-bottom:14px">Primero los que tienen menos días por delante. Pasado el día ${DOR_DIAS} pasan a "Dormidos". Montos a precio en efectivo. No entran bisnietos ni tataranietos.</div>`;
+  const chip = (txt,bg,col,tit) => `<span ${tit?`title="${escH(tit)}"`:''} style="display:inline-block;font-size:11.5px;font-weight:700;margin:6px 6px 0 0;padding:3px 9px;border-radius:999px;background:${bg};color:${col}">${txt}</span>`;
+  const btn = (txt, fn, bg, col) => `<button onclick="${fn}" style="padding:7px 12px;border:none;border-radius:999px;background:${bg};color:${col};font-size:12px;font-weight:700;cursor:pointer;white-space:nowrap">${txt}</button>`;
+  wrap.innerHTML = `<div style="display:flex;flex-direction:column;gap:8px">${lista.map(d=>{
+    const f = new Date(d.created_at).toLocaleDateString('es-AR',{day:'numeric',month:'short'});
+    const u = d.quedan<=3;
+    const reloj = d.quedan<=0 ? chip('🔥 Último día','var(--rosa)','#fff')
+                : chip((u?'🔥 ':'⏳ ')+(d.quedan===1?'Le queda 1 día':'Le quedan '+d.quedan+' días'), u?'var(--rosal)':'var(--cel)', u?'#9A2350':'#0e5a7a');
+    const contacto = d.faltaContacto ? chip('⚠️ Falta contacto: sin celular ni mail','#fff4d6','#8a5a00')
+                   : d.sinCel ? chip('Falta celular','#fff4d6','#8a5a00') : '';
+    const suelto = d.cobroSuelto ? chip('👀 Hay un cobro suelto con este nombre','#ede9fe','#6d28d9','En Ingresos hay un cobro que no es consulta, con el mismo nombre y sin vincular a esta ficha. Revisalo antes de escribirle.') : '';
+    const quien = curAdmin && d.gestor ? `<span class="gb3 ${gbCl(d.gestor)}" style="font-size:10px;padding:2px 7px;margin-left:6px">${escH(d.gestor)}</span>` : '';
+    const monto = [d.pesos?'$'+fmt(d.pesos):'', d.usd?'USD '+fmt(d.usd):''].filter(Boolean);
+    return `<div style="background:var(--wh);border:1px solid ${u?'var(--rosa2)':'var(--bo)'};border-radius:14px;padding:12px 15px;display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap">
+      <div style="min-width:0;flex:1 1 260px">
+        <div style="font-size:14px;font-weight:700;color:var(--grd)">${escH(d.nombre)}${quien}</div>
+        <div style="font-size:12px;color:var(--gr);margin-top:2px">${escH(d.tramite)} · presupuesto del ${f} · ${d.dias===0?'hoy':d.dias===1?'ayer':'hace '+d.dias+' días'}</div>
+        <div>${reloj}${contacto}${suelto}</div>
       </div>
       <div style="display:flex;gap:10px;align-items:center;flex-wrap:wrap">
         <div style="text-align:right;line-height:1.35">${monto.length
