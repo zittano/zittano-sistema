@@ -735,6 +735,7 @@ body{background:var(--bg);}
   <button class="sb-btn" data-c="az" data-yesi id="sb-sops" onclick="showTab('sops',this)"><span class="sb-ico">📚</span>SOPs<span class="preg-badge" id="preg-badge-sb" style="display:none"></span></button>
   <button class="sb-btn" data-c="vd" id="sb-precios" onclick="showTab('precios',this)"><span class="sb-ico">💲</span>Precios</button>
   <button class="sb-btn" data-c="am" id="sb-seguimiento" onclick="showTab('seguimiento',this)"><span class="sb-ico">📞</span>Seguim.</button>
+  <button class="sb-btn" data-c="ro" id="sb-dormidos" onclick="showTab('dormidos',this)" title="Presupuestos dormidos: gente con presupuesto que nunca pagó más que la consulta"><span class="sb-ico">😴</span>Dormidos</button>
   <button class="sb-btn" data-c="gr" id="sb-papelera" onclick="showTab('papelera',this)"><span class="sb-ico">🗑️</span>Papelera</button>
 </div>
 <div class="hdr">
@@ -2104,9 +2105,10 @@ renderConsulados();
 <div class="seg-modal-bg" id="lead-motivo-bg">
   <div class="seg-modal">
     <h3>❌ No avanzó</h3>
-    <label>¿Por qué?</label>
+    <label>¿Por qué? <span style="color:var(--rosa)">(obligatorio)</span></label>
     <div id="lead-motivos" style="display:flex;flex-wrap:wrap;gap:6px;margin-bottom:8px"></div>
-    <textarea id="lead-motivo-txt" placeholder="Otro motivo o detalle (opcional)"></textarea>
+    <textarea id="lead-motivo-txt" placeholder="Detalle (opcional)" oninput="document.getElementById('lead-motivo-err').style.display='none'"></textarea>
+    <div id="lead-motivo-err" style="display:none;margin-top:8px;padding:8px 11px;border-radius:9px;background:var(--rosal);color:#9A2350;font-size:12.5px;font-weight:700"></div>
     <div class="seg-modal-actions">
       <button class="seg-modal-cancel" onclick="cerrarMotivoLead()">Cancelar</button>
       <button class="seg-modal-send" onclick="guardarNoAvanzo()">Guardar</button>
@@ -2274,6 +2276,24 @@ renderConsulados();
 </div>
 </div>
 
+<!-- VIEW PRESUPUESTOS DORMIDOS (solo lectura: no modifica ningún dato) -->
+<div class="view" id="view-dormidos">
+<div class="vbody">
+  <div style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:12px;margin-bottom:18px">
+    <div>
+      <div class="dbtitle" style="color:var(--rosa)">😴 Presupuestos dormidos</div>
+      <div style="font-size:13px;color:#94a3b8;margin-top:4px">Gente con presupuesto armado hace más de 14 días que nunca pagó nada más que la consulta. De mayor a menor.</div>
+    </div>
+    <div style="display:flex;gap:8px;flex-wrap:wrap;align-items:center">
+      <select id="dor-gest" onchange="renderDormidos()" style="display:none;padding:8px 12px;border:1px solid var(--bo);border-radius:9px;font-size:13px;background:#fff"></select>
+      <button onclick="loadDormidos()" style="padding:8px 14px;border:1px solid var(--bo);border-radius:9px;background:#fff;font-size:13px;font-weight:600;color:var(--gr);cursor:pointer">↻ Actualizar</button>
+    </div>
+  </div>
+  <div id="dor-resumen"></div>
+  <div id="dor-wrap"><div class="empty"><i>⏳</i><h3>Cargando...</h3></div></div>
+</div>
+</div>
+
 <div class="seg-modal-bg" id="nota-modal-bg">
   <div class="seg-modal">
     <h3>📝 Anotar a quién contactar</h3>
@@ -2349,6 +2369,7 @@ const CL={
 };
 
 let etas=[],srvs=[],curId=null,allC=[],curG='',chkItems=[],modC=null;
+let curAdmin=false; // profiles.is_admin del usuario logueado (lo usa "Presupuestos dormidos")
 // PRECIO A DISTANCIA (clientes del interior): precio único = efectivo × 1.25.
 // La base de las chicas (A Pagar) sigue siendo siempre el efectivo: monto ÷ 1.25.
 let presInterior=null; // null = todavía no eligieron zona
@@ -2455,6 +2476,7 @@ async function login(){
   document.getElementById('login-screen').style.display='none';
   document.getElementById('app').style.display='block';
   curG=perfil.gestor;
+  curAdmin=perfil.is_admin===true;
   document.body.classList.toggle('rol-yesi', curG==='Yesi');
   document.getElementById('gname').textContent=curG;
   document.getElementById('gdot').style.background=GC[curG]||'#64748b';
@@ -3072,6 +3094,7 @@ function showTab(name,btn){
   if(btn) btn.classList.add('on');
   if(name==='base')loadDb();
   if(name==='leads')loadLeads();
+  if(name==='dormidos')loadDormidos();
   if(name==='ingresos'){
     loadIngresos().then(()=>{
       if(!ingMesInicializado){
@@ -9025,7 +9048,8 @@ const LEAD_EST = {
   no_avanzo: {t:'No avanzó',  bg:'#f1f5f9', c:'#64748b'},
 };
 const LEAD_ORDEN = ['nuevo','contactado','consulta','avanzo','no_avanzo'];
-const LEAD_MOTIVOS = ['No respondió','Le pareció caro','No califica','Lo hace por su cuenta','Más adelante','Se fue con otro'];
+// Motivos de pérdida: lista corta y fija para poder contar después por qué se pierden las ventas.
+const LEAD_MOTIVOS = ['Precio','Lo hace por su cuenta','Se fue con otro','No califica','Sin respuesta','Otro'];
 const leadUlt10 = t => String(t||'').replace(/\D/g,'').slice(-10);
 const leadHoras = f => (Date.now() - new Date(f).getTime()) / 36e5;
 
@@ -9717,22 +9741,212 @@ async function crearFichaLead(id){
 function abrirMotivoLead(id){
   leadMotivoId = id; leadMotivoSel = '';
   document.getElementById('lead-motivo-txt').value = '';
+  errMotivoLead('');
   pintarMotivosLead();
   document.getElementById('lead-motivo-bg').classList.add('on');
 }
 function pintarMotivosLead(){
   document.getElementById('lead-motivos').innerHTML = LEAD_MOTIVOS.map(m =>
-    `<button onclick="leadMotivoSel='${m}';pintarMotivosLead()" style="padding:6px 11px;border-radius:20px;font-size:12px;font-weight:600;cursor:pointer;border:1.5px solid ${leadMotivoSel===m?'var(--az)':'var(--bo)'};background:${leadMotivoSel===m?'var(--azl)':'#fff'};color:${leadMotivoSel===m?'var(--az)':'var(--gr)'}">${m}</button>`).join('');
+    `<button onclick="leadMotivoSel='${m}';errMotivoLead('');pintarMotivosLead()" style="padding:6px 11px;border-radius:20px;font-size:12px;font-weight:600;cursor:pointer;border:1.5px solid ${leadMotivoSel===m?'var(--az)':'var(--bo)'};background:${leadMotivoSel===m?'var(--azl)':'#fff'};color:${leadMotivoSel===m?'var(--az)':'var(--gr)'}">${m}</button>`).join('');
+  const t = document.getElementById('lead-motivo-txt');
+  if(t) t.placeholder = leadMotivoSel==='Otro' ? 'Contanos cuál fue el motivo (obligatorio)' : 'Detalle (opcional)';
+}
+function errMotivoLead(msg){
+  const e = document.getElementById('lead-motivo-err'); if(!e) return;
+  e.textContent = msg; e.style.display = msg ? 'block' : 'none';
 }
 function cerrarMotivoLead(){ document.getElementById('lead-motivo-bg').classList.remove('on'); }
+// Arma el texto que se guarda en leads.motivo. Devuelve '' si falta algo: sin motivo no se guarda.
+function motivoLeadTexto(sel, extra){
+  extra = (extra||'').trim();
+  if(!LEAD_MOTIVOS.includes(sel)) return '';
+  if(sel==='Otro') return extra ? 'Otro — '+extra : '';
+  return extra ? sel+' — '+extra : sel;
+}
 async function guardarNoAvanzo(){
   const l = allLeads.find(x => x.id===leadMotivoId); if(!l) return;
-  const extra = document.getElementById('lead-motivo-txt').value.trim();
-  const motivo = [leadMotivoSel, extra].filter(Boolean).join(' — ') || 'Sin motivo';
+  const extra = document.getElementById('lead-motivo-txt').value;
+  const motivo = motivoLeadTexto(leadMotivoSel, extra);
+  if(!motivo){
+    errMotivoLead(leadMotivoSel==='Otro' ? 'Elegiste "Otro": escribí cuál fue el motivo.' : 'Elegí un motivo para poder guardar.');
+    if(leadMotivoSel==='Otro') document.getElementById('lead-motivo-txt').focus();
+    return;
+  }
   const {error} = await SB.from('leads').update({estado:'no_avanzo', motivo, actualizado_at:new Date().toISOString()}).eq('id', l.id);
   if(error){ toast('Error: '+error.message,'err'); return; }
   l.estado='no_avanzo'; l.motivo=motivo;
   cerrarMotivoLead(); toast('Guardado'); renderLeads();
+}
+
+/* ══════════════════════════════════════════════════════════════════
+   PRESUPUESTOS DORMIDOS
+   Clientes con presupuesto (servicios) cargado hace más de 14 días y sin
+   ningún pago que no sea la consulta. Es SOLO LECTURA: no escribe nada.
+   Cada gestora ve los suyos; admin (profiles.is_admin) ve todo.
+   Nunca entran bisnietos ni tataranietos (parentesco con "bis"/"tatara").
+   ══════════════════════════════════════════════════════════════════ */
+const DOR_DIAS = 14;
+let dorLista = [], dorCotiz = 0;
+
+const dorNorm = s => String(s||'').toLowerCase().normalize('NFD').replace(/[̀-ͯ]/g,'').replace(/\s+/g,' ').trim();
+const dorDni  = s => String(s||'').replace(/\D/g,'');
+const dorNum  = v => parseFloat(String(v==null?'':v).replace(/[^0-9.]/g,''))||0;
+function dorExcluidoPorParentesco(p){ return /bis|tatara/i.test(p||''); }
+
+// Monto del presupuesto: precio en efectivo × cantidad (a distancia para los del interior),
+// pesos y dólares por separado, igual que el total que ve el cliente. No toca el presupuesto.
+function dorMonto(servicios){
+  let pesos=0, usd=0;
+  (Array.isArray(servicios)?servicios:[]).forEach(s=>{
+    if(!s) return;
+    const c = parseInt(s.cant)||1;
+    let n, esU;
+    if(s.interior){ const pd=precioDistancia(s); n=pd.n; esU=pd.usd; }
+    else { n=pn(s.efect); esU=(s.efect||'').toUpperCase().includes('USD');
+           if(!n){ n=pn(s.transf); esU=(s.transf||'').toUpperCase().includes('USD'); } }
+    if(esU) usd+=n*c; else pesos+=n*c;
+  });
+  return {pesos, usd};
+}
+
+// ¿Este renglón de pagos_manual es un pago real que no es consulta?
+function dorPagoManualCuenta(p){
+  if(!p || esConsulta(p.tipo) || esConsulta(p.concepto)) return false;
+  return dorNum(p.monto)>0 || dorNum(p.efectivo)>0 || dorNum(p.transferencia)>0 || dorNum(p.a_pagar)>0 || !!p.comprobante;
+}
+
+// Función pura: de clientes + ingresos saca la lista de dormidos, ya ordenada.
+function calcularDormidos(clientes, ingresos, opts){
+  const o = opts||{};
+  const ahora = o.ahora || Date.now();
+  const cotiz = o.cotiz || 0;
+  const pagoId = new Set(), pagoDni = new Set(), pagoNombre = new Set();
+  (ingresos||[]).forEach(r=>{
+    if(esConsulta(r.tipo)) return;
+    if(r.cliente_id) pagoId.add(String(r.cliente_id));
+    const d = dorDni(r.dni_cliente); if(d.length>=6) pagoDni.add(d);
+    const n = dorNorm(r.cliente); if(n.length>=6) pagoNombre.add(n);
+  });
+  const lista = [];
+  (clientes||[]).forEach(c=>{
+    if(!Array.isArray(c.servicios) || !c.servicios.length) return;
+    if(!o.admin && c.gestor!==o.gestor) return;                       // cada gestora ve solo lo suyo
+    if(dorExcluidoPorParentesco(c.parentesco)) return;                // bisnietos / tataranietos nunca
+    if(!c.created_at) return;
+    const dias = Math.floor((ahora - new Date(c.created_at).getTime())/864e5);
+    if(!(dias > DOR_DIAS)) return;
+    if(pagoId.has(String(c.id))) return;
+    const d = dorDni(c.dni); if(d.length>=6 && pagoDni.has(d)) return;
+    if((Array.isArray(c.pagos_manual)?c.pagos_manual:[]).some(dorPagoManualCuenta)) return;
+    const m = dorMonto(c.servicios);
+    const sinCel = leadUlt10(c.celular).length<10, sinMail = !/\S+@\S+\.\S+/.test(c.mail||'');
+    lista.push({
+      id:c.id, nombre:c.nombre||c.ficha_nombre||'(sin nombre)', gestor:c.gestor||'',
+      tramite:c.tipo_tramite || ((c.servicios[0]||{}).desc) || '—',
+      created_at:c.created_at, dias, pesos:m.pesos, usd:m.usd,
+      // Para ordenar pesos y dólares juntos: todo a pesos con la última cotización cargada en Ingresos.
+      // Si no hay cotización, van primero los que tienen más dólares.
+      orden: m.pesos + m.usd*(cotiz||1e7),
+      celular:c.celular||'', sinCel, sinMail, faltaContacto: sinCel && sinMail,
+      // Aviso (no excluye): hay un cobro que no es consulta, sin vincular a la ficha, con el mismo nombre.
+      cobroSuelto: pagoNombre.has(dorNorm(c.nombre)),
+      // Aviso (no excluye): la ficha está marcada como terminada; puede haber pagado antes de que existiera el Sistema.
+      cerrada: Array.isArray(c.tags) && c.tags.some(t=>/finalizado|cerrado/i.test(t||'')),
+    });
+  });
+  lista.sort((a,b)=> (b.orden-a.orden) || (b.dias-a.dias));
+  return lista;
+}
+
+async function dorTraerTodo(tabla, cols, filtro){
+  let filas=[], from=0; const paso=1000;
+  while(true){
+    let q = SB.from(tabla).select(cols);
+    if(filtro) q = filtro(q);
+    const {data, error} = await q.range(from, from+paso-1);
+    if(error) throw error;
+    filas = filas.concat(data||[]);
+    if(!data || data.length<paso) break;
+    from += paso;
+  }
+  return filas;
+}
+
+async function loadDormidos(){
+  const wrap = document.getElementById('dor-wrap');
+  wrap.innerHTML = '<div class="empty"><i>⏳</i><h3>Buscando presupuestos dormidos...</h3></div>';
+  document.getElementById('dor-resumen').innerHTML = '';
+  try{
+    const clientes = await dorTraerTodo(TB, 'id,nombre,ficha_nombre,dni,gestor,tipo_tramite,parentesco,created_at,servicios,pagos_manual,celular,mail,tags',
+      q => (curAdmin ? q : q.eq('gestor', curG)).order('created_at',{ascending:false}));
+    const ingresos = await dorTraerTodo('ingresos', 'id,cliente_id,dni_cliente,cliente,tipo,fecha,cotizacion', q => q.order('id'));
+    const conCot = ingresos.filter(r => parseFloat(r.cotizacion)>0 && r.fecha).sort((a,b)=> a.fecha<b.fecha?1:-1)[0];
+    dorCotiz = conCot ? parseFloat(conCot.cotizacion) : 0;
+    dorLista = calcularDormidos(clientes, ingresos, {admin:curAdmin, gestor:curG, cotiz:dorCotiz});
+  }catch(e){
+    wrap.innerHTML = `<div class="empty"><i>⚠️</i><h3>No se pudo cargar</h3><p>${escH(e.message||String(e))}</p></div>`;
+    return;
+  }
+  const sel = document.getElementById('dor-gest');
+  if(curAdmin){
+    const gs = [...new Set(dorLista.map(d=>d.gestor).filter(Boolean))].sort();
+    const prev = sel.value;
+    sel.innerHTML = '<option value="">Todas las gestoras</option>' + gs.map(g=>`<option value="${escH(g)}">Solo ${escH(g)}</option>`).join('');
+    sel.value = gs.includes(prev) ? prev : '';
+    sel.style.display = 'block';
+  } else sel.style.display = 'none';
+  renderDormidos();
+}
+
+function renderDormidos(){
+  const g = curAdmin ? ((document.getElementById('dor-gest')||{}).value||'') : '';
+  const lista = dorLista.filter(d => !g || d.gestor===g);
+  const wrap = document.getElementById('dor-wrap'), res = document.getElementById('dor-resumen');
+  if(!lista.length){
+    res.innerHTML = '';
+    wrap.innerHTML = '<div class="empty"><i>🌸</i><h3>No hay presupuestos dormidos</h3><p>Todos los que tienen presupuesto de más de 14 días ya pagaron algo. ¡Bien ahí!</p></div>';
+    return;
+  }
+  const totP = lista.reduce((a,d)=>a+d.pesos,0), totU = lista.reduce((a,d)=>a+d.usd,0);
+  const sinC = lista.filter(d=>d.faltaContacto).length;
+  const card = (t,v,s,bg,col) => `<div style="flex:1 1 170px;background:${bg};border-radius:16px;padding:14px 16px">
+      <div style="font-size:11px;font-weight:800;letter-spacing:.5px;text-transform:uppercase;color:${col};opacity:.8">${t}</div>
+      <div style="font-size:22px;font-weight:800;color:${col};margin-top:3px">${v}</div>
+      <div style="font-size:11.5px;color:${col};opacity:.75;margin-top:2px">${s}</div></div>`;
+  res.innerHTML = `<div style="display:flex;gap:10px;flex-wrap:wrap;margin-bottom:10px">
+      ${card('Dormidos', lista.length, 'con más de '+DOR_DIAS+' días', 'var(--rosal)', '#9A2350')}
+      ${card('En pesos', '$'+fmt(totP), 'precio en efectivo', 'var(--cel)', '#0e5a7a')}
+      ${card('En dólares', 'USD '+fmt(totU), 'precio en efectivo', 'var(--cel)', '#0e5a7a')}
+      ${card('Sin contacto', sinC, 'no tienen celular ni mail', sinC?'#fff4d6':'#ecfdf5', sinC?'#8a5a00':'#047857')}
+    </div>
+    <div style="font-size:11.5px;color:#94a3b8;margin-bottom:14px">${dorCotiz
+      ? 'Ordenados de mayor a menor sumando pesos + dólares a $'+fmt(dorCotiz)+' (la última cotización cargada en Ingresos). Solo se usa para ordenar.'
+      : 'Ordenados de mayor a menor: primero los que tienen más dólares, después por pesos.'} No entran bisnietos ni tataranietos.</div>`;
+  const chip = (txt,bg,col,tit) => `<span ${tit?`title="${escH(tit)}"`:''} style="display:inline-block;font-size:11.5px;font-weight:700;margin:6px 6px 0 0;padding:3px 9px;border-radius:999px;background:${bg};color:${col}">${txt}</span>`;
+  const btn = (txt, fn, bg, col) => `<button onclick="${fn}" style="padding:7px 12px;border:none;border-radius:999px;background:${bg};color:${col};font-size:12px;font-weight:700;cursor:pointer;white-space:nowrap">${txt}</button>`;
+  wrap.innerHTML = `<div style="display:flex;flex-direction:column;gap:8px">${lista.map((d,i)=>{
+    const f = new Date(d.created_at).toLocaleDateString('es-AR',{day:'numeric',month:'short',year:'numeric'});
+    const contacto = d.faltaContacto ? chip('⚠️ Falta contacto: sin celular ni mail','#fff4d6','#8a5a00')
+                   : d.sinCel ? chip('Falta celular','#fff4d6','#8a5a00')
+                   : d.sinMail ? chip('Falta mail','#f1f5f9','#64748b') : '';
+    const suelto = d.cobroSuelto ? chip('👀 Hay un cobro suelto con este nombre','#ede9fe','#6d28d9','En Ingresos hay un cobro que no es consulta, con el mismo nombre y sin vincular a esta ficha. Revisalo antes de escribirle.') : '';
+    const cerr = d.cerrada ? chip('🏁 Ficha marcada Finalizado/Cerrado','#f1f5f9','#64748b','La ficha tiene la etiqueta Finalizado o Cerrado. Puede haber pagado antes de que existiera el Sistema: revisalo antes de escribirle.') : '';
+    const quien = curAdmin && d.gestor ? `<span class="gb3 ${gbCl(d.gestor)}" style="font-size:10px;padding:2px 7px;margin-left:6px">${escH(d.gestor)}</span>` : '';
+    const monto = [d.pesos?'$'+fmt(d.pesos):'', d.usd?'USD '+fmt(d.usd):''].filter(Boolean);
+    return `<div style="background:var(--wh);border:1px solid var(--bo);border-radius:14px;padding:12px 15px;display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap">
+      <div style="min-width:0;flex:1 1 260px">
+        <div style="font-size:14px;font-weight:700;color:var(--grd)"><span style="color:var(--rosa2);font-weight:800;margin-right:6px">${i+1}</span>${escH(d.nombre)}${quien}</div>
+        <div style="font-size:12px;color:var(--gr);margin-top:2px">${escH(d.tramite)} · presupuesto del ${f} · hace ${d.dias} días</div>
+        <div>${contacto}${suelto}${cerr}</div>
+      </div>
+      <div style="display:flex;gap:10px;align-items:center;flex-wrap:wrap">
+        <div style="text-align:right;line-height:1.35">${monto.length
+          ? monto.map((m,j)=>`<div style="font-size:${j?12.5:15}px;font-weight:800;color:${j?'#0e5a7a':'#9A2350'}">${j?'+ ':''}${m}</div>`).join('')
+          : '<div style="font-size:12px;color:#94a3b8">sin monto</div>'}</div>
+        ${d.sinCel ? '' : btn('💬 Escribirle', `abrirWpp('${escH(String(d.celular).replace(/[^0-9+]/g,''))}','')`, '#e6f7ee', '#009246')}
+        ${btn('📂 Ficha', `openM('${escH(d.id)}')`, 'var(--azl)', 'var(--az)')}
+      </div>
+    </div>`; }).join('')}</div>`;
 }
 
 </script>
