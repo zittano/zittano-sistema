@@ -716,6 +716,7 @@ body{background:var(--bg);}
       <button class="gb2" data-g="Belén" onclick="selG(this)"><i>BE</i>Belén</button>
       <button class="gb2" data-g="Germán" onclick="selG(this)"><i>GE</i>Germán</button>
       <button class="gb2" data-g="Yesi" onclick="selG(this)"><i>YE</i>Yesi</button>
+      <button class="gb2" data-g="Moni" onclick="selG(this)"><i>MO</i>Moni</button>
     </div>
     <div class="lpw">
       <input type="password" class="lpi" id="pwd" placeholder="Tu contraseña secreta" autocomplete="off" onkeydown="if(event.key==='Enter')login()">
@@ -726,11 +727,27 @@ body{background:var(--bg);}
   </div>
 </div>
 
+<!-- OFICINA (rol "oficina": Moni). Pantalla aparte, no carga nada del sistema -->
+<div id="ofi-screen" style="display:none;min-height:100vh;background:#fbf7ef;padding:18px 16px 40px">
+  <div style="max-width:720px;margin:0 auto">
+    <div style="display:flex;align-items:center;justify-content:space-between;gap:10px;margin-bottom:6px">
+      <div style="font-family:'DM Serif Display',serif;font-size:26px;color:#009246">🏢 Cobros de hoy</div>
+      <div style="display:flex;gap:8px">
+        <button onclick="ofiCargar()" style="padding:8px 12px;border:1.5px solid #d6cfc0;border-radius:10px;background:#fff;font-size:14px;cursor:pointer">↺</button>
+        <button onclick="logout()" style="padding:8px 12px;border:1.5px solid #d6cfc0;border-radius:10px;background:#fff;font-size:13px;font-weight:600;cursor:pointer">Salir</button>
+      </div>
+    </div>
+    <div id="ofi-fecha" style="font-size:14px;color:#7c6f57;margin-bottom:16px"></div>
+    <div id="ofi-lista"></div>
+  </div>
+</div>
+
 <!-- APP -->
 <div id="app">
 <div class="sidebar" id="sidebar">
   <button class="sb-btn" data-c="vd" id="sb-caja" style="display:none" onclick="showTab('caja',this)"><span class="sb-ico">🧾</span>Caja</button>
   <button class="sb-btn" data-c="am" id="sb-deben" onclick="showTab('deben',this)"><span class="sb-ico">🧮</span>Me deben</button>
+  <button class="sb-btn" data-c="vd" id="sb-oficina" onclick="showTab('oficina',this)" title="Quién pasa a pagar a la oficina (reemplaza el grupo de WhatsApp)"><span class="sb-ico">🏢</span>Oficina</button>
   <button class="sb-btn" data-c="ro" id="sb-gastos" onclick="showTab('gastos',this)"><span class="sb-ico">💸</span>Gastos</button>
   <button class="sb-btn" data-c="az" data-yesi id="sb-sops" onclick="showTab('sops',this)"><span class="sb-ico">📚</span>SOPs<span class="preg-badge" id="preg-badge-sb" style="display:none"></span></button>
   <button class="sb-btn" data-c="vd" id="sb-precios" onclick="showTab('precios',this)"><span class="sb-ico">💲</span>Precios</button>
@@ -1285,10 +1302,62 @@ body{background:var(--bg);}
 <div class="vbody">
   <div style="margin-bottom:16px">
     <div class="dbtitle" style="margin-bottom:4px;color:#b45309">🧮 Me deben</div>
-    <div style="font-size:13px;color:#94a3b8;max-width:720px">Clientes que pagaron un adelanto y todavía no tienen cargado el resto. Sale de lo que se anota en Ingresos (“adel…”, “50%…”, “resto…”), así que es una guía: antes de reclamar, mirá la ficha.</div>
+    <div style="font-size:13px;color:#94a3b8;max-width:760px">Por cliente: lo presupuestado (valor efectivo, pesos y dólares por separado) menos lo que ya está cargado en Ingresos vinculado a su ficha. Solo aparecen los que ya pagaron algo además de la consulta; los que no pagaron nada están en 🔥 Calientes y 😴 Dormidos.</div>
+    <div style="display:flex;gap:10px;flex-wrap:wrap;align-items:center;margin-top:12px">
+      <select class="fsel" id="deben-gestor" onchange="renderDeben()" style="display:none">
+        <option value="">Todas las vendedoras</option>
+        <option value="Malena">Malena</option>
+        <option value="Sofía">Sofía</option>
+        <option value="Belén">Belén</option>
+        <option value="Germán">Germán</option>
+      </select>
+      <input class="sinp" id="deben-q" placeholder="🔍 Buscar cliente..." oninput="renderDeben()" style="max-width:220px">
+      <button class="bref" onclick="loadDeben()">↺</button>
+    </div>
   </div>
   <div id="deben-body"></div>
 </div>
+</div>
+
+<!-- VIEW OFICINA (gestoras y Belén) -->
+<div class="view" id="view-oficina">
+<div class="vbody">
+  <div style="margin-bottom:16px">
+    <div class="dbtitle" style="margin-bottom:4px;color:var(--vd)">🏢 Cobros en oficina</div>
+    <div style="font-size:13px;color:#94a3b8;max-width:720px">Quién pasa a pagar y cuándo. Reemplaza el grupo de WhatsApp: Moni lo ve en su pantalla y, cuando toca “Recibido”, el ingreso se carga solo y queda vinculado a la ficha.</div>
+    <div style="display:flex;gap:10px;flex-wrap:wrap;align-items:center;margin-top:12px">
+      <select class="fsel" id="ofi-ver" onchange="renderOficinaEquipo()">
+        <option value="pendientes">Esperados (hoy y próximos)</option>
+        <option value="hoy">Solo hoy</option>
+        <option value="todos">Todos (también recibidos y no vino)</option>
+      </select>
+      <button onclick="ofiNuevoDesdeLista()" style="padding:9px 16px;border:none;border-radius:8px;background:var(--vd);color:#fff;font-size:13px;font-weight:700;cursor:pointer">+ Pasa a pagar</button>
+      <button class="bref" onclick="loadOficinaEquipo()">↺</button>
+    </div>
+  </div>
+  <div id="ofi-eq-body"></div>
+</div>
+</div>
+
+<!-- MODAL "PASA A PAGAR" -->
+<style>#ofi-modal input,#ofi-screen input{box-sizing:border-box;max-width:100%!important;min-width:0!important}#ofi-modal label{min-width:0}</style>
+<div id="ofi-modal" style="display:none;position:fixed;inset:0;z-index:10050;background:rgba(15,23,42,.45);align-items:center;justify-content:center;padding:16px" onclick="if(event.target===this)ofiCerrarModal()">
+  <div style="background:#fff;border-radius:16px;max-width:460px;width:100%;padding:20px 22px;box-shadow:0 20px 50px rgba(0,0,0,.25);max-height:92vh;overflow:auto">
+    <div style="font-size:17px;font-weight:800;color:var(--vd);margin-bottom:12px">🏢 Pasa a pagar a la oficina</div>
+    <div id="ofi-m-cli"></div>
+    <div style="display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:10px;margin-top:10px">
+      <label style="font-size:11px;font-weight:700;color:#64748b">Día que viene<input type="date" id="ofi-m-fecha" class="sinp" style="width:100%;margin-top:3px"></label>
+      <label style="font-size:11px;font-weight:700;color:#64748b">Quién lo trae<input id="ofi-m-trae" class="sinp" placeholder="El cliente, la hija..." style="width:100%;margin-top:3px"></label>
+      <label style="font-size:11px;font-weight:700;color:#64748b;grid-column:1/3">Qué paga (va al “Tipo” del ingreso)<input id="ofi-m-concepto" class="sinp" placeholder="resto acta it, adel tradus..." list="ing-tipo-list" style="width:100%;margin-top:3px"></label>
+      <label style="font-size:11px;font-weight:700;color:#64748b">Pesos que trae<input type="number" id="ofi-m-ars" class="sinp" placeholder="0" style="width:100%;margin-top:3px"></label>
+      <label style="font-size:11px;font-weight:700;color:#64748b">Dólares que trae<input type="number" id="ofi-m-usd" class="sinp" placeholder="0" style="width:100%;margin-top:3px"></label>
+      <label style="font-size:11px;font-weight:700;color:#64748b;grid-column:1/3">Nota para Moni (opcional)<input id="ofi-m-nota" class="sinp" placeholder="Ej: necesita factura, viene a la tarde..." style="width:100%;margin-top:3px"></label>
+    </div>
+    <div style="display:flex;gap:10px;justify-content:flex-end;margin-top:16px">
+      <button onclick="ofiCerrarModal()" style="padding:9px 14px;border:1.5px solid var(--bo);border-radius:8px;background:#fff;font-size:13px;font-weight:600;cursor:pointer">Cancelar</button>
+      <button id="ofi-m-ok" onclick="ofiGuardarNuevo()" style="padding:9px 16px;border:none;border-radius:8px;background:var(--vd);color:#fff;font-size:13px;font-weight:700;cursor:pointer">Avisar a la oficina</button>
+    </div>
+  </div>
 </div>
 
 <!-- VIEW CAJA DEL MES (solo Belén) -->
@@ -2464,6 +2533,7 @@ const EMAIL_POR_GESTOR = {
   'Belén': 'mbloccisano@gmail.com',
   'Germán': 'duttogerman@gmail.com',
   'Yesi': 'mbloccisano+yesi@gmail.com',
+  'Moni': 'mbloccisano+moni@gmail.com',   // rol "oficina": solo ve los cobros del día
 };
 
 async function login(){
@@ -2483,7 +2553,7 @@ async function login(){
 
   // Confirmamos quién es de verdad consultando su perfil — no confiamos
   // ciegamente en qué botón tocó, sino en quién logró autenticarse.
-  const {data:perfil,error:perfilError} = await SB.from('profiles').select('gestor,is_admin').eq('id',data.user.id).single();
+  const {data:perfil,error:perfilError} = await SB.from('profiles').select('gestor,is_admin,rol').eq('id',data.user.id).single();
   if(perfilError || !perfil){
     document.getElementById('lerr').classList.add('on');
     await SB.auth.signOut();
@@ -2493,6 +2563,13 @@ async function login(){
 
   document.getElementById('lerr').classList.remove('on');
   document.getElementById('login-screen').style.display='none';
+  // Rol "oficina" (Moni): no entra al sistema, solo a la lista de cobros del día
+  if(perfil.rol==='oficina'){
+    if(btn){btn.disabled=false;btn.textContent='Andiamo!';}
+    curG=perfil.gestor; curAdmin=false;
+    ofiAbrir();
+    return;
+  }
   document.getElementById('app').style.display='block';
   curG=perfil.gestor;
   curAdmin=perfil.is_admin===true;
@@ -2535,6 +2612,7 @@ function setZoom(dir){
 async function logout(){
   await SB.auth.signOut();
   document.getElementById('app').style.display='none';
+  const ofi=document.getElementById('ofi-screen'); if(ofi) ofi.style.display='none';
   document.getElementById('login-screen').style.display='flex';
   document.getElementById('pwd').value='';
   selGestor='';
@@ -2584,6 +2662,9 @@ function initApp(){
     // Mostrar filtro de gestor en ingresos
     const igf=document.getElementById('ing-gestor');
     if(igf) igf.style.display='block';
+    // Filtro por vendedora en "Me deben"
+    const dgf=document.getElementById('deben-gestor');
+    if(dgf) dgf.style.display='block';
     // Mostrar filtro de gestor en gastos
     const ggf=document.getElementById('gas-gestor');
     if(ggf) ggf.style.display='block';
@@ -3135,6 +3216,7 @@ function showTab(name,btn){
   if(name==='caja')loadCaja();
   if(name==='turnos')loadTurnos();
   if(name==='deben')loadDeben();
+  if(name==='oficina')loadOficinaEquipo();
   if(name==='ingresos')asegurarClientes();
   if(name==='gastos'){
     loadGastos().then(()=>{
@@ -4568,6 +4650,7 @@ async function openM(id){
   document.getElementById('mtit').textContent=c.nombre||'Ficha';
   renderMBody();
   document.getElementById('mbg').classList.add('on');
+  if(typeof ofiCargarFicha==='function') ofiCargarFicha(c.id);
 }
 /* ── Portal de seguimiento (seguimiento.zittano.com.ar) ── */
 const PORTAL_URL='https://seguimiento.zittano.com.ar/';
@@ -4697,6 +4780,15 @@ function renderMBody(){
     <div style="background:#fff;border:1px solid var(--bo);border-radius:12px;padding:14px 16px">
       <div style="font-size:9px;font-weight:700;color:#94a3b8;letter-spacing:1px;text-transform:uppercase;margin-bottom:12px">💰 Pagos</div>
       <div id="m-pagos-wrap">${renderPagos(modC)}</div>
+    </div>
+
+    <!-- PASA A PAGAR A LA OFICINA -->
+    <div style="background:#fff;border:1px solid var(--bo);border-radius:12px;padding:14px 16px">
+      <div style="display:flex;align-items:center;justify-content:space-between;gap:10px;margin-bottom:10px">
+        <div style="font-size:9px;font-weight:700;color:#94a3b8;letter-spacing:1px;text-transform:uppercase">🏢 Pasa a pagar a la oficina</div>
+        <button onclick="ofiNuevoDesdeFicha()" style="padding:6px 12px;border:none;border-radius:8px;background:var(--vd);color:#fff;font-size:12px;font-weight:700;cursor:pointer">+ Pasa a pagar</button>
+      </div>
+      <div id="m-ofi-wrap">${typeof ofiFichaHtml==='function'?ofiFichaHtml(c.id):''}</div>
     </div>
 
     <!-- NOTAS INTERNAS -->
@@ -6214,19 +6306,105 @@ function calcularDeben(ingresos){
   });
   return out.sort((a,b)=>(a.fecha||'').localeCompare(b.fecha||''));
 }
+/* ── ME DEBEN (nuevo): presupuesto − pagos registrados, por cliente ──
+   Presupuesto = mismo cálculo que Calientes/Dormidos (dorMonto): valor efectivo
+   (o precio a distancia si es del interior), pesos y dólares por separado.
+   Pagado = ingresos vinculados a la ficha (cliente_id), sin consultas:
+     · dólares: monto_usd
+     · pesos: efectivo − (usd × cotización) + transferencia ÷ factor (interior: sin dividir)
+   Solo lectura: no escribe nada. */
+let debenLista=[], debenViejo=[];
+const DEBEN_TOL_ARS=1000, DEBEN_TOL_USD=5;
+function calcularDebenPorCliente(clientes, ingresos, cobros){
+  const porCli={};
+  (ingresos||[]).forEach(r=>{ if(r.cliente_id && !esConsulta(r.tipo)) (porCli[r.cliente_id]=porCli[r.cliente_id]||[]).push(r); });
+  const proxCobro={};
+  (cobros||[]).forEach(o=>{ if(o.estado==='esperado' && o.cliente_id){ const p=proxCobro[o.cliente_id]; if(!p||o.fecha_esperada<p.fecha_esperada) proxCobro[o.cliente_id]=o; } });
+  const out=[];
+  (clientes||[]).forEach(c=>{
+    const pagos=porCli[c.id]; if(!pagos||!pagos.length) return;
+    if(!Array.isArray(c.servicios)||!c.servicios.length) return;
+    const serv=c.servicios.filter(s=>s&&!esConsulta(s.desc));
+    const pres=dorMonto(serv); if(!pres.pesos&&!pres.usd) return;
+    const interior=esClienteInterior(c);
+    let pPes=0,pUsd=0,ultimo='';
+    pagos.forEach(r=>{
+      const usd=parseFloat(r.monto_usd)||0, cot=parseFloat(r.cotizacion)||0;
+      let ef=parseFloat(r.efectivo)||0, tr=parseFloat(r.transferencia)||0;
+      if(usd>0){ pUsd+=usd; ef=Math.max(0, ef-(cot?usd*cot:ef)); }
+      pPes += ef + (interior ? tr : tr/factorTransfCaba(r.fecha));
+      if((r.fecha||'')>ultimo) ultimo=r.fecha||'';
+    });
+    const sPes=Math.round(pres.pesos-pPes), sUsd=Math.round((pres.usd-pUsd)*100)/100;
+    if(sPes<=DEBEN_TOL_ARS && sUsd<=DEBEN_TOL_USD) return;
+    out.push({id:c.id, nombre:c.nombre||c.ficha_nombre||'(sin nombre)', gestor:c.gestor||'', celular:c.celular||'',
+      presPes:pres.pesos, presUsd:pres.usd, pagPes:Math.round(pPes), pagUsd:pUsd,
+      debePes:Math.max(0,sPes), debeUsd:Math.max(0,sUsd), aFavorPes:sPes<-DEBEN_TOL_ARS?-sPes:0, aFavorUsd:sUsd<-DEBEN_TOL_USD?-sUsd:0,
+      ultimo, cerrada:Array.isArray(c.tags)&&c.tags.some(t=>/finalizado|cerrado/i.test(t||'')),
+      prox:proxCobro[c.id]||null});
+  });
+  return out.sort((a,b)=>(b.debePes+b.debeUsd*1500)-(a.debePes+a.debeUsd*1500));
+}
 async function loadDeben(){
   const wrap=document.getElementById('deben-body');
   wrap.innerHTML='<div style="padding:30px;text-align:center;color:#94a3b8">Cargando…</div>';
-  const desde=new Date(); desde.setMonth(desde.getMonth()-12);
-  const {data,error}=await SB.from('ingresos').select('*').gte('fecha',desde.toISOString().slice(0,10)).order('fecha',{ascending:true}).limit(20000);
-  if(error){wrap.innerHTML='<div style="padding:30px;text-align:center;color:#b91c1c">No se pudo cargar.</div>';return;}
-  await asegurarClientes();
-  const deben=calcularDeben(data||[]);
+  try{
+    const [clientes, ingresos, cobrosR] = await Promise.all([
+      dorTraerTodo(TB,'id,nombre,ficha_nombre,gestor,servicios,tags,celular'),
+      dorTraerTodo('ingresos','id,fecha,cliente,cliente_id,tipo,efectivo,transferencia,monto_usd,cotizacion,gestor,created_at'),
+      SB.from('cobros_oficina').select('cliente_id,fecha_esperada,estado').eq('estado','esperado')
+    ]);
+    debenLista=calcularDebenPorCliente(clientes, ingresos, cobrosR.data||[]);
+    const desde=new Date(); desde.setMonth(desde.getMonth()-12); const d0=desde.toISOString().slice(0,10);
+    debenViejo=calcularDeben(ingresos.filter(r=>(r.fecha||'')>=d0));
+    if(!allC||!allC.length) allC=clientes;
+  }catch(e){ wrap.innerHTML='<div style="padding:30px;text-align:center;color:#b91c1c">No se pudo cargar.</div>'; return; }
+  renderDeben();
+}
+function renderDeben(){
+  const wrap=document.getElementById('deben-body'); if(!wrap) return;
+  const g=curG==='Belén' ? ((document.getElementById('deben-gestor')||{}).value||'') : '';
+  const q=dorNorm((document.getElementById('deben-q')||{}).value||'');
+  const lista=debenLista.filter(d=>(!g||dorNorm(d.gestor)===dorNorm(g)) && (!q||dorNorm(d.nombre).includes(q)));
+  const $=n=>'$'+Math.round(n||0).toLocaleString('es-AR'), U=n=>'USD '+(Math.round((n||0)*100)/100).toLocaleString('es-AR');
+  const totPes=lista.reduce((a,d)=>a+d.debePes,0), totUsd=lista.reduce((a,d)=>a+d.debeUsd,0);
+  const td='padding:8px 8px;border-bottom:1px solid var(--grl);font-size:12.5px;vertical-align:middle';
+  const card=(t,v,col)=>`<div style="background:#fff;border:1px solid var(--bo);border-radius:12px;padding:12px 16px"><div style="font-size:10px;font-weight:700;color:#94a3b8;text-transform:uppercase">${t}</div><div style="font-size:21px;font-weight:800;color:${col}">${v}</div></div>`;
+  const monto=(p,u)=>[p?$(p):'',u?U(u):''].filter(Boolean).join('<br>')||'—';
+  wrap.innerHTML=`
+  <div style="display:flex;gap:12px;flex-wrap:wrap;margin-bottom:14px">
+    ${card('Clientes que deben',lista.length,'#b45309')}
+    ${card('Total en pesos',$(totPes),'#9a3412')}
+    ${card('Total en dólares',U(totUsd),'#15803d')}
+  </div>
+  <div class="twrap" style="overflow-x:auto"><table style="width:100%;border-collapse:collapse;min-width:820px">
+    <thead><tr style="background:var(--grl)">${['Cliente','Vendedora','Presupuesto','Pagó','Debe','Último pago','',''].map(h=>`<th style="padding:8px 8px;text-align:left;font-size:10px;color:#94a3b8;text-transform:uppercase;white-space:nowrap">${h}</th>`).join('')}</tr></thead><tbody>
+    ${lista.map(d=>`<tr>
+      <td style="${td};font-weight:700">${escH(d.nombre)}${d.cerrada?' <span style="font-size:9px;background:#f1f5f9;color:#64748b;border-radius:6px;padding:1px 5px">ficha cerrada</span>':''}${d.aFavorPes||d.aFavorUsd?` <span title="Pagó de más en la otra moneda: puede que haya pagado pesos por algo presupuestado en dólares" style="font-size:9px;background:#e0f2fe;color:#0369a1;border-radius:6px;padding:1px 5px">a favor ${monto(d.aFavorPes,d.aFavorUsd).replace('<br>',' + ')}</span>`:''}</td>
+      <td style="${td}"><span class="gb3 ${gbCl(d.gestor)}" style="font-size:10px">${escH(d.gestor)}</span></td>
+      <td style="${td};white-space:nowrap;color:#64748b">${monto(d.presPes,d.presUsd)}</td>
+      <td style="${td};white-space:nowrap;color:#15803d">${monto(d.pagPes,d.pagUsd)}</td>
+      <td style="${td};white-space:nowrap;font-weight:800;color:#b91c1c">${monto(d.debePes,d.debeUsd)}</td>
+      <td style="${td};white-space:nowrap">${d.ultimo?fmtFechaIng(d.ultimo):'—'}${d.prox?`<div style="font-size:10px;font-weight:700;color:var(--vd);margin-top:2px">🏢 pasa ${fmtFechaIng(d.prox.fecha_esperada)}</div>`:''}</td>
+      <td style="${td}"><button type="button" onclick="openM('${escH(d.id)}')" style="padding:4px 9px;border:none;border-radius:6px;background:var(--azl);color:var(--az);font-size:11px;font-weight:700;cursor:pointer;white-space:nowrap">📂 Ficha</button></td>
+      <td style="${td}">${d.celular?`<button type="button" onclick="abrirWpp('${escH(String(d.celular))}','')" style="padding:4px 9px;border:none;border-radius:6px;background:#dcfce7;color:#15803d;font-size:11px;font-weight:700;cursor:pointer;white-space:nowrap">💬 WhatsApp</button>`:''}</td>
+    </tr>`).join('')||'<tr><td colspan="8" style="padding:24px;text-align:center;color:#94a3b8">Nadie debe nada ✓</td></tr>'}
+    </tbody></table></div>
+  <div style="font-size:11.5px;color:#94a3b8;margin-top:8px">Es una guía: si a un cliente le cambiaron el presupuesto o pagó algo que no está en Ingresos, el número no va a cerrar. Antes de reclamar, mirá la ficha.</div>
+  ${debenViejoHtml(g)}`;
+}
+// La vista anterior (adelantos sin resto) queda abajo, plegada, por si les sirve
+function debenViejoHtml(g){
+  const deben=debenViejo.filter(r=>!g||dorNorm(r.gestor)===dorNorm(g));
+  if(!deben.length) return '';
+  return `<details style="margin-top:22px"><summary style="cursor:pointer;font-size:13px;font-weight:700;color:#b45309">Vista anterior: adelantos sin “resto” cargado (${deben.length})</summary><div id="deben-viejo" style="margin-top:10px">${debenViejoTabla(deben)}</div></details>`;
+}
+function debenViejoTabla(deben){
   const hoy=new Date();
   const dias=f=>Math.floor((hoy-new Date(f+'T12:00:00'))/86400000);
   const td='padding:7px 8px;border-bottom:1px solid var(--grl);font-size:12px;vertical-align:middle';
   const viejos=deben.filter(r=>dias(r.fecha)>60).length;
-  wrap.innerHTML=`
+  return `
   <div style="display:flex;gap:12px;flex-wrap:wrap;margin-bottom:14px">
     <div style="background:#fff;border:1px solid var(--bo);border-radius:12px;padding:12px 16px"><div style="font-size:10px;font-weight:700;color:#94a3b8;text-transform:uppercase">Adelantos sin resto</div><div style="font-size:22px;font-weight:800;color:#b45309">${deben.length}</div></div>
     <div style="background:#fff;border:1px solid var(--bo);border-radius:12px;padding:12px 16px"><div style="font-size:10px;font-weight:700;color:#94a3b8;text-transform:uppercase">Hace más de 2 meses</div><div style="font-size:22px;font-weight:800;color:${viejos?'#b91c1c':'#15803d'}">${viejos}</div></div>
@@ -10058,6 +10236,257 @@ function renderCalientes(){
     </div>`; }).join('')}</div>`;
 }
 
+</script>
+<script>
+/* ══════════════════════════════════════════════════════════════════
+   COBROS EN OFICINA (24/11/2026) — reemplaza el grupo de WhatsApp de pagos
+   · Sofi / Male / Belu cargan "Pasa a pagar" desde la ficha (o eligiendo
+     el cliente de la base en la pestaña 🏢 Oficina). Nunca texto libre.
+   · Moni (rol "oficina") entra y ve SOLO la lista del día. Al tocar
+     "Recibido" la base crea el ingreso (Efectivo oficina) vinculado al
+     cliente y lo engancha al cobro. Todo eso lo hace Supabase
+     (oficina_marcar_recibido), así Moni no necesita ver clientes ni ingresos.
+   · Permisos: cada gestora ve los cobros de sus clientes; Belén ve todo.
+   ══════════════════════════════════════════════════════════════════ */
+function ofiHoyISO(){ const d=new Date(); return d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0'); }
+const ofi$ = n => '$'+Math.round(n||0).toLocaleString('es-AR');
+const ofiU = n => 'USD '+(Math.round((n||0)*100)/100).toLocaleString('es-AR');
+function ofiMontoTxt(ars,usd){ return [ars?ofi$(ars):'', usd?ofiU(usd):''].filter(Boolean).join(' + ') || 'monto a confirmar'; }
+function ofiFechaLarga(iso){
+  if(!iso) return '';
+  const d=new Date(iso+'T12:00:00');
+  return d.toLocaleDateString('es-AR',{weekday:'long',day:'numeric',month:'long'});
+}
+const OFI_ESTADO = {
+  'esperado': {txt:'Esperado', bg:'#fff7ed', col:'#c2410c'},
+  'recibido': {txt:'Recibido', bg:'#dcfce7', col:'#15803d'},
+  'no vino':  {txt:'No vino',  bg:'#f1f5f9', col:'#64748b'},
+};
+function ofiBadge(e){ const s=OFI_ESTADO[e]||OFI_ESTADO['esperado']; return `<span style="display:inline-block;padding:2px 9px;border-radius:20px;font-size:10.5px;font-weight:800;background:${s.bg};color:${s.col}">${s.txt}</span>`; }
+
+/* ───────── PANTALLA DE MONI ───────── */
+let ofiFilas=[], ofiTimer=null;
+function ofiAbrir(){
+  document.getElementById('app').style.display='none';
+  document.getElementById('ofi-screen').style.display='block';
+  document.getElementById('ofi-fecha').textContent='Hola '+(curG||'')+' · '+ofiFechaLarga(ofiHoyISO());
+  ofiCargar();
+  clearInterval(ofiTimer);
+  ofiTimer=setInterval(()=>{ const s=document.getElementById('ofi-screen');
+    if(s&&s.style.display!=='none'&&document.visibilityState==='visible'&&!document.querySelector('#ofi-lista input:focus')) ofiCargar(); },60000);
+}
+async function ofiCargar(){
+  const box=document.getElementById('ofi-lista');
+  if(!ofiFilas.length) box.innerHTML='<div style="padding:30px;text-align:center;color:#a8a08c">Cargando…</div>';
+  const {data,error}=await SB.rpc('oficina_lista_hoy');
+  if(error){ box.innerHTML='<div style="padding:24px;text-align:center;color:#b91c1c">No se pudo cargar la lista. Revisá internet y tocá ↺</div>'; return; }
+  ofiFilas=data||[];
+  ofiPintar();
+}
+function ofiPintar(){
+  const box=document.getElementById('ofi-lista'); const hoy=ofiHoyISO();
+  if(!ofiFilas.length){ box.innerHTML='<div style="background:#fff;border:1px solid #ece4d3;border-radius:16px;padding:34px 20px;text-align:center;color:#7c6f57;font-size:15px">☕ Hoy no hay nadie anotado para pasar a pagar.</div>'; return; }
+  const esper=ofiFilas.filter(r=>r.estado==='esperado').length;
+  box.innerHTML=`<div style="font-size:13px;font-weight:700;color:#7c6f57;margin-bottom:10px">${esper?`Faltan ${esper} de ${ofiFilas.length}`:'✅ Ya pasaron todos'}</div>`+
+  ofiFilas.map(r=>{
+    const atras=r.fecha_esperada<hoy;
+    const cab=`<div style="display:flex;justify-content:space-between;align-items:flex-start;gap:10px">
+        <div><div style="font-size:18px;font-weight:800;color:#1f2937">${escH(r.cliente_nombre)}</div>
+          <div style="font-size:13px;color:#6b7280;margin-top:2px">${escH(r.concepto||'')} · de ${escH(r.gestor||'')}</div></div>
+        <div style="text-align:right">${ofiBadge(r.estado)}${atras?`<div style="font-size:10.5px;font-weight:700;color:#b91c1c;margin-top:4px">venía el ${fmtFechaIng(r.fecha_esperada)}</div>`:''}</div>
+      </div>
+      <div style="margin-top:8px;font-size:15px;font-weight:800;color:#009246">Trae: ${ofiMontoTxt(r.monto_ars,r.monto_usd)}</div>
+      ${r.quien_trae?`<div style="font-size:12.5px;color:#6b7280;margin-top:2px">Lo trae: <b>${escH(r.quien_trae)}</b></div>`:''}
+      ${r.nota?`<div style="font-size:12.5px;color:#92400e;background:#fffbeb;border-radius:8px;padding:6px 9px;margin-top:6px">📝 ${escH(r.nota)}</div>`:''}`;
+    if(r.estado==='recibido'){
+      return `<div style="background:#f0fdf4;border:1.5px solid #bbf7d0;border-radius:16px;padding:14px 16px;margin-bottom:10px;opacity:.85">${cab}
+        <div style="font-size:12.5px;color:#15803d;margin-top:8px">✅ Entregó ${ofiMontoTxt(r.recibido_ars,r.recibido_usd)}${r.vuelto_ars?` · vuelto ${ofi$(r.vuelto_ars)}`:''}${r.recibido_at?` · ${new Date(r.recibido_at).toLocaleTimeString('es-AR',{hour:'2-digit',minute:'2-digit'})}`:''}</div></div>`;
+    }
+    if(r.estado==='no vino'){
+      return `<div style="background:#f8fafc;border:1.5px solid #e2e8f0;border-radius:16px;padding:14px 16px;margin-bottom:10px;opacity:.75">${cab}
+        <button onclick="ofiNoVino('${r.id}',false)" style="margin-top:10px;padding:7px 12px;border:1.5px solid #cbd5e1;border-radius:10px;background:#fff;font-size:12.5px;font-weight:600;cursor:pointer">↩ Me equivoqué, sí vino</button></div>`;
+    }
+    const inp='width:100%;padding:11px 10px;border:1.5px solid #d6cfc0;border-radius:10px;font-size:16px;outline:none;background:#fff;margin-top:3px';
+    const lbl='font-size:11.5px;font-weight:700;color:#7c6f57';
+    return `<div style="background:#fff;border:1.5px solid ${atras?'#fecaca':'#ece4d3'};border-radius:16px;padding:14px 16px;margin-bottom:10px;box-shadow:0 2px 10px rgba(0,0,0,.04)">${cab}
+      <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(130px,1fr));gap:9px;margin-top:12px">
+        <label style="${lbl}">Entregó en pesos<input type="number" inputmode="numeric" id="ofi-ars-${r.id}" value="${r.monto_ars||''}" placeholder="0" oninput="ofiCalc('${r.id}')" style="${inp}"></label>
+        <label style="${lbl}">Vuelto que le diste<input type="number" inputmode="numeric" id="ofi-vu-${r.id}" value="" placeholder="0" oninput="ofiCalc('${r.id}')" style="${inp}"></label>
+        <label style="${lbl}">Entregó en dólares<input type="number" inputmode="decimal" id="ofi-usd-${r.id}" value="${r.monto_usd||''}" placeholder="0" oninput="ofiCalc('${r.id}')" style="${inp}"></label>
+        <label style="${lbl};${r.monto_usd?'':'display:none'}" id="ofi-cotl-${r.id}">Cotización dólar hoy<input type="number" inputmode="numeric" id="ofi-cot-${r.id}" value="${r.ultima_cotizacion||''}" placeholder="1700" style="${inp}"></label>
+      </div>
+      <div id="ofi-calc-${r.id}" style="font-size:13px;color:#374151;margin-top:8px"></div>
+      <div style="display:flex;gap:9px;margin-top:12px;flex-wrap:wrap">
+        <button id="ofi-ok-${r.id}" onclick="ofiRecibido('${r.id}')" style="flex:2;min-width:160px;padding:14px;border:none;border-radius:12px;background:#009246;color:#fff;font-size:17px;font-weight:800;cursor:pointer">✅ Recibido</button>
+        <button onclick="ofiNoVino('${r.id}',true)" style="flex:1;min-width:110px;padding:14px;border:1.5px solid #e2e8f0;border-radius:12px;background:#fff;color:#64748b;font-size:14px;font-weight:700;cursor:pointer">No vino</button>
+      </div>
+    </div>`;
+  }).join('');
+  ofiFilas.filter(r=>r.estado==='esperado').forEach(r=>ofiCalc(r.id));
+}
+function ofiNum(id){ const el=document.getElementById(id); return el?(parseFloat(el.value)||0):0; }
+function ofiCalc(id){
+  const ars=ofiNum('ofi-ars-'+id), vu=ofiNum('ofi-vu-'+id), usd=ofiNum('ofi-usd-'+id);
+  const cl=document.getElementById('ofi-cotl-'+id); if(cl) cl.style.display=usd>0?'':'none';
+  const el=document.getElementById('ofi-calc-'+id); if(!el) return;
+  if(vu>ars){ el.innerHTML='<b style="color:#b91c1c">⚠️ El vuelto es más grande que lo que entregó</b>'; return; }
+  const neto=ars-vu;
+  el.innerHTML=(neto||usd)?`Queda en la caja: <b>${ofiMontoTxt(neto,usd)}</b>`:'';
+}
+async function ofiRecibido(id){
+  const r=ofiFilas.find(x=>x.id===id); if(!r) return;
+  const ars=ofiNum('ofi-ars-'+id), vu=ofiNum('ofi-vu-'+id), usd=ofiNum('ofi-usd-'+id), cot=ofiNum('ofi-cot-'+id);
+  if(vu>ars){ toast('El vuelto no puede ser mayor que lo que entregó','err'); return; }
+  if(!(ars-vu) && !usd){ toast('Poné cuánto entregó','err'); return; }
+  if(usd>0 && !cot){ toast('Falta la cotización del dólar','err'); return; }
+  if(!confirm(`${r.cliente_nombre}\n\nQueda en la caja: ${ofiMontoTxt(ars-vu,usd)}${vu?`\n(entregó ${ofi$(ars)}, vuelto ${ofi$(vu)})`:''}\n\n¿Confirmás que lo recibiste?`)) return;
+  const b=document.getElementById('ofi-ok-'+id); if(b){ b.disabled=true; b.textContent='Guardando…'; }
+  const {error}=await SB.rpc('oficina_marcar_recibido',{p_id:id,p_recibido_ars:ars||null,p_recibido_usd:usd||null,p_vuelto_ars:vu||null,p_cotizacion:usd>0?cot:null});
+  if(error){ toast('No se guardó: '+(error.message||'revisá internet'),'err'); if(b){ b.disabled=false; b.textContent='✅ Recibido'; } return; }
+  toast('✅ Recibido y cargado en Ingresos','ok');
+  ofiCargar();
+}
+async function ofiNoVino(id, noVino){
+  const enOficina=document.getElementById('ofi-screen').style.display!=='none';
+  if(noVino && !confirm(enOficina?'¿Marcar que no vino?':'¿Sacarlo de la lista de la oficina? (queda como “No vino”)')) return;
+  // Moni usa la función de la base; las gestoras actualizan su propio cobro (los permisos los controla Supabase)
+  const {error} = enOficina
+    ? await SB.rpc('oficina_marcar_no_vino',{p_id:id,p_no_vino:!!noVino})
+    : await SB.from('cobros_oficina').update({estado:'no vino',recibido_por:curG,recibido_at:new Date().toISOString()}).eq('id',id).eq('estado','esperado');
+  if(error){ toast('No se guardó: '+(error.message||'revisá internet'),'err'); return; }
+  if(enOficina) ofiCargar();
+  else { loadOficinaEquipo(); if(modC) ofiCargarFicha(modC.id); }
+}
+
+/* ───────── FICHA DEL CLIENTE ───────── */
+const ofiPorCliente={};
+async function ofiCargarFicha(clienteId){
+  const {data,error}=await SB.from('cobros_oficina').select('*').eq('cliente_id',clienteId).order('fecha_esperada',{ascending:false}).limit(30);
+  if(error) return;
+  ofiPorCliente[clienteId]=data||[];
+  const w=document.getElementById('m-ofi-wrap');
+  if(w && modC && modC.id===clienteId) w.innerHTML=ofiFichaHtml(clienteId);
+}
+function ofiFichaHtml(clienteId){
+  const lista=ofiPorCliente[clienteId];
+  if(!lista) return '<div style="font-size:12px;color:#94a3b8">Cargando…</div>';
+  if(!lista.length) return '<div style="font-size:12.5px;color:#94a3b8;padding:10px;background:var(--grl);border-radius:8px;text-align:center">Nadie anotado para pasar a pagar</div>';
+  return lista.map(o=>`<div style="display:flex;align-items:center;gap:10px;padding:8px 4px;border-bottom:1px solid var(--grl);flex-wrap:wrap">
+    <div style="min-width:86px;font-size:12.5px;font-weight:700">${fmtFechaIng(o.fecha_esperada)}</div>
+    <div style="flex:1;min-width:150px;font-size:12.5px">${escH(o.concepto)} · <b>${ofiMontoTxt(o.monto_ars,o.monto_usd)}</b>${o.quien_trae?` <span style="color:#94a3b8">· lo trae ${escH(o.quien_trae)}</span>`:''}
+      ${o.estado==='recibido'?`<div style="font-size:11px;color:#15803d">Entregó ${ofiMontoTxt((o.recibido_ars||0)-(o.vuelto_ars||0),o.recibido_usd)} · lo recibió ${escH(o.recibido_por||'')}</div>`:''}</div>
+    ${ofiBadge(o.estado)}
+    ${o.estado==='esperado'?`<button onclick="ofiNoVino('${o.id}',true)" title="Ya no viene" style="padding:3px 7px;border:none;border-radius:6px;background:#f1f5f9;color:#64748b;font-size:11px;cursor:pointer">No viene</button>`:''}
+  </div>`).join('');
+}
+
+/* ───────── MODAL "PASA A PAGAR" ───────── */
+let ofiModalCli=null; // {id, nombre, gestor}
+function ofiAbrirModal(cli){
+  ofiModalCli=cli||null;
+  ['ofi-m-trae','ofi-m-concepto','ofi-m-ars','ofi-m-usd','ofi-m-nota'].forEach(i=>{const e=document.getElementById(i); if(e) e.value='';});
+  document.getElementById('ofi-m-fecha').value=ofiHoyISO();
+  ofiPintarCliModal();
+  document.getElementById('ofi-modal').style.display='flex';
+}
+function ofiPintarCliModal(){
+  const box=document.getElementById('ofi-m-cli');
+  if(ofiModalCli){
+    box.innerHTML=`<div style="display:flex;align-items:center;gap:8px;padding:9px 12px;border-radius:10px;background:var(--vdl)">
+      <span style="flex:1;font-size:14px;font-weight:800;color:var(--vd)">👤 ${escH(ofiModalCli.nombre)}</span>
+      <span class="gb3 ${gbCl(ofiModalCli.gestor)}" style="font-size:10px">${escH(ofiModalCli.gestor||'')}</span>
+      ${ofiModalCli.fijo?'':`<button onclick="ofiModalCli=null;ofiPintarCliModal()" style="border:none;background:transparent;cursor:pointer;color:#64748b">✏️</button>`}</div>`;
+  } else {
+    box.innerHTML=`<label style="font-size:11px;font-weight:700;color:#64748b">Cliente (elegilo de la base)</label>
+      <div style="position:relative"><input id="ofi-m-buscar" class="sinp" placeholder="Escribí nombre o DNI..." autocomplete="off" oninput="ofiBuscarCli(this.value)" style="width:100%;margin-top:3px">
+      <div id="ofi-m-sug" style="display:none;position:absolute;top:100%;left:0;right:0;background:#fff;border:1.5px solid var(--az);border-radius:8px;box-shadow:var(--sh);z-index:5;max-height:220px;overflow-y:auto"></div></div>`;
+    setTimeout(()=>{const i=document.getElementById('ofi-m-buscar'); if(i) i.focus();},50);
+  }
+}
+function ofiBuscarCli(v){
+  const sug=document.getElementById('ofi-m-sug'); if(!sug) return;
+  const t=dorNorm(v), dni=String(v||'').replace(/\D/g,'');
+  if(t.length<2){ sug.style.display='none'; return; }
+  const m=(allC||[]).filter(c=>dorNorm(c.nombre||c.ficha_nombre).includes(t)||(dni.length>=4&&String(c.dni||'').replace(/\D/g,'').includes(dni))).slice(0,10);
+  sug.innerHTML=m.length?m.map(c=>`<div onclick="ofiElegirCli('${escH(c.id)}')" style="padding:9px 12px;cursor:pointer;font-size:13px;border-bottom:1px solid var(--grl);display:flex;gap:8px;align-items:center" onmouseover="this.style.background='var(--azl)'" onmouseout="this.style.background=''">
+      <span style="flex:1;font-weight:600">${escH(c.nombre||c.ficha_nombre||'')}</span><span style="font-size:10px;color:#94a3b8">${escH(c.dni||'')}</span>
+      <span class="gb3 ${gbCl(c.gestor)}" style="font-size:9px;padding:1px 5px">${escH(c.gestor||'')}</span></div>`).join('')
+    :'<div style="padding:10px 12px;font-size:12.5px;color:#94a3b8">No está en la base. Primero creá su ficha (📂 Base de Clientes).</div>';
+  sug.style.display='block';
+}
+function ofiElegirCli(id){
+  const c=(allC||[]).find(x=>x.id===id); if(!c) return;
+  ofiModalCli={id:c.id, nombre:c.nombre||c.ficha_nombre||'', gestor:c.gestor||''};
+  ofiPintarCliModal();
+}
+function ofiCerrarModal(){ document.getElementById('ofi-modal').style.display='none'; }
+function ofiNuevoDesdeFicha(){
+  if(!modC) return;
+  ofiAbrirModal({id:modC.id, nombre:modC.nombre||modC.ficha_nombre||'', gestor:modC.gestor||'', fijo:true});
+}
+async function ofiNuevoDesdeLista(){ await asegurarClientes(); ofiAbrirModal(null); }
+async function ofiGuardarNuevo(){
+  if(!ofiModalCli||!ofiModalCli.id){ toast('👤 Elegí el cliente de la lista','err'); return; }
+  const fecha=document.getElementById('ofi-m-fecha').value;
+  const concepto=document.getElementById('ofi-m-concepto').value.trim();
+  const ars=parseFloat(document.getElementById('ofi-m-ars').value)||null;
+  const usd=parseFloat(document.getElementById('ofi-m-usd').value)||null;
+  if(!fecha){ toast('Poné el día que viene','err'); return; }
+  if(fecha<ofiHoyISO()){ toast('La fecha ya pasó','err'); return; }
+  if(!concepto){ toast('Poné qué paga (ej: resto acta it)','err'); return; }
+  if(!ars && !usd){ toast('Poné cuánto trae (pesos o dólares)','err'); return; }
+  const b=document.getElementById('ofi-m-ok'); b.disabled=true;
+  const {error}=await SB.from('cobros_oficina').insert({
+    cliente_id:ofiModalCli.id, fecha_esperada:fecha, concepto, monto_ars:ars, monto_usd:usd,
+    quien_trae:document.getElementById('ofi-m-trae').value.trim()||null,
+    nota:document.getElementById('ofi-m-nota').value.trim()||null,
+    // la base completa nombre y gestora desde la ficha; estos valores son solo de relleno
+    cliente_nombre:ofiModalCli.nombre||'-', gestor:ofiModalCli.gestor||curG
+  });
+  b.disabled=false;
+  if(error){ toast('No se guardó: '+error.message,'err'); return; }
+  toast(fecha===ofiHoyISO()?'🏢 Listo: Moni ya lo ve en su lista de hoy':'🏢 Anotado para el '+fmtFechaIng(fecha),'ok');
+  ofiCerrarModal();
+  ofiCargarFicha(ofiModalCli.id);
+  if(document.getElementById('view-oficina').classList.contains('on')) loadOficinaEquipo();
+}
+
+/* ───────── PESTAÑA 🏢 OFICINA (equipo) ───────── */
+let ofiEquipo=[];
+async function loadOficinaEquipo(){
+  const box=document.getElementById('ofi-eq-body'); if(!box) return;
+  box.innerHTML='<div style="padding:30px;text-align:center;color:#94a3b8">Cargando…</div>';
+  const d=new Date(); d.setDate(d.getDate()-30);
+  const {data,error}=await SB.from('cobros_oficina').select('*').gte('fecha_esperada',d.toISOString().slice(0,10)).order('fecha_esperada').order('cliente_nombre');
+  if(error){ box.innerHTML='<div style="padding:30px;text-align:center;color:#b91c1c">No se pudo cargar.</div>'; return; }
+  ofiEquipo=data||[];
+  renderOficinaEquipo();
+}
+function renderOficinaEquipo(){
+  const box=document.getElementById('ofi-eq-body'); if(!box) return;
+  const ver=(document.getElementById('ofi-ver')||{}).value||'pendientes', hoy=ofiHoyISO();
+  let l=ofiEquipo;
+  if(ver==='pendientes') l=l.filter(o=>o.estado==='esperado');
+  if(ver==='hoy') l=l.filter(o=>o.fecha_esperada===hoy);
+  if(ver==='todos') l=[...l].reverse();
+  if(!l.length){ box.innerHTML='<div style="padding:30px;text-align:center;color:#94a3b8">No hay nadie anotado.</div>'; return; }
+  const grupos={}; l.forEach(o=>{ (grupos[o.fecha_esperada]=grupos[o.fecha_esperada]||[]).push(o); });
+  const td='padding:8px 8px;border-bottom:1px solid var(--grl);font-size:12.5px;vertical-align:middle';
+  box.innerHTML=Object.keys(grupos).map(f=>{
+    const tit = f===hoy?'Hoy': f<hoy?`⚠️ ${ofiFechaLarga(f)} (pasó)`: ofiFechaLarga(f);
+    return `<div style="margin-bottom:16px"><div style="font-size:13px;font-weight:800;color:${f<hoy?'#b91c1c':'var(--vd)'};margin-bottom:6px;text-transform:capitalize">${tit}</div>
+    <div class="twrap" style="overflow-x:auto"><table style="width:100%;border-collapse:collapse;min-width:680px"><tbody>
+    ${grupos[f].map(o=>`<tr>
+      <td style="${td};font-weight:700">${o.cliente_id?`<a href="#" onclick="openM('${escH(o.cliente_id)}');return false" style="color:inherit">${escH(o.cliente_nombre)}</a>`:escH(o.cliente_nombre)}</td>
+      <td style="${td}"><span class="gb3 ${gbCl(o.gestor)}" style="font-size:10px">${escH(o.gestor)}</span></td>
+      <td style="${td}">${escH(o.concepto)}</td>
+      <td style="${td};white-space:nowrap;font-weight:700">${ofiMontoTxt(o.monto_ars,o.monto_usd)}</td>
+      <td style="${td};color:#64748b">${escH(o.quien_trae||'')}${o.nota?` · 📝 ${escH(o.nota)}`:''}</td>
+      <td style="${td};white-space:nowrap">${ofiBadge(o.estado)}${o.estado==='recibido'?`<div style="font-size:10.5px;color:#15803d;margin-top:2px">${ofiMontoTxt((o.recibido_ars||0)-(o.vuelto_ars||0),o.recibido_usd)}</div>`:''}</td>
+      <td style="${td}">${o.estado==='esperado'?`<button onclick="ofiNoVino('${o.id}',true)" style="padding:3px 8px;border:none;border-radius:6px;background:#f1f5f9;color:#64748b;font-size:11px;cursor:pointer">No viene</button>`:''}</td>
+    </tr>`).join('')}</tbody></table></div></div>`;
+  }).join('');
+}
 </script>
 </body>
 </html>
