@@ -608,6 +608,16 @@ tr.row-int{background:#fff7ed!important;}
 .seg-modal-cancel{background:var(--grl);color:var(--gr);}
 .seg-modal-send{background:linear-gradient(135deg,#0891b2,#0369a1);color:#fff;}
 
+/* Solapas de Seguimiento: Hoy · Contactar primero · Y después */
+.seg-solapas{display:flex;gap:10px;flex-wrap:wrap;margin-bottom:20px;}
+.seg-sol{flex:1 1 180px;text-align:left;padding:12px 16px;border:1.5px solid var(--bo);border-radius:14px;background:var(--wh);font-family:"DM Sans",sans-serif;cursor:pointer;transition:all .16s;}
+.seg-sol:hover{border-color:#cbd5e1;transform:translateY(-1px);box-shadow:0 4px 12px rgba(15,23,42,.06);}
+.seg-sol b{display:block;font-size:14.5px;font-weight:700;color:var(--grd);}
+.seg-sol span{display:block;font-size:11.5px;color:#94a3b8;margin-top:3px;}
+.seg-sol.on{border-color:var(--am);background:#fffbeb;box-shadow:0 3px 10px rgba(232,160,0,.14);}
+.seg-sol.on b{color:#92610a;}
+.seg-sol.on span{color:#b07d14;}
+
 /* ===== TEMA CELESTE + ROSA (nov 2026) — solo visual =====
    Cambia colores de la pantalla de entrada y del interior del Sistema.
    El presupuesto (.doc) conserva sus colores originales: abajo se le
@@ -753,8 +763,6 @@ body{background:var(--bg);}
   <button class="sb-btn" data-c="az" data-yesi id="sb-sops" onclick="showTab('sops',this)"><span class="sb-ico">📚</span>SOPs<span class="preg-badge" id="preg-badge-sb" style="display:none"></span></button>
   <button class="sb-btn" data-c="vd" id="sb-precios" onclick="showTab('precios',this)"><span class="sb-ico">💲</span>Precios</button>
   <button class="sb-btn" data-c="am" id="sb-seguimiento" onclick="showTab('seguimiento',this)"><span class="sb-ico">📞</span>Seguim.</button>
-  <button class="sb-btn" data-c="ro" id="sb-calientes" onclick="showTab('calientes',this)" title="Presupuestos calientes: los de los últimos 14 días que todavía no pagaron"><span class="sb-ico">🔥</span>Calientes</button>
-  <button class="sb-btn" data-c="ro" id="sb-dormidos" onclick="showTab('dormidos',this)" title="Presupuestos dormidos: gente con presupuesto que nunca pagó más que la consulta"><span class="sb-ico">😴</span>Dormidos</button>
   <button class="sb-btn" data-c="gr" id="sb-papelera" onclick="showTab('papelera',this)"><span class="sb-ico">🗑️</span>Papelera</button>
 </div>
 <div class="hdr">
@@ -2339,47 +2347,44 @@ renderConsulados();
   <div style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:12px;margin-bottom:20px">
     <div>
       <div class="dbtitle" style="color:var(--am)">📞 Seguimiento</div>
-      <div style="font-size:13px;color:#94a3b8;margin-top:4px">A quién le escribo hoy — el sistema arma la lista, vos solo mandás el mensaje</div>
+      <div style="font-size:13px;color:#94a3b8;margin-top:4px">A quién contactar, por orden de prioridad — el sistema arma la lista, vos solo mandás el mensaje</div>
     </div>
     <button onclick="abrirModalNota()" style="padding:10px 18px;border:none;border-radius:20px;background:linear-gradient(135deg,#0891b2,#0369a1);color:#fff;font-size:13px;font-weight:700;cursor:pointer;white-space:nowrap">+ Anotar a alguien</button>
   </div>
-  <div id="seg-wrap"><div class="empty"><i>⏳</i><h3>Cargando...</h3></div></div>
-</div>
-</div>
+  <!-- Las tres listas viven acá adentro. Antes eran tres botones sueltos
+       en el menú (Seguim., Calientes, Dormidos) y quedaba desprolijo:
+       las tres responden a la misma pregunta, a quién contacto. -->
+  <div class="seg-solapas">
+    <button class="seg-sol on" id="sol-hoy"      onclick="verSeguimiento('hoy')">
+      <b>Hoy</b><span>Lo que toca sí o sí</span></button>
+    <button class="seg-sol"    id="sol-primero"  onclick="verSeguimiento('primero')">
+      <b>Contactar primero</b><span>Presupuestos de los últimos 14 días</span></button>
+    <button class="seg-sol"    id="sol-despues"  onclick="verSeguimiento('despues')">
+      <b>Y después</b><span>Los que quedaron dormidos</span></button>
+  </div>
 
-<!-- VIEW PRESUPUESTOS CALIENTES (solo lectura: no modifica ningún dato) -->
-<div class="view" id="view-calientes">
-<div class="vbody">
-  <div style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:12px;margin-bottom:18px">
-    <div>
-      <div class="dbtitle" style="color:var(--rosa)">🔥 Presupuestos calientes</div>
-      <div style="font-size:13px;color:#94a3b8;margin-top:4px">Presupuestos de los últimos 14 días que todavía no pagaron. La mayoría de las ventas se cierra en esas dos semanas: primero los que están por enfriarse.</div>
-    </div>
-    <div style="display:flex;gap:8px;flex-wrap:wrap;align-items:center">
+  <div id="seg-panel-hoy">
+    <div id="seg-wrap"><div class="empty"><i>⏳</i><h3>Cargando...</h3></div></div>
+  </div>
+
+  <div id="seg-panel-primero" style="display:none">
+    <div style="display:flex;align-items:flex-start;justify-content:space-between;gap:14px;flex-wrap:wrap;margin:-4px 0 16px">
+      <div style="font-size:13px;color:#94a3b8;flex:1 1 320px">Presupuestos de los últimos 14 días que todavía no pagaron. La mayoría de las ventas se cierra en esas dos semanas, así que estos son los primeros.</div>
       <select id="cal-gest" onchange="renderCalientes()" style="display:none;padding:8px 12px;border:1px solid var(--bo);border-radius:9px;font-size:13px;background:#fff"></select>
-      <button onclick="loadCalientes()" style="padding:8px 14px;border:1px solid var(--bo);border-radius:9px;background:#fff;font-size:13px;font-weight:600;color:var(--gr);cursor:pointer">↻ Actualizar</button>
     </div>
+    <div id="cal-resumen"></div>
+    <div id="cal-wrap"><div class="empty"><i>⏳</i><h3>Cargando...</h3></div></div>
   </div>
-  <div id="cal-resumen"></div>
-  <div id="cal-wrap"><div class="empty"><i>⏳</i><h3>Cargando...</h3></div></div>
-</div>
-</div>
 
-<!-- VIEW PRESUPUESTOS DORMIDOS (solo lectura: no modifica ningún dato) -->
-<div class="view" id="view-dormidos">
-<div class="vbody">
-  <div style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:12px;margin-bottom:18px">
-    <div>
-      <div class="dbtitle" style="color:var(--rosa)">😴 Presupuestos dormidos</div>
-      <div style="font-size:13px;color:#94a3b8;margin-top:4px">Gente con presupuesto armado hace más de 14 días que nunca pagó nada más que la consulta. De mayor a menor.</div>
-    </div>
-    <div style="display:flex;gap:8px;flex-wrap:wrap;align-items:center">
+  <div id="seg-panel-despues" style="display:none">
+    <div style="display:flex;align-items:flex-start;justify-content:space-between;gap:14px;flex-wrap:wrap;margin:-4px 0 16px">
+      <div style="font-size:13px;color:#94a3b8;flex:1 1 320px">Gente con presupuesto armado hace más de 14 días que nunca pagó nada más que la consulta. De mayor a menor.</div>
       <select id="dor-gest" onchange="renderDormidos()" style="display:none;padding:8px 12px;border:1px solid var(--bo);border-radius:9px;font-size:13px;background:#fff"></select>
-      <button onclick="loadDormidos()" style="padding:8px 14px;border:1px solid var(--bo);border-radius:9px;background:#fff;font-size:13px;font-weight:600;color:var(--gr);cursor:pointer">↻ Actualizar</button>
     </div>
+    <div id="dor-resumen"></div>
+    <div id="dor-wrap"><div class="empty"><i>⏳</i><h3>Cargando...</h3></div></div>
   </div>
-  <div id="dor-resumen"></div>
-  <div id="dor-wrap"><div class="empty"><i>⏳</i><h3>Cargando...</h3></div></div>
+
 </div>
 </div>
 
@@ -3195,8 +3200,6 @@ function showTab(name,btn){
   if(btn) btn.classList.add('on');
   if(name==='base')loadDb();
   if(name==='leads')loadLeads();
-  if(name==='dormidos')loadDormidos();
-  if(name==='calientes')loadCalientes();
   if(name==='ingresos'){
     loadIngresos().then(()=>{
       if(!ingMesInicializado){
@@ -3253,7 +3256,7 @@ function showTab(name,btn){
   }
   if(name==='finalizados')loadFinalizados();
   if(name==='checklist')loadChecklist();
-  if(name==='seguimiento')loadSeguimiento();
+  if(name==='seguimiento'){ loadSeguimiento(); verSeguimiento(segSolapa); }
   if(name==='papelera')loadPapelera();
   if(name==='info')loadInfo();
   if(name==='sops')loadSops();
@@ -4327,6 +4330,30 @@ async function loadNotasSeguimiento(){
   remotas.forEach(n=>combinado[n.id]=n);
   locales.forEach(n=>combinado[n.id]=n);
   notasSeguimiento = Object.values(combinado);
+}
+
+/* ══════════════════════════════════════════════════════════════════
+   SEGUIMIENTO — las tres listas en un solo lugar.
+   Antes eran tres botones sueltos en el menú (Seguim., Calientes,
+   Dormidos). Son la misma pregunta, a quién contacto, así que ahora
+   van como solapas: Hoy · Contactar primero · Y después.
+   Cada lista la arma la misma función de siempre; acá solo se decide
+   cuál se muestra y se carga la primera vez que se abre.
+   ══════════════════════════════════════════════════════════════════ */
+let segSolapa = 'hoy';
+const segYaCargado = {primero:false, despues:false};
+
+function verSeguimiento(cual){
+  segSolapa = cual;
+  ['hoy','primero','despues'].forEach(k=>{
+    const panel = document.getElementById('seg-panel-'+k);
+    if(panel) panel.style.display = (k===cual) ? '' : 'none';
+    const sol = document.getElementById('sol-'+k);
+    if(sol) sol.classList.toggle('on', k===cual);
+  });
+  // Las listas pesadas se cargan recién cuando las abrís la primera vez.
+  if(cual==='primero' && !segYaCargado.primero){ segYaCargado.primero=true; loadCalientes(); }
+  if(cual==='despues' && !segYaCargado.despues){ segYaCargado.despues=true; loadDormidos(); }
 }
 
 function abrirModalNota(){
@@ -10163,7 +10190,7 @@ let calLista = [], calCotiz = 0;
 
 async function loadCalientes(){
   const wrap = document.getElementById('cal-wrap');
-  wrap.innerHTML = '<div class="empty"><i>⏳</i><h3>Buscando presupuestos calientes...</h3></div>';
+  wrap.innerHTML = '<div class="empty"><i>⏳</i><h3>Buscando los primeros a contactar...</h3></div>';
   document.getElementById('cal-resumen').innerHTML = '';
   try{
     const desde = new Date(Date.now() - (DOR_DIAS+1)*864e5).toISOString();
@@ -10194,7 +10221,7 @@ function renderCalientes(){
   const wrap = document.getElementById('cal-wrap'), res = document.getElementById('cal-resumen');
   if(!lista.length){
     res.innerHTML = '';
-    wrap.innerHTML = '<div class="empty"><i>🌸</i><h3>No hay presupuestos calientes sin pagar</h3><p>Todos los presupuestos de los últimos 14 días ya pagaron algo, o todavía no se armó ninguno.</p></div>';
+    wrap.innerHTML = '<div class="empty"><i>🌸</i><h3>No hay nadie urgente para contactar</h3><p>Todos los presupuestos de los últimos 14 días ya pagaron algo, o todavía no se armó ninguno.</p></div>';
     return;
   }
   const urg = lista.filter(d=>d.quedan<=3);
