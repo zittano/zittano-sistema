@@ -763,7 +763,6 @@ body{background:var(--bg);}
   <button class="sb-btn" data-c="az" data-yesi id="sb-sops" onclick="showTab('sops',this)"><span class="sb-ico">📚</span>SOPs<span class="preg-badge" id="preg-badge-sb" style="display:none"></span></button>
   <button class="sb-btn" data-c="vd" id="sb-precios" onclick="showTab('precios',this)"><span class="sb-ico">💲</span>Precios</button>
   <button class="sb-btn" data-c="am" id="sb-seguimiento" onclick="showTab('seguimiento',this)"><span class="sb-ico">📞</span>Seguim.</button>
-  <button class="sb-btn" data-c="gr" id="sb-papelera" onclick="showTab('papelera',this)"><span class="sb-ico">🗑️</span>Papelera</button>
 </div>
 <div class="hdr">
   <div class="hdr-in">
@@ -785,6 +784,9 @@ body{background:var(--bg);}
       <div class="sychip"><div class="sydot sp" id="sydot"></div><span id="sytxt">Conectando</span></div>
       <div class="gchip"><div class="gdot" id="gdot"></div><span id="gname">—</span></div>
       <button class="btnx" id="btn-excel-todo" onclick="descargarTodoExcel()" style="border-color:#86efac;color:#16a34a" onmouseover="this.style.background='#f0fdf4'" onmouseout="this.style.background='transparent'" title="Descarga un Excel con todas las hojas: Clientes, Ingresos, Gastos, Planillas y Precios">📥 Descargar todo</button>
+      <!-- La papelera salió del menú lateral, pero sigue accesible desde
+           acá: es el único lugar donde se recupera algo borrado por error. -->
+      <button class="btnx" id="btn-papelera" onclick="showTab('papelera',null)" title="Papelera — recuperar algo borrado por error" style="padding:6px 10px">🗑️</button>
       <div class="zoomctl" title="Tamaño de la letra. Se guarda en esta computadora.">
         <button class="za" onclick="setZoom(-1)" id="zm-menos" aria-label="Letra más chica">A</button>
         <span class="zval" id="zm-val" onclick="setZoom(0)" title="Volver al tamaño normal">100%</span>
