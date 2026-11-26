@@ -164,11 +164,60 @@ let gens = JSON.parse(JSON.stringify(DEF));
 const ROMAN = ['I','II','III','IV','V','VI','VII','VIII'];
 const NUM = ['','Una','Dos','Tres','Cuatro','Cinco','Seis','Siete','Ocho','Nueve'];
 
+/* ══════════════════════════════════════════════════════════════════
+   PARENTESCOS — antes había que escribir a mano "I · Il bisnonno ·
+   Italia" entero. Ahora se elige de una lista y el número romano y el
+   "· Italia" de la primera generación los pone el sistema solo, así
+   que si agregás o quitás una generación se renumera todo sin tocar
+   nada. Los términos están en italiano y bien escritos: en italiano
+   el artículo va con el parentesco (Il nonno), no con el posesivo.
+   ══════════════════════════════════════════════════════════════════ */
+const PARENTESCOS = [
+  'Il trisnonno', 'La trisnonna',
+  'Il bisnonno',  'La bisnonna',
+  'Il nonno',     'La nonna',
+  'Il papà',      'La mamma',
+  'Lo zio',       'La zia',
+  'Il fratello',  'La sorella',
+];
+
+// De "I · Il bisnonno · Italia" saca "Il bisnonno"
+function parentescoDe(rol){
+  const partes = String(rol||'').split('·').map(s=>s.trim()).filter(Boolean);
+  if(!partes.length) return '';
+  if(ROMAN.includes(partes[0])) partes.shift();   // saca el número romano
+  if(partes.length && /^italia$/i.test(partes[partes.length-1])) partes.pop();
+  return partes.join(' · ');
+}
+function esParentescoConocido(p){ return PARENTESCOS.includes(p); }
+
+function opcionesParentesco(actual){
+  const conocido = esParentescoConocido(actual);
+  return PARENTESCOS.map(p=>`<option value="${esc(p)}"${p===actual?' selected':''}>${esc(p)}</option>`).join('')
+       + `<option value="__otro__"${conocido?'':' selected'}>Otro…</option>`;
+}
+
+// Arma el rol completo: número romano + parentesco + Italia si es la primera
+function armarRol(i, parentesco){
+  return ROMAN[i] + ' · ' + (parentesco||'') + (i===0 ? ' · Italia' : '');
+}
+// Renumera todas las generaciones (al agregar o quitar una)
+function renumerarGens(){
+  gens.forEach((g,i)=>{ g.rol = armarRol(i, parentescoDe(g.rol)); });
+}
+
 function renderForm(){
   $('gens').innerHTML = gens.map((g,i)=>`
   <div class="gen">
     <div class="genhead"><span>Generación ${ROMAN[i]}${i===0?' · la persona italiana':''}</span>${gens.length>1?`<button type="button" class="del" data-del="${i}">Quitar</button>`:''}</div>
-    <label for="g${i}r">Rol (sale arriba del nombre)</label><input type="text" id="g${i}r" data-i="${i}" data-k="rol" value="${esc(g.rol)}">
+    <label for="g${i}p">Parentesco (sale arriba del nombre)</label>
+    <select id="g${i}p" data-i="${i}" data-k="parentesco">
+      ${opcionesParentesco(parentescoDe(g.rol))}
+    </select>
+    <div data-otro="${i}" style="${esParentescoConocido(parentescoDe(g.rol))?'display:none':''}">
+      <label for="g${i}r">Escribilo como quieras</label>
+      <input type="text" id="g${i}r" data-i="${i}" data-k="rolLibre" value="${esc(parentescoDe(g.rol))}" placeholder="Ej: Il prozio">
+    </div>
     <label for="g${i}n">Nombre completo</label><input type="text" id="g${i}n" data-i="${i}" data-k="nombre" value="${esc(g.nombre)}">
     <label for="g${i}d">Nacimiento (lugar · año)</label><input type="text" id="g${i}d" data-i="${i}" data-k="dato" value="${esc(g.dato)}">
     <label for="g${i}c">Casado/a con (opcional)</label><input type="text" id="g${i}c" data-i="${i}" data-k="con" value="${esc(g.con)}">
@@ -231,9 +280,28 @@ function scale(){
 function unlock(){ const ok=$('ok').checked; $('print').disabled=!ok; $('story').disabled=!ok; }
 function changed(){ $('ok').checked=false; unlock(); renderSheet(); }
 
-$('gens').addEventListener('input', e=>{ const t=e.target; if(t.dataset.k){ gens[+t.dataset.i][t.dataset.k]=t.value; changed(); } });
-$('gens').addEventListener('click', e=>{ const d=e.target.dataset.del; if(d!==undefined){ gens.splice(+d,1); renderForm(); changed(); } });
-$('addGen').addEventListener('click', ()=>{ const n=gens.length; gens.push({rol:ROMAN[n]+' · ', nombre:'', dato:'', con:''}); renderForm(); changed(); });
+$('gens').addEventListener('input', e=>{
+  const t=e.target; if(!t.dataset.k) return;
+  const i=+t.dataset.i;
+  if(t.dataset.k==='rolLibre'){ gens[i].rol = armarRol(i, t.value); changed(); return; }
+  gens[i][t.dataset.k]=t.value; changed();
+});
+// El selector de parentesco
+$('gens').addEventListener('change', e=>{
+  const t=e.target; if(t.dataset.k!=='parentesco') return;
+  const i=+t.dataset.i;
+  const caja=$('gens').querySelector(`[data-otro="${i}"]`);
+  if(t.value==='__otro__'){
+    if(caja){ caja.style.display=''; const inp=caja.querySelector('input'); if(inp){ inp.value=''; inp.focus(); } }
+    gens[i].rol = armarRol(i,'');
+  } else {
+    if(caja) caja.style.display='none';
+    gens[i].rol = armarRol(i, t.value);
+  }
+  changed();
+});
+$('gens').addEventListener('click', e=>{ const d=e.target.dataset.del; if(d!==undefined){ gens.splice(+d,1); renumerarGens(); renderForm(); changed(); } });
+$('addGen').addEventListener('click', ()=>{ const n=gens.length; gens.push({rol:armarRol(n,''), nombre:'', dato:'', con:''}); renumerarGens(); renderForm(); changed(); });
 ['apellido','anioViaje','desde','hasta','cliente','anioRec'].forEach(id=>$(id).addEventListener('input',changed));
 ['genero','avoGen'].forEach(id=>$(id).addEventListener('change',changed));
 $('ok').addEventListener('change', unlock);
