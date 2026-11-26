@@ -1299,7 +1299,7 @@ body{background:var(--bg);}
       </select>
       <select class="fsel" id="tur-ver" onchange="renderTurnos()">
         <option value="abiertos">Abiertos</option>
-        <option value="todos">Todos (también cerrados y cancelados)</option>
+        <option value="todos" id="tur-ver-todos">Todos (también cerrados y cancelados)</option>
       </select>
       <button onclick="addTurno()" style="padding:9px 16px;border:none;border-radius:8px;background:var(--az);color:#fff;font-size:13px;font-weight:700;cursor:pointer">+ Anotar turno</button>
     </div>
@@ -6215,7 +6215,11 @@ function turEstado(t){
     return hoy>lim ? {k:'vencido',txt:'Cobro vencido el '+fmtFechaIng(lim).slice(0,5),col:'#b91c1c',bg:'#fee2e2',abierto:true}
                    : {k:'cobrar',txt:'Cobrar antes del '+fmtFechaIng(lim).slice(0,5),col:'#b45309',bg:'#fef3c7',abierto:true};
   }
-  if(!t.pagado_prog) return {k:'pagar',txt:turEsAdmin()?'Cobrado · pagar a programadores':'Cobrado ✓',col:'#15803d',bg:'#dcfce7',abierto:turEsAdmin()};
+  // Cobrado pero todavía sin pagarle a los programadores.
+  // OJO: antes acá iba abierto:turEsAdmin(), así que apenas la gestora
+  // tildaba "Cobrado" el turno se le desaparecía de la pantalla sin aviso
+  // y parecía que se había borrado. Ahora lo sigue viendo ella también.
+  if(!t.pagado_prog) return {k:'pagar',txt:turEsAdmin()?'Cobrado · pagar a programadores':'Cobrado ✓',col:'#15803d',bg:'#dcfce7',abierto:true};
   return {k:'cerrado',txt:'Cerrado ✓',col:'#15803d',bg:'#dcfce7',abierto:false};
 }
 async function loadTurnos(){
@@ -6247,6 +6251,17 @@ function renderTurnos(){
   if(!turnosOk) return;
   const adm=turEsAdmin();
   const lista=turVisibles();
+  // El filtro "Todos" muestra cuántos turnos quedan fuera de la vista,
+  // para que se note que están guardados y no se perdieron.
+  (function(){
+    const op=document.getElementById('tur-ver-todos');
+    if(!op) return;
+    const de=(document.getElementById('tur-de')||{}).value||'mios';
+    const mios=turnosData.filter(t=>!(adm&&de==='mios'&&gbCl(t.gestor)!==gbCl(curG)));
+    const ocultos=mios.length-lista.length;
+    const sel=(document.getElementById('tur-ver')||{}).value||'abiertos';
+    op.textContent='Todos (también cerrados y cancelados)'+((sel==='abiertos'&&ocultos>0)?' · '+ocultos+' guardado'+(ocultos>1?'s':'')+' acá':'');
+  })();
   const base=turnosData.filter(t=>!(adm&&((document.getElementById('tur-de')||{}).value||'mios')==='mios'&&gbCl(t.gestor)!==gbCl(curG))&&!t.cancelado);
   const esperando=base.filter(t=>!t.fecha_sacado).length;
   const porCobrar=base.filter(t=>t.fecha_sacado&&!t.cobrado);
@@ -6330,7 +6345,15 @@ async function updTurno(id,campo,valor){
     renderTurnos();
     return;
   }
-  toast('✓ Guardado','ok');
+  // Si el cambio hace que la fila salga de la vista, avisamos. Sin esto
+  // el turno desaparece de la pantalla y parece que se borró.
+  const salioDeLaVista = !turVisibles().some(x=>x.id===id);
+  if(salioDeLaVista){
+    const est = turEstado(t);
+    toast('✓ Guardado. "'+(t.cliente||'El turno')+'" pasó a '+est.txt.toLowerCase()+' — para verlo, poné el filtro en "Todos"','ok');
+  } else {
+    toast('✓ Guardado','ok');
+  }
   if(['cobrado','pagado_prog','cancelado','fecha_sacado','tipo','cliente'].includes(campo)) renderTurnos();
 }
 
