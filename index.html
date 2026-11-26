@@ -5753,6 +5753,25 @@ function refrescarColumnaSueldo(){
   }
 }
 
+/* ══════════════════════════════════════════════════════════════════
+   COBROS QUE NO SON DE LA GESTORA
+   Plata que entra pero pasa derecho a Belén, así que no suma al
+   A Pagar ni al sueldo del mes:
+     · Correo
+     · Divorcio / Sentencia de divorcio
+     · Los EXTRAS de actas italianas ("extra acta it", "extra actas
+       italianas"). Ojo: pide las dos cosas juntas, extra + acta
+       italiana, para no llevarse puesto un "actas nac extra", que
+       sí cuenta.
+   ══════════════════════════════════════════════════════════════════ */
+function vaDirectoABelen(tipoTexto){
+  const t = (tipoTexto || '').toLowerCase();
+  if (t.includes('correo') || t.includes('divorcio')) return true;
+  const esExtra    = t.includes('extra');
+  const esActaItal = t.includes('acta it') || t.includes('actas it') || t.includes('acta italiana') || t.includes('actas italianas');
+  return esExtra && esActaItal;
+}
+
 function calcularAPagarExcel(r) {
   // A PAGAR = siempre el precio CASH de la lista (la base de las chicas).
   //   · CABA / GBA: efectivo tal cual + transferencia ÷ 1.25 (÷ 1.4 si es anterior al 12/11/2026)
@@ -5760,8 +5779,7 @@ function calcularAPagarExcel(r) {
   //               (efectivo + transferencia) ÷ 1.25
   //   · CONSULTA: no lleva recargo → efectivo + transferencia
   //   · Correo / Divorcio → 0 (van directo a Belén)
-  const tipo = (r.tipo || '').toLowerCase();
-  if (tipo.includes('correo') || tipo.includes('divorcio')) return 0;
+  if (vaDirectoABelen(r.tipo)) return 0;
   let efectivo = parseFloat(r.efectivo) || 0;
   let transferencia = parseFloat(r.transferencia) || 0;
   // Dólares transferidos: el monto va en la columna Efectivo, pero entró por banco → lleva el factor
@@ -5779,8 +5797,7 @@ function factorAPagar(r){
 }
 // Texto chiquito debajo del A Pagar: muestra la cuenta para que se entienda
 function hintAPagar(r){
-  const tipo=(r.tipo||'').toLowerCase();
-  if(tipo.includes('correo')||tipo.includes('divorcio')) return 'va directo a Belén';
+  if(vaDirectoABelen(r.tipo)) return 'va directo a Belén';
   let e=parseFloat(r.efectivo)||0, t=parseFloat(r.transferencia)||0; const f=factorAPagar(r);
   if(esUsdTransferido(r)){ t+=e; e=0; }
   const n=v=>Math.round(v).toLocaleString('es-AR');
@@ -5841,6 +5858,9 @@ function buscarCliente(rowId, valor){
 async function asegurarClientes(){
   if(allC&&allC.length) return;
   try{ const {data}=await SB.from(TB).select('*'); if(data&&data.length&&(!allC||!allC.length)) allC=data; }catch(e){}
+  // Si la lista llegó tarde, puede haber filas que se vincularon sin zona.
+  // Repasamos las alertas para que salten acá y no a fin de mes.
+  try{ if(typeof renderAlertasIng==='function') renderAlertasIng(); }catch(e){}
 }
 // Crea la ficha mínima de un cliente nuevo desde Ingresos y la deja vinculada
 async function crearClienteRapido(rowId){
@@ -5861,12 +5881,15 @@ async function crearClienteRapido(rowId){
   cerrarSugerencias(rowId);
   toast('📂 Cliente creado y vinculado','ok');
 }
-function vincularCliente(rowId,clienteId,clienteNombre,gestorCliente){
+async function vincularCliente(rowId,clienteId,clienteNombre,gestorCliente){
   const r=ingresosData.find(x=>x.id===rowId);
   if(!r) return;
   r.cliente=clienteNombre; r.cliente_id=clienteId;
   if(!r.gestor&&gestorCliente) r.gestor=gestorCliente;
-  // Zona automática: la toma del presupuesto del cliente
+  // Zona automática: la toma del presupuesto del cliente.
+  // El await es importante: desde el celular la lista de clientes tarda
+  // más en llegar, y sin esperarla la zona quedaba siempre en CABA.
+  await asegurarClientes();
   const zc=zonaCliente((allC||[]).find(c=>c.id===clienteId));
   if(zc && (zc==='interior')!==!!r.es_interior){
     updIng(rowId,'es_interior',zc==='interior');
