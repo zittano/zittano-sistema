@@ -756,6 +756,7 @@ body{background:var(--bg);}
 <!-- APP -->
 <div id="app">
 <div class="sidebar" id="sidebar">
+  <button class="sb-btn" data-c="vd" id="sb-tablero" style="display:none" onclick="showTab('tablero',this)" title="Plata del mes, ritmo, objetivos, leads y turnos"><span class="sb-ico">📊</span>Tablero</button>
   <button class="sb-btn" data-c="vd" id="sb-caja" style="display:none" onclick="showTab('caja',this)"><span class="sb-ico">🧾</span>Caja</button>
   <button class="sb-btn" data-c="am" id="sb-deben" onclick="showTab('deben',this)"><span class="sb-ico">🧮</span>Me deben</button>
   <button class="sb-btn" data-c="vd" id="sb-oficina" onclick="showTab('oficina',this)" title="Quién pasa a pagar a la oficina (reemplaza el grupo de WhatsApp)"><span class="sb-ico">🏢</span>Oficina</button>
@@ -1373,6 +1374,20 @@ body{background:var(--bg);}
       <button id="ofi-m-ok" onclick="ofiGuardarNuevo()" style="padding:9px 16px;border:none;border-radius:8px;background:var(--vd);color:#fff;font-size:13px;font-weight:700;cursor:pointer">Avisar a la oficina</button>
     </div>
   </div>
+</div>
+
+<!-- VIEW TABLERO (solo Belén) -->
+<div class="view" id="view-tablero">
+<div class="vbody">
+  <div style="margin-bottom:16px;display:flex;justify-content:space-between;align-items:flex-end;gap:12px;flex-wrap:wrap">
+    <div>
+      <div class="dbtitle" style="margin-bottom:4px;color:var(--vd)">📊 Tablero</div>
+      <div style="font-size:13px;color:#94a3b8">Plata del mes, ritmo contra el mes pasado, objetivos, leads y turnos</div>
+    </div>
+    <button class="btnx" onclick="loadTablero()" style="padding:6px 12px">↻ Actualizar</button>
+  </div>
+  <div id="tablero-body"></div>
+</div>
 </div>
 
 <!-- VIEW CAJA DEL MES (solo Belén) -->
@@ -2596,6 +2611,138 @@ async function login(){
    Queda guardado en esta computadora, así cada una lo deja como mejor
    le sirve. No toca ningún dato ni el PDF del cliente.
    ══════════════════════════════════════════════════════════════════ */
+/* ════════════════════════════════════════
+   TABLERO (solo Belén): plata del mes, ritmo, objetivos, leads y turnos.
+   Solo lee. Pesos = efectivo + transferencia de la tabla ingresos.
+════════════════════════════════════════ */
+const TAB_METAS = {Malena: 6000000, 'Sofía': 2500000};   // objetivos al 31/12
+const TAB_METAS_DESDE = '2026-11-20';                    // se cuentan desde que se fijaron
+const TAB_NOMBRE = {Malena: 'Male', 'Sofía': 'Sofi', 'Belén': 'Belu', 'Germán': 'Germán', Yesi: 'Yesi'};
+const TAB_MES = ['ene','feb','mar','abr','may','jun','jul','ago','sep','oct','nov','dic'];
+function tabM(v){ return '$' + (v/1e6).toLocaleString('es-AR',{minimumFractionDigits:1,maximumFractionDigits:1}) + 'M'; }
+function tabYmd(d){ return d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0'); }
+function tabF(s){ return s ? s.slice(8,10)+'/'+s.slice(5,7) : 'sin fecha'; }
+function tabEsc(s){ return String(s==null?'':s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c])); }
+function tabCaja(html, extra){ return `<div style="background:var(--wh);border-radius:14px;box-shadow:var(--sh);border:1px solid var(--bo);padding:16px 18px;min-width:0;${extra||''}">${html}</div>`; }
+function tabCard(label, valor, sub, color){
+  return tabCaja(`<div style="font-size:11px;font-weight:700;color:#94a3b8;text-transform:uppercase;letter-spacing:.5px">${label}</div>
+    <div style="font-size:26px;font-weight:800;color:${color||'var(--grd)'};margin:4px 0;font-variant-numeric:tabular-nums">${valor}</div>
+    <div style="font-size:12px;color:#64748b">${sub}</div>`);
+}
+async function loadTablero(){
+  const box = document.getElementById('tablero-body');
+  if(!box) return;
+  if(curG !== 'Belén'){ box.innerHTML = ''; return; }
+  box.innerHTML = '<div style="color:#94a3b8;font-size:13px">Cargando…</div>';
+  const hoy = new Date(), y = hoy.getFullYear(), m = hoy.getMonth(), dia = hoy.getDate();
+  const hoyS = tabYmd(hoy), mesKey = hoyS.slice(0,7), prevKey = tabYmd(new Date(y,m-1,1)).slice(0,7);
+  const desde = tabYmd(new Date(y,m-7,1));
+  const [ing, lea, tur, wa] = await Promise.all([
+    SB.from('ingresos').select('fecha,efectivo,transferencia,monto_usd,tipo,gestor').gte('fecha',desde).lte('fecha',hoyS).limit(10000),
+    SB.from('leads').select('asignada_a,estado,created_at').limit(10000),
+    SB.from('turnos').select('fecha_turno,cliente,consulado,tipo,gestor,cobrado,fecha_sacado,cancelado').eq('cancelado',false).limit(5000),
+    SB.from('wa_seguimiento').select('actualizado_at').order('actualizado_at',{ascending:false}).limit(1)
+  ]);
+  if(ing.error){ box.innerHTML = '<div style="color:var(--ro);font-size:13px">No se pudieron leer los ingresos: '+tabEsc(ing.error.message)+'</div>'; return; }
+  const rows = (ing.data||[]).filter(r=>r.fecha).map(r=>({f:r.fecha, d:+r.fecha.slice(8,10), ars:(+r.efectivo||0)+(+r.transferencia||0), usd:+r.monto_usd||0, cons:/consulta/i.test(r.tipo||''), g:r.gestor}));
+  const sum = (arr,k) => arr.reduce((a,r)=>a+r[k],0);
+  const delMes = rows.filter(r=>r.f.startsWith(mesKey));
+  const mesArs = sum(delMes,'ars'), mesUsd = sum(delMes,'usd');
+  const prevAlDia = sum(rows.filter(r=>r.f.startsWith(prevKey) && r.d<=dia),'ars');
+  const ayer = sum(rows.filter(r=>r.f===tabYmd(new Date(y,m,dia-1))),'ars');
+  const consultas = delMes.filter(r=>r.cons).length;
+  const varPct = prevAlDia ? Math.round((mesArs/prevAlDia-1)*100) : null;
+  const diasMes = new Date(y,m+1,0).getDate(), diasPrev = new Date(y,m,0).getDate();
+  const proy = Math.round(mesArs/dia*diasMes);
+  const nomMes = TAB_MES[m], nomPrev = TAB_MES[(m+11)%12];
+  const varTxt = varPct==null ? 'sin datos del mes pasado' : `<b style="color:${varPct>=0?'var(--vd)':'var(--ro)'}">${varPct>=0?'+':''}${varPct}%</b> vs. ${nomPrev} al mismo día`;
+
+  // Aviso: foto de WhatsApp vieja
+  let aviso = '';
+  const waUlt = wa.data && wa.data[0] ? wa.data[0].actualizado_at : null;
+  if(waUlt){
+    const dias = Math.floor((hoy - new Date(waUlt))/86400000);
+    if(dias > 2) aviso = `<div style="background:var(--aml);border:1px solid var(--am);border-radius:10px;padding:10px 14px;font-size:13px;margin-bottom:14px">⚠️ La foto de WhatsApp no se actualiza desde el ${tabF(tabYmd(new Date(waUlt)))}: los números de chats sin respuesta están viejos.</div>`;
+  }
+
+  // Tarjetas
+  const tarjetas = `<div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(190px,1fr));gap:12px;margin-bottom:18px">
+    ${tabCard('Cobrado en '+nomMes, tabM(mesArs), varTxt, 'var(--vd)')}
+    ${tabCard('Si sigue este ritmo', tabM(proy), 'cierre estimado de '+nomMes)}
+    ${tabCard('Cobrado ayer', tabM(ayer), 'efectivo + transferencia')}
+    ${tabCard('Dólares en '+nomMes, 'USD '+Math.round(mesUsd).toLocaleString('es-AR'), 'cargados en USD')}
+    ${tabCard('Consultas cobradas', consultas, 'de '+delMes.length+' cobros en '+nomMes)}
+  </div>`;
+
+  // Ritmo: acumulado por día, este mes vs. mes pasado
+  const acum = (key, n, lim) => { let a=0; const out=[]; for(let d=1; d<=n; d++){ if(lim && d>lim){ out.push(null); continue; } a += sum(rows.filter(r=>r.f.startsWith(key) && r.d===d),'ars'); out.push(a); } return out; };
+  const act = acum(mesKey, 31, dia), ant = acum(prevKey, diasPrev);
+  const W=640, H=220, L=58, R=12, T=12, B=26;
+  const ymax = Math.max(1, ...act.filter(v=>v!=null), ...ant) * 1.08;
+  const X = d => L + (d-1)/30*(W-L-R), Y = v => T + (1 - v/ymax)*(H-T-B);
+  const path = arr => arr.map((v,i)=>v==null?null:`${X(i+1).toFixed(1)},${Y(v).toFixed(1)}`).filter(Boolean).join(' ');
+  let grid = '';
+  for(let i=0;i<=4;i++){ const v=ymax/4*i; grid += `<line x1="${L}" x2="${W-R}" y1="${Y(v)}" y2="${Y(v)}" stroke="#e2e8f0"/><text x="${L-6}" y="${Y(v)+4}" text-anchor="end" font-size="11" fill="#94a3b8">${tabM(v)}</text>`; }
+  [1,5,10,15,20,25,31].forEach(d=>{ grid += `<text x="${X(d)}" y="${H-8}" text-anchor="middle" font-size="11" fill="#94a3b8">${d}</text>`; });
+  let lastI = -1; act.forEach((v,i)=>{ if(v!=null) lastI=i; });
+  const ritmo = tabCaja(`<div style="font-weight:700;color:var(--grd);margin-bottom:4px">Ritmo de ${nomMes} contra ${nomPrev}</div>
+    <div style="font-size:12px;color:#64748b;margin-bottom:8px"><span style="display:inline-block;width:14px;height:3px;background:var(--vd);vertical-align:middle;margin-right:5px"></span>${nomMes} &nbsp; <span style="display:inline-block;width:14px;height:3px;background:#cbd5e1;vertical-align:middle;margin-right:5px"></span>${nomPrev} · pesos acumulados día por día</div>
+    <svg viewBox="0 0 ${W} ${H}" style="width:100%;max-width:860px;height:auto;display:block" role="img" aria-label="Pesos cobrados acumulados por día">
+      ${grid}
+      <polyline points="${path(ant)}" fill="none" stroke="#cbd5e1" stroke-width="2" stroke-dasharray="4 3"/>
+      <polyline points="${path(act)}" fill="none" stroke="var(--vd)" stroke-width="2.5"/>
+      ${lastI>=0?`<circle cx="${X(lastI+1)}" cy="${Y(act[lastI])}" r="4" fill="var(--vd)"/>`:''}
+    </svg>`, 'margin-bottom:18px');
+
+  // Últimos 8 meses
+  const meses = []; for(let i=7;i>=0;i--){ meses.push(tabYmd(new Date(y,m-i,1)).slice(0,7)); }
+  const porMes = meses.map(k=>({k, ars:sum(rows.filter(r=>r.f.startsWith(k)),'ars'), cons:rows.filter(r=>r.f.startsWith(k)&&r.cons).length}));
+  const maxMes = Math.max(1, ...porMes.map(p=>p.ars));
+  const barras = tabCaja(`<div style="font-weight:700;color:var(--grd);margin-bottom:10px">Cobrado por mes</div>
+    <div style="display:flex;align-items:flex-end;gap:6px;height:170px">
+    ${porMes.map((p,i)=>`<div style="flex:1;display:flex;flex-direction:column;align-items:center;justify-content:flex-end;height:100%;min-width:0" title="${TAB_MES[+p.k.slice(5)-1]} ${p.k.slice(0,4)}: ${tabM(p.ars)} · ${p.cons} consultas">
+      <div style="font-size:10.5px;color:#64748b;margin-bottom:3px;font-variant-numeric:tabular-nums">${(p.ars/1e6).toLocaleString('es-AR',{maximumFractionDigits:1})}</div>
+      <div style="width:100%;max-width:38px;border-radius:5px 5px 0 0;background:${i===porMes.length-1?'var(--vd)':'#cbd5e1'};height:${Math.max(2,p.ars/maxMes*130)}px"></div>
+      <div style="font-size:11px;color:#94a3b8;margin-top:4px">${TAB_MES[+p.k.slice(5)-1]}</div></div>`).join('')}
+    </div><div style="font-size:11px;color:#94a3b8;margin-top:6px">En millones de pesos. ${nomMes} va hasta hoy.</div>`);
+
+  // Objetivos y gestoras
+  const metas = Object.keys(TAB_METAS).map(g=>{
+    const hecho = sum(rows.filter(r=>r.g===g && r.f>=TAB_METAS_DESDE),'ars');
+    const p = Math.min(1, hecho/TAB_METAS[g]);
+    return `<div style="margin-bottom:12px"><div style="display:flex;justify-content:space-between;gap:8px;flex-wrap:wrap;font-size:13px"><b>${TAB_NOMBRE[g]}</b><span style="color:#64748b;font-variant-numeric:tabular-nums">${tabM(hecho)} de ${tabM(TAB_METAS[g])} · ${Math.round(hecho/TAB_METAS[g]*100)}%</span></div>
+      <div style="height:10px;border-radius:5px;background:var(--grl);overflow:hidden;margin-top:5px"><div style="height:100%;width:${p*100}%;background:${p>=1?'var(--vd)':'var(--am)'};border-radius:5px"></div></div></div>`;
+  }).join('');
+  const gestoras = [...new Set(delMes.map(r=>r.g).filter(Boolean))].map(g=>({g, ars:sum(delMes.filter(r=>r.g===g),'ars'), n:delMes.filter(r=>r.g===g).length, c:delMes.filter(r=>r.g===g&&r.cons).length})).sort((a,b)=>b.ars-a.ars);
+  const objetivos = tabCaja(`<div style="font-weight:700;color:var(--grd);margin-bottom:10px">Objetivos al 31/12</div>${metas}
+    <div style="font-size:11px;color:#94a3b8;margin-bottom:12px">Cuenta lo cobrado desde el ${tabF(TAB_METAS_DESDE)}, cuando se fijaron.</div>
+    <table class="tabla" style="width:100%;font-size:12.5px"><thead><tr><th style="text-align:left">En ${nomMes}</th><th style="text-align:right">Cobrado</th><th style="text-align:right">Cobros</th><th style="text-align:right">Consultas</th></tr></thead><tbody>
+    ${gestoras.map(x=>`<tr><td>${tabEsc(TAB_NOMBRE[x.g]||x.g)}</td><td style="text-align:right">${tabM(x.ars)}</td><td style="text-align:right">${x.n}</td><td style="text-align:right">${x.c}</td></tr>`).join('')}
+    </tbody></table>`);
+
+  // Leads
+  const ahora = Date.now(), leads = lea.data||[];
+  const porQuien = {};
+  leads.forEach(l=>{ const k=l.asignada_a||'Sin asignar'; const o=porQuien[k]||(porQuien[k]={sin:0,nuevos:0,avanzo:0}); const t=new Date(l.created_at).getTime(); if(l.estado==='nuevo' && ahora-t>86400000) o.sin++; if(ahora-t<7*86400000) o.nuevos++; if(l.estado==='avanzo') o.avanzo++; });
+  const leadsHtml = tabCaja(`<div style="font-weight:700;color:var(--grd);margin-bottom:10px">Leads</div>
+    ${lea.error?'<div style="color:var(--ro);font-size:13px">No se pudieron leer los leads.</div>':`<table class="tabla" style="width:100%;font-size:12.5px"><thead><tr><th style="text-align:left">Asignado a</th><th style="text-align:right">En "nuevo" +24 h</th><th style="text-align:right">Nuevos 7 días</th><th style="text-align:right">Avanzaron</th></tr></thead><tbody>
+    ${Object.entries(porQuien).sort((a,b)=>b[1].sin-a[1].sin).map(([k,o])=>`<tr><td>${tabEsc(TAB_NOMBRE[k]||k)}</td><td style="text-align:right;${o.sin?'color:var(--ro);font-weight:700':''}">${o.sin}</td><td style="text-align:right">${o.nuevos}</td><td style="text-align:right">${o.avanzo}</td></tr>`).join('')}
+    </tbody></table>`}`);
+
+  // Turnos: próximos 14 días y sacados hace +5 días sin cobrar
+  const en14 = tabYmd(new Date(y,m,dia+14)), hace5 = tabYmd(new Date(y,m,dia-5));
+  const turnos = (tur.data||[]).map(t=>Object.assign({}, t, {sinCobrar: !t.cobrado && !!t.fecha_sacado && t.fecha_sacado < hace5})).filter(t=>t.sinCobrar || (t.fecha_turno && t.fecha_turno>=hoyS && t.fecha_turno<=en14)).sort((a,b)=>(a.fecha_turno||'').localeCompare(b.fecha_turno||''));
+  const turnosHtml = tabCaja(`<div style="font-weight:700;color:var(--grd);margin-bottom:10px">Turnos: próximos 14 días y sin cobrar</div>
+    ${tur.error?'<div style="color:var(--ro);font-size:13px">No se pudieron leer los turnos.</div>':!turnos.length?'<div style="font-size:13px;color:#94a3b8">Nada para mostrar.</div>':`<table class="tabla" style="width:100%;font-size:12.5px"><thead><tr><th style="text-align:left">Turno</th><th style="text-align:left">Cliente</th><th style="text-align:left">Trámite</th><th style="text-align:left">Consulado</th><th style="text-align:left">Gestora</th><th style="text-align:left">Estado</th></tr></thead><tbody>
+    ${turnos.map(t=>`<tr><td>${tabF(t.fecha_turno)}</td><td>${tabEsc(t.cliente)}</td><td>${tabEsc(t.tipo)}</td><td>${tabEsc(t.consulado)}</td><td>${tabEsc(TAB_NOMBRE[t.gestor]||t.gestor)}</td><td><span style="font-size:11px;font-weight:700;padding:2px 8px;border-radius:10px;${t.sinCobrar?'background:var(--rol);color:var(--ro)':'background:var(--vdl);color:var(--vd)'}">${t.sinCobrar?'Sin cobrar':(t.cobrado?'Cobrado':'Próximo')}</span></td></tr>`).join('')}
+    </tbody></table>`}
+    <div style="font-size:11px;color:#94a3b8;margin-top:8px">"Sin cobrar": sacado hace más de 5 días y sin pago cargado.</div>`, 'overflow-x:auto');
+
+  box.innerHTML = aviso + tarjetas + ritmo +
+    `<div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(300px,1fr));gap:18px;margin-bottom:18px">${barras}${objetivos}</div>` +
+    `<div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(300px,1fr));gap:18px">${leadsHtml}${turnosHtml}</div>`;
+}
+
 const ZOOMS = [1, 1.1, 1.2, 1.3, 1.45];
 let zoomIdx = 1;   // arranca un escalón más grande que antes
 
@@ -2671,6 +2818,8 @@ function initApp(){
 
     const sbc=document.getElementById('sb-caja');
     if(sbc) sbc.style.display='';
+    const sbt=document.getElementById('sb-tablero');
+    if(sbt) sbt.style.display='';
     // Mostrar filtro de gestor en ingresos
     const igf=document.getElementById('ing-gestor');
     if(igf) igf.style.display='block';
@@ -3224,6 +3373,7 @@ function showTab(name,btn){
     });
   }
   if(name==='caja')loadCaja();
+  if(name==='tablero')loadTablero();
   if(name==='turnos')loadTurnos();
   if(name==='deben')loadDeben();
   if(name==='oficina')loadOficinaEquipo();
