@@ -5473,6 +5473,15 @@ function updIngFecha(id,part,value){
   if(!parts[0]) parts[0]='2026';
   if(!parts[1]) parts[1]='01';
   if(!parts[2]) parts[2]='01';
+  // Mismo candado que en Turnos: si el año no puede ser, no lo tomamos.
+  if(part==='anio'){
+    const anio=parseInt(value,10);
+    if(!(anio>=2000&&anio<=2100)){
+      toast('⚠️ El año "'+value+'" no puede ser. Poné el año completo (2026, 2027…)','err');
+      renderIngresos();
+      return;
+    }
+  }
   if(part==='anio') parts[0]=String(value);
   if(part==='mes') parts[1]=String(value).padStart(2,'0');
   if(part==='dia') parts[2]=String(value).padStart(2,'0');
@@ -5528,12 +5537,29 @@ function zonaCliente(c){
 
 // ── CARTEL DE INCONSISTENCIAS ─────────────────────────────────────
 let alertasIngAbierto=true;
+// Busca la ficha de un cliente a partir del nombre escrito en el ingreso.
+// Primero prueba el nombre exacto y, si no hay, el nombre completo: en los
+// ingresos se carga el nombre corto y la ficha tiene el segundo nombre
+// ("Rosa Conforti" en el ingreso → "Rosa Beatriz Conforti" en la ficha).
+function fichasProbables(nombre){
+  const norm=t=>String(t||'').toLowerCase().normalize('NFD').replace(/[̀-ͯ]/g,'').replace(/\s+/g,' ').trim();
+  const n=norm(nombre); if(!n) return [];
+  const todas=allC||[];
+  const exactas=todas.filter(c=>norm(c.nombre)===n);
+  if(exactas.length) return exactas;
+  // Palabras con peso: sacamos lo que va entre paréntesis y las muy cortas
+  const pal=norm(n.replace(/\(.*?\)/g,'')).split(' ').filter(p=>p.length>=4&&p!=='flia'&&p!=='familia');
+  if(pal.length<2) return [];
+  return todas.filter(c=>{
+    const pc=' '+norm(c.nombre)+' ';
+    return pal.every(p=>pc.includes(' '+p+' '));
+  });
+}
 function alertasIngresos(){
   const mes=(document.getElementById('ing-mes')||{}).value||'';
   const hoy=new Date(); const desde=new Date(hoy.getFullYear(),hoy.getMonth()-1,1).toISOString().slice(0,10);
   const rows=ingresosFiltrados.filter(r=>r.fecha && (mes || r.fecha>=desde));
   const out=[]; const norm=t=>String(t||'').toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g,'').replace(/\s+/g,' ').trim();
-  const porNombre={}; (allC||[]).forEach(c=>{const k=norm(c.nombre); if(k) (porNombre[k]=porNombre[k]||[]).push(c);});
   const vistos={};
   rows.forEach(r=>{
     const nom=escH(r.cliente||'(sin nombre)'); const f=(r.fecha||'').split('-').reverse().slice(0,2).join('/');
@@ -5543,8 +5569,14 @@ function alertasIngresos(){
       out.push({id:r.id,niv:'alta',txt:`<b>${nom}</b> (${f}) está como <b>${r.es_interior?'INTERIOR':'CABA/GBA'}</b>, pero su presupuesto es de <b>${zc==='interior'?'INTERIOR':'CABA/GBA'}</b>. El A Pagar puede estar mal.`,fix:`corregirZonaIng('${r.id}')`,fixTxt:'Corregir'});
     const prob=[]; let fix=null, fixTxt='';
     if(!r.cliente_id && r.cliente){
-      const m=porNombre[norm(r.cliente)];
-      if(m&&m.length===1){ prob.push('no está vinculado a su ficha (así no se puede chequear la zona)'); fix=`vincularDesdeAlerta('${r.id}','${m[0].id}')`; fixTxt='Vincular'; }
+      const m=fichasProbables(r.cliente);
+      // Una consulta que no llegó a ser cliente no tiene ficha, y está bien así:
+      // de esas no avisamos nada. De todo el resto sí, porque es trabajo hecho
+      // que no le queda registrado a nadie.
+      const esConsulta=/consulta/.test(norm(r.tipo));
+      if(m.length===1){ prob.push('no está vinculado a su ficha (así no se puede chequear la zona)'); fix=`vincularDesdeAlerta('${r.id}','${m[0].id}')`; fixTxt='Vincular'; }
+      else if(m.length>1){ prob.push(`tiene <b>${m.length} fichas</b> con ese nombre — hay que elegir la correcta en la fila`); }
+      else if(!esConsulta){ prob.push('<b>no tiene ficha</b> en la Base de Clientes — hay que crearla'); }
     }
     if(!(parseFloat(r.efectivo)||0) && !(parseFloat(r.transferencia)||0)) prob.push('no tiene monto');
     if(!String(r.tipo||'').trim()) prob.push('no tiene tipo de trámite');
@@ -6287,7 +6319,7 @@ function renderTurnos(){
     ${lista.map(t=>{
       const e=turEstado(t);
       const sel=(campo,ops)=>`<select onchange="updTurno('${t.id}','${campo}',this.value)" style="${inp};cursor:pointer"><option value="">—</option>${ops.map(o=>`<option${t[campo]===o?' selected':''}>${o}</option>`).join('')}${t[campo]&&!ops.includes(t[campo])?`<option selected>${escH(t[campo])}</option>`:''}</select>`;
-      const fecha=campo=>`<input type="date" value="${t[campo]||''}" onchange="updTurno('${t.id}','${campo}',this.value)" style="${inp};width:118px">`;
+      const fecha=campo=>`<input type="date" min="2000-01-01" max="2100-12-31" value="${t[campo]||''}" onchange="updTurno('${t.id}','${campo}',this.value)" style="${inp};width:118px">`;
       const num=campo=>`<input type="number" value="${t[campo]??''}" placeholder="0" onchange="updTurno('${t.id}','${campo}',this.value)" style="${inp};width:64px;font-weight:700">`;
       const chk=campo=>`<input type="checkbox" ${t[campo]?'checked':''} onchange="updTurno('${t.id}','${campo}',this.checked)" style="width:19px;height:19px;cursor:pointer">`;
       return `<tr id="tur-${t.id}" style="${t.cancelado?'opacity:.55':''}">
@@ -6325,6 +6357,17 @@ async function updTurno(id,campo,valor){
   const cambio={};
   if(['precio_usd','costo_usd'].includes(campo)) valor=(valor===''||valor===null)?null:parseFloat(valor);
   if(['fecha_pedido','fecha_sacado','fecha_turno'].includes(campo)&&!valor) valor=null;
+  // Candado de fechas: un año fuera de rango es siempre un dedazo al tipear.
+  // Ya pasó con turnos que quedaron guardados en el año 0202 y 0020, y así
+  // el turno no aparece nunca en el listado ordenado por fecha.
+  if(['fecha_pedido','fecha_sacado','fecha_turno'].includes(campo)&&valor){
+    const anio=parseInt(String(valor).slice(0,4),10);
+    if(!(anio>=2000&&anio<=2100)){
+      toast('⚠️ El año "'+String(valor).slice(0,4)+'" no puede ser. Escribí la fecha de nuevo con el año completo (2026, 2027…)','err');
+      renderTurnos();
+      return;
+    }
+  }
   if(campo==='cliente'){
     valor=(valor||'').trim();
     const c=(allC||[]).find(x=>(x.nombre||'').trim().toLowerCase()===valor.toLowerCase());
