@@ -393,7 +393,7 @@ tr.row-int{background:#fff7ed!important;}
 .ptbl thead th:last-child{border-radius:0 12px 12px 0;padding-right:16px;}
 .ptbl tbody td:first-child{padding-left:16px;}
 .ptbl tbody td:last-child{padding-right:16px;}
-.ptbl tbody tr:nth-child(even) td{background:var(--cream);}
+.ptbl tbody tr:nth-child(even):not(.tot) td{background:var(--cream);}
 .ptbl tbody td{border-bottom:none;}
 .ptbl .tot{background:none;}
 .ptbl .tot td{background:#12379a;}
@@ -415,7 +415,8 @@ tr.row-int{background:#fff7ed!important;}
 .dh-t{font-size:13.5px;margin-top:4px;}
 .ptbl .tot td{border:none!important;box-shadow:none;}
 .ptbl .tot{background:var(--navy);}
-.ptbl tfoot td{border-left:0!important;border-right:0!important;}
+.ptbl .tot td{border-left:0!important;border-right:0!important;}
+.ptbl .tot{break-inside:avoid;page-break-inside:avoid;}
 .ptbl td:first-child{min-width:150px;}
 
 /* BASE DE CLIENTES */
@@ -1052,12 +1053,15 @@ body{background:var(--bg);}
             <th>Tiempo estimado</th>
           </tr></thead>
           <tbody id="d-pb"><tr><td colspan="6" class="ph" style="text-align:center;padding:14px">Agregá servicios desde el panel</td></tr></tbody>
-          <tfoot id="d-pf" style="display:none">
+          <!-- OJO: esto va como <tbody>, NO como <tfoot>. El navegador repite el
+               tfoot en TODAS las páginas al imprimir, y la barra azul del total
+               aparecía dos veces cuando el presupuesto se partía en dos hojas. -->
+          <tbody id="d-pf" style="display:none">
             <tr class="tot">
               <td colspan="3" style="text-align:left;padding-left:16px">Inversión total</td>
               <td class="r" id="d-tt">—</td><td class="r" id="d-te">—</td><td></td>
             </tr>
-          </tfoot>
+          </tbody>
         </table>
       </div>
       <div class="dcl">
